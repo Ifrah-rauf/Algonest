@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+//essential
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Auth {
+  auth_id   Int      @id @default(autoincrement())
+  mail      String   @unique
+  password  String
+  username  String?
+  createdAt DateTime @default(now())
+
+  student StAccount?
+  teacher TAccount?
+}
+
+model StAccount {
+  s_id       Int       @id @default(autoincrement())
+  auth_id    Int       @unique
+  name       String
+  is_demo    Boolean   @default(false)
+  updated_at DateTime?
+
+  auth    Auth          @relation(fields: [auth_id], references: [auth_id])
+  plans   PlanRecord[]
+  classes ClassRecord[]
+}
+
+model Specialization {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  teachers TAccount[] @relation("TeacherSpecs")
+}
+
+model TAccount {
+  t_id       Int       @id @default(autoincrement())
+  auth_id    Int       @unique
+  name       String
+  bio        String?
+  rating     Float?
+  updated_at DateTime?
+
+  auth    Auth             @relation(fields: [auth_id], references: [auth_id])
+  specs   Specialization[] @relation("TeacherSpecs")
+  classes ClassRecord[]
+}
+
+model PlanDesc {
+  plan_id          Int     @id @default(autoincrement())
+  plan_name        String
+  desc             String?
+  duration         Int
+  price            Float
+  sessionsIncluded Int
+
+  records PlanRecord[] //records field will contain array from PlanRecord table foreign key:plan_id, all enrollments of this plan
+}
+
+model PlanRecord {
+  record_no   Int      @id @default(autoincrement())
+  s_id        Int
+  plan_id     Int
+  joinAt      DateTime @default(now())
+  sessionsRem Int
+  isValid     Boolean  @default(true)
+
+  student StAccount     @relation(fields: [s_id], references: [s_id])
+  plan    PlanDesc      @relation(fields: [plan_id], references: [plan_id]) //type of plan taken
+  classes ClassRecord[] //classes field will contain array from ClassRecord table foreign key:  
+  //it is the proof of all the classes ever taken under this plan.
+}
+
+model ClassRecord {
+  record_no      Int       @id @default(autoincrement())
+  t_id           Int
+  s_id           Int
+  plan_record_id Int //class covered by which plan
+  link           String?
+  startAt        DateTime
+  endAt          DateTime?
+
+  teacher    TAccount   @relation(fields: [t_id], references: [t_id])
+  student    StAccount  @relation(fields: [s_id], references: [s_id])
+  planRecord PlanRecord @relation(fields: [plan_record_id], references: [record_no]) //type of plan taken
+}
