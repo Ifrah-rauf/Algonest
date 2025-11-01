@@ -5,7 +5,7 @@ import session from "express-session";
 import authRoutes from "./routes/auth.js";
 import dotenv from "dotenv";
 
-//Dummy commit
+//Dummy commit part 2
 dotenv.config();
 const app = express();
 const PORT = 5000;
