@@ -11,26 +11,40 @@ const router = express.Router();
 
 
 router.post("/save-user", async (req, res) => {
-  console.log("Request body received:", req.body); // <-- log what frontend sends
-  const { uid, mail, username } = req.body;
+  console.log("Request body received:", req.body);
+  const { uid, mail, username} = req.body;
+  const email = mail;
+  const name = username;
+  console.log(uid,mail,name);
 
   try {
     let user = await prisma.auth.findUnique({ where: { uid } });
+
     if (!user) {
-      user = await prisma.auth.create({ data: { uid, mail, username, student: {
-      create: {
-        name:username
-      } 
-        } 
-        },include: { student: true } });
+      user = await prisma.auth.create({
+        data: {
+          uid,
+          email, // must match your Prisma field
+          name:name,
+          role: "student",
+          student: {
+            create: {
+              name: name, // matches Student.name
+            },
+          },
+        },
+        include: { student: true },
+      });
     }
+
     console.log("User saved:", user);
     res.json(user);
   } catch (err) {
-    console.error("Error in /save-user:", err); // <-- log full error
+    console.error("Error in /save-user:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 router.get("/user/:uid", async (req, res) => {
@@ -74,9 +88,9 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   console.log(">>> /login route hit!", req.body);
   const { mail, password } = req.body;
-
+const email = mail;
   try {
-    const user = await prisma.auth.findUnique({ where: { mail } });
+    const user = await prisma.auth.findUnique({ where: { email } });
     if (!user) {
       return res.json({ status: "error", message: "User not found" });
     }
@@ -92,7 +106,7 @@ router.post("/login", async (req, res) => {
     req.session.user = {
       uid: user.uid,
       username: user.username,
-      mail: user.mail,
+      mail: user.email,
     };
 
     res.json({ status: "success", user: req.session.user, login_uid:user.uid});
@@ -106,30 +120,37 @@ router.post("/login", async (req, res) => {
 router.post("/firebase-login", async (req, res) => {
   console.log(">>> /firebase-login route hit!", req.body);
   const { mail, uidFromFirebase } = req.body;
+  const email = mail;
 
   try {
-    let user = await prisma.auth.findUnique({ where: { mail } });
+    let user = await prisma.auth.findUnique({ where: { email } });
 
     // If user does not exist, create new one
     if (!user) {
       user = await prisma.auth.create({
         data: {
           uid: uidFromFirebase || uuidv4(),
-          username: mail.split("@")[0], // default username
-          password: "", // firebase user won't need local password
-          mail,
+          name: email.split("@")[0], // ✅ use 'name', not 'username'
+          email,                     // ✅ matches schema
+          password: "",              // ✅ allowed, since String?
+          role: "student",           // ✅ default role
         },
       });
     }
 
-    // Set session
+    // Set session (Express-session)
     req.session.user = {
       uid: user.uid,
-      username: user.username,
-      mail: user.mail,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     };
 
-    res.json({ status: "success", user: req.session.user, login_uid:user.uid})
+    res.json({
+      status: "success",
+      user: req.session.user,
+      login_uid: user.uid,
+    });
   } catch (err) {
     console.error("Firebase login error:", err);
     res.status(500).json({ status: "error", message: err.message });
@@ -151,53 +172,53 @@ router.post("/logout", (req, res) => {
 //   const { uid } = req.params;
 //   const user = await prisma.auth.findUnique({ where: { uid } });
 // });
-router.post("/book/:uid", async (req, res) => {
-  const { uid } = req.params;  // uid corresponds to s_id in StAccount
-  const { plan_id, payCheck = false} = req.body;
-  console.log("PLAN_ID AT BACKEND"+plan_id);
-  if (!uid) {
-    return res.status(400).json({ message: "UID is required" });
-  }
+// router.post("/book/:uid", async (req, res) => {
+//   const { uid } = req.params;  // uid corresponds to s_id in StAccount
+//   const { plan_id, payCheck = false} = req.body;
+//   console.log("PLAN_ID AT BACKEND"+plan_id);
+//   if (!uid) {
+//     return res.status(400).json({ message: "UID is required" });
+//   }
 
-  try {
-    // check if student exists
-    const student = await prisma.stAccount.findUnique({
-      where: { uid: uid },
-    });
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+//   try {
+//     // check if student exists
+//     const student = await prisma.stAccount.findUnique({
+//       where: { uid: uid },
+//     });
+//     if (!student) {
+//       return res.status(404).json({ message: "Student not found" });
+//     }
     
-    // check if plan exists
-    const plan = await prisma.planDesc.findUnique({
-      where: { plan_id: plan_id },
-    });
-    if (!plan) {
-      return res.status(404).json({ message: "Plan not found" });
-    }
+//     // check if plan exists
+//     const plan = await prisma.planDesc.findUnique({
+//       where: { plan_id: plan_id },
+//     });
+//     if (!plan) {
+//       return res.status(404).json({ message: "Plan not found" });
+//     }
 
-    // create PlanRecord
-    const newRecord = await prisma.planRecord.create({
-      data: {
-        s_id: student.s_id,
-        plan_id: plan.plan_id,
-        sessionsRem: plan.sessionsIncluded,
-        isValid: false, // only valid if payment is done
-        payCheck,
-      },
-    });
+//     // create PlanRecord
+//     const newRecord = await prisma.planRecord.create({
+//       data: {
+//         s_id: student.s_id,
+//         plan_id: plan.plan_id,
+//         sessionsRem: plan.sessionsIncluded,
+//         isValid: false, // only valid if payment is done
+//         payCheck,
+//       },
+//     });
 
-    res.status(201).json({
-      message: payCheck
-        ? "Booking successful"
-        : "Booking saved but payment pending",
-      planRecord: newRecord,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
+//     res.status(201).json({
+//       message: payCheck
+//         ? "Booking successful"
+//         : "Booking saved but payment pending",
+//       planRecord: newRecord,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
 
 import dotenv from "dotenv";
 dotenv.config();

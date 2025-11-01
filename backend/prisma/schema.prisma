@@ -6,85 +6,245 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-model Auth {
-  auth_id   Int        @default(autoincrement())
-  uid      String      @id @default(uuid()) 
-  mail      String     @unique
-  password  String?
-  username  String?
-  createdAt DateTime   @default(now())
 
-  student   StAccount?
-  teacher   TAccount?
-}
-model StAccount {
-  s_id       Int           @id @default(autoincrement())
-  uid        String        @unique 
-  name       String      
-  is_demo    Boolean       @default(false)
-  updated_at DateTime?     
 
-  auth       Auth          @relation(fields: [uid], references: [uid])
-  plans      PlanRecord[]
-  classes    ClassRecord[]
-}
-model Specialization {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  teachers  TAccount[]  @relation("TeacherSpecs")
-}
-model TAccount {
-  t_id       Int           @id @default(autoincrement())
-  uid        String        @unique
-  name       String      
-  bio        String?
-  rating     Float?
-  updated_at DateTime?     
+// ================= ENUMS ===================
 
-  auth       Auth          @relation(fields: [uid], references: [uid])
-  specs      Specialization[] @relation("TeacherSpecs")
-  classes    ClassRecord[]
+enum BookingStatus {
+  ACTIVE
+  EXPIRED
+  REFUNDED
 }
-model PlanDesc {
-  plan_id           Int           @id
-  plan_name         String
-  desc              String?
-  duration          String
-  price             Float
-  sessionsIncluded  Int
 
-  records           PlanRecord[]  //records field will contain array from PlanRecord table foreign key:plan_id, all enrollments of this plan
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
 }
-enum ConsultStatus {
+
+enum PayMethod {
+  RAZORPAY
+  STRIPE
+  UPI
+  CARD
+  WALLET
+}
+
+enum SessionAttendance {
+  ABSENT
   TAKEN
-  DEMANDED
-  NOT_TAKEN
+  CANCELLED
 }
-model PlanRecord {  //plan enrollment table
-  record_no   Int        @id @default(autoincrement())
-  s_id        Int
-  plan_id     Int 
-  joinAt      DateTime   @default(now())
-  sessionsRem Int
-  isValid     Boolean    @default(true)
-  payCheck    Boolean    @default(false)
-  consultStat ConsultStatus @default(NOT_TAKEN)
 
-  student     StAccount  @relation(fields: [s_id], references: [s_id])
-  plan        PlanDesc   @relation(fields: [plan_id], references: [plan_id]) //type of plan taken
-  classes     ClassRecord[] //classes field will contain array from ClassRecord table foreign key:  
+enum SessionStatus {
+  EXPIRED
+  VALID
 }
-model ClassRecord {
-  record_no Int      @id @default(autoincrement())
-  t_id      Int
-  s_id      Int
-  plan_record_id   Int //class covered by which plan
-  link      String?
-  startAt   DateTime
-  endAt     DateTime?
 
-  teacher   TAccount @relation(fields: [t_id], references: [t_id])
-  student   StAccount @relation(fields: [s_id], references: [s_id])
-  planRecord    PlanRecord  @relation(fields: [plan_record_id], references: [record_no])  //type of plan taken
+// ================= AUTH ====================
+
+model Auth {
+  uid             String   @id
+  created_at      DateTime @default(now())
+  name            String
+  email           String   @unique
+  password        String?
+  last_login      DateTime?
+  role            String   // "student" | "teacher" | "admin"
+
+  student         Student?
+  teacher         Teacher?
+}
+
+// ================= STUDENT =================
+
+model Student {
+  s_id            Int       @id @default(autoincrement())
+  uid             String    @unique
+  name            String
+  bio             String?
+  education       String?
+  total_bookings  Int       @default(0)
+
+  // Relations
+  auth            Auth?     @relation(fields: [uid], references: [uid])
+  testimonials    Testimonial[]
+  outlines        CourseOutline[]
+  bookings        Booking[]
+  sessions        Session[]
+
+  @@map("student")
+}
+
+// ================= TEACHER =================
+
+model Teacher {
+  t_id            Int       @id @default(autoincrement())
+  uid             String    @unique
+  name            String
+  bio             String?
+  education       String?
+  teaching_style  String?
+  rating          Float?
+  video_url       String?
+  pfp             String?
+
+  // FKs
+  specialisation_id Int?
+  availability_id   Int?
+
+  // Relations
+  specialisation  Specialisation? @relation(fields: [specialisation_id], references: [sp_id])
+  availability    Availability?   @relation(fields: [availability_id], references: [a_id])
+  auth            Auth?           @relation(fields: [uid], references: [uid])
+  outlines        CourseOutline[]
+  sessions        Session[]
+
+  @@map("teacher")
+}
+
+// ================= SPECIALISATION ===========
+
+model Specialisation {
+  sp_id           Int       @id @default(autoincrement())
+  title           String
+  teachers        Teacher[]
+
+  @@map("specialisation")
+}
+
+// ================= AVAILABILITY =============
+
+model Availability {
+  a_id            Int       @id @default(autoincrement())
+  day             String
+  start_shift     String
+  end_shift       String
+  status          Boolean
+
+  teachers        Teacher[]
+
+  @@map("availability")
+}
+
+// ================= TESTIMONIALS =============
+
+model Testimonial {
+  id              Int       @id @default(autoincrement())
+  s_id            Int?
+  name            String
+  course          String?
+  body            String?
+
+  student         Student?  @relation(fields: [s_id], references: [s_id])
+
+  @@map("testimonials")
+}
+
+// ================= PLAN ====================
+
+model Plan {
+  plan_id         Int       @id @default(autoincrement())
+  plan_name       String
+  description     String
+  duration        String
+  price           Float
+  sessions        Int
+
+  outlines        CourseOutline[]
+  bookings        Booking[]
+
+  @@map("plan")
+}
+
+// ================= BOOKING =================
+
+model Booking {
+  booking_id      Int           @id @default(autoincrement())
+  s_id            Int
+  plan_id         Int
+  outline_id      Int?
+  payment_id      Int?        
+  booking_date    DateTime      @default(now())
+  expiry_date     DateTime?
+  total_amount    Float
+  status          BookingStatus @default(ACTIVE)
+
+  // Relations
+  student         Student       @relation(fields: [s_id], references: [s_id])
+  plan            Plan          @relation(fields: [plan_id], references: [plan_id])
+  payment         Payment?  
+  outline         CourseOutline?
+
+  @@map("booking")
+}
+
+// ================= PAYMENT =================
+
+model Payment {
+  payment_id      Int           @id @default(autoincrement())
+  booking_id      Int           @unique 
+  transaction_id  String?
+  payment_method  PayMethod
+  payment_status  PaymentStatus
+  amount          Float
+  currency        String        @default("INR")
+  created_at      DateTime      @default(now())
+
+  // Relations
+  booking         Booking       @relation(fields: [booking_id], references: [booking_id])
+
+  @@map("payment")
+}
+
+// ================= COURSE OUTLINE ===========
+
+model CourseOutline {
+  outline_id      Int           @id @default(autoincrement())
+  s_id            Int           
+  t_id            Int           
+  plan_id         Int
+  booking_id      Int?          @unique 
+  title           String
+  created_at      DateTime      @default(now())
+  valid_till      DateTime?
+  notes           String?
+  attachments     String?
+  session_count   Int           @default(0)
+  progress        Float         @default(0)
+  roadmap         String?
+  status          SessionStatus @default(VALID)
+
+  // Relations
+  student         Student       @relation(fields: [s_id], references: [s_id])
+  teacher         Teacher       @relation(fields: [t_id], references: [t_id])
+  plan            Plan          @relation(fields: [plan_id], references: [plan_id])
+  booking         Booking?      @relation(fields: [booking_id], references: [booking_id])
+  sessions        Session[]
+
+  @@map("plan_outline")
+}
+
+// ================= SESSION =================
+
+model Session {
+  session_id      Int              @id @default(autoincrement())
+  outline_id      Int
+  s_id            Int
+  t_id            Int
+  session_link    String?
+  session_date    DateTime?
+  duration        String?
+  attendance      SessionAttendance
+  feedback        String?
+
+  // Relations
+  outline         CourseOutline   @relation(fields: [outline_id], references: [outline_id])
+  student         Student         @relation(fields: [s_id], references: [s_id])
+  teacher         Teacher         @relation(fields: [t_id], references: [t_id])
+
+  @@map("session")
 }
