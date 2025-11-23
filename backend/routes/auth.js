@@ -1,236 +1,196 @@
-// backend/routes/auth.js
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from "express";
-import pkg from "@prisma/client";      // default import
-const { PrismaClient } = pkg;         // destructure named export
-import bcrypt from "bcrypt"; // for hashing passwords
-import { v4 as uuidv4 } from "uuid";
-import e from "express";
-import axios from "axios";
-const prisma = new PrismaClient();
 const router = express.Router();
 
+import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
+import { supabase } from "../lib/supabase.js"; 
+
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
+const WABA_ID = process.env.WABA_ID;
 
 router.post("/save-user", async (req, res) => {
-  console.log("Request body received:", req.body);
-  const { uid, mail, username} = req.body;
+  const { uid, mail, username } = req.body;
   const email = mail;
   const name = username;
-  console.log(uid,mail,name);
 
-  try {
-    let user = await prisma.auth.findUnique({ where: { uid } });
+  // Check if user exists
+  const { data: existing } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("uid", uid)
+    .single();
 
-    if (!user) {
-      user = await prisma.auth.create({
-        data: {
+  if (!existing) {
+    // Create new user
+    const { data, error } = await supabase
+      .from("auth")
+      .insert([
+        {
           uid,
-          email, // must match your Prisma field
-          name:name,
-          role: "student",
-          student: {
-            create: {
-              name: name, // matches Student.name
-            },
-          },
-        },
-        include: { student: true },
-      });
-    }
+          email,
+          name
+        }
+      ])
+      .select()
+      .single();
 
-    console.log("User saved:", user);
-    res.json(user);
-  } catch (err) {
-    console.error("Error in /save-user:", err);
-    res.status(500).json({ error: err.message });
+    if (error) return res.status(500).json({ error });
+
+    // Create Student entry
+    await supabase
+      .from("student")
+      .insert([{ uid, name }]);
+
+    return res.json(data);
   }
-});
 
+  res.json(existing);
+});
 
 
 router.get("/user/:uid", async (req, res) => {
   const { uid } = req.params;
-  try {
-    const user = await prisma.auth.findUnique({ where: { uid } });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+
+  const { data, error } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("uid", uid)
+    .single();
+
+  if (error) return res.status(404).json({ error });
+
+  res.json(data);
 });
+
 
 router.post("/signup", async (req, res) => {
-  console.log(">>> /signup route hit!");
-  console.log("Request body:", req.body);
+  console.log(">>> /signup hit");
   const { username, password, mail } = req.body;
-  try {
-    const existing = await prisma.auth.findUnique({ where: { mail } });
-    if (existing) {
-      return res.json({ status: "mail already exists"});
-    }
+  const email = mail;
+  const name = username;
 
-    const hashed = await bcrypt.hash(password, 10);
-    const uid = uuidv4();
-    const newUser = await prisma.auth.create({
-      data: { uid, username, password: hashed, mail,student: {
-      create: {
-        name:username
-      } 
-        } 
-        },include: { student: true }
-    });
-    req.session.user = { uid: newUser.uid, username: newUser.username, mail: newUser.mail };
-    res.json({ status: "success", uid: newUser.uid, login_uid: newUser.uid});
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  // Check existing mail
+  const { data: existing } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("email", email)
+    .single();
+
+  if (existing) return res.json({ status: "mail already exists" });
+
+  const hashed = await bcrypt.hash(password, 10);
+  const uid = uuidv4();
+
+  // Create user
+  console.log(">>> creating user...");
+  const { data, error } = await supabase
+    .from("auth")
+    .insert([
+      { uid, name, password: hashed, email, role: "STUDENT" }
+    ])
+    .select()
+    .single();
+  
+  console.log("INSERT RESULT:", { data, error });
+  if (error) return res.status(500).json({ error });
+
+  // Create student row too
+  await supabase.from("student").insert([{ uid, name: username }]);
+
+  // Set session
+  req.session.user = { uid, name, email };
+
+  res.json({ status: "success", uid });
 });
+
 
 router.post("/login", async (req, res) => {
-  console.log(">>> /login route hit!", req.body);
   const { mail, password } = req.body;
-const email = mail;
-  try {
-    const user = await prisma.auth.findUnique({ where: { email } });
-    if (!user) {
-      return res.json({ status: "error", message: "User not found" });
-    }
-    if (!user.password) {
-      return res.json({ status: "firebase_login" });
-    }
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.json({ status: "error", message: "Wrong password" });
-    }
+  const email = mail;
 
-    // Set session
-    req.session.user = {
-      uid: user.uid,
-      username: user.username,
-      mail: user.email,
-    };
+  const { data: user, error } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("email", email)
+    .single();
 
-    res.json({ status: "success", user: req.session.user, login_uid:user.uid});
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ status: "error", message: err.message });
-  }
+  if (!user) return res.json({ status: "error", message: "User not found" });
+
+  if (!user.password) return res.json({ status: "firebase_login" });
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.json({ status: "error", message: "Wrong password" });
+
+  req.session.user = {
+    uid: user.uid,
+    username: user.name,
+    email: user.email
+  };
+
+  res.json({ status: "success", user: req.session.user });
 });
+
 
 
 router.post("/firebase-login", async (req, res) => {
-  console.log(">>> /firebase-login route hit!", req.body);
   const { mail, uidFromFirebase } = req.body;
   const email = mail;
 
-  try {
-    let user = await prisma.auth.findUnique({ where: { email } });
+  let { data: user } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("email", email)
+    .single();
 
-    // If user does not exist, create new one
-    if (!user) {
-      user = await prisma.auth.create({
-        data: {
+  if (!user) {
+    const { data } = await supabase
+      .from("auth")
+      .insert([
+        {
           uid: uidFromFirebase || uuidv4(),
-          name: email.split("@")[0], // ✅ use 'name', not 'username'
-          email,                     // ✅ matches schema
-          password: "",              // ✅ allowed, since String?
-          role: "student",           // ✅ default role
-        },
-      });
-    }
+          name: email.split("@")[0],
+          email,
+          role: "STUDENT",
+          password: ""
+        }
+      ])
+      .select()
+      .single();
 
-    // Set session (Express-session)
-    req.session.user = {
-      uid: user.uid,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    };
-
-    res.json({
-      status: "success",
-      user: req.session.user,
-      login_uid: user.uid,
-    });
-  } catch (err) {
-    console.error("Firebase login error:", err);
-    res.status(500).json({ status: "error", message: err.message });
+    user = data;
   }
+
+  req.session.user = {
+    uid: user.uid,
+    name: user.name,
+    email: user.email,
+    role: user.role
+  };
+
+  res.json({ status: "success", user: req.session.user });
 });
 
-// Logout
+
 router.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: "Failed to log out" });
-    }
+  req.session.destroy(() => {
     res.json({ status: "signed_out" });
   });
 });
 
-
-// router.post("/book/:uid", async (req, res) => {
-//   const { uid } = req.params;
-//   const user = await prisma.auth.findUnique({ where: { uid } });
-// });
-// router.post("/book/:uid", async (req, res) => {
-//   const { uid } = req.params;  // uid corresponds to s_id in StAccount
-//   const { plan_id, payCheck = false} = req.body;
-//   console.log("PLAN_ID AT BACKEND"+plan_id);
-//   if (!uid) {
-//     return res.status(400).json({ message: "UID is required" });
-//   }
-
-//   try {
-//     // check if student exists
-//     const student = await prisma.stAccount.findUnique({
-//       where: { uid: uid },
-//     });
-//     if (!student) {
-//       return res.status(404).json({ message: "Student not found" });
-//     }
-    
-//     // check if plan exists
-//     const plan = await prisma.planDesc.findUnique({
-//       where: { plan_id: plan_id },
-//     });
-//     if (!plan) {
-//       return res.status(404).json({ message: "Plan not found" });
-//     }
-
-//     // create PlanRecord
-//     const newRecord = await prisma.planRecord.create({
-//       data: {
-//         s_id: student.s_id,
-//         plan_id: plan.plan_id,
-//         sessionsRem: plan.sessionsIncluded,
-//         isValid: false, // only valid if payment is done
-//         payCheck,
-//       },
-//     });
-
-//     res.status(201).json({
-//       message: payCheck
-//         ? "Booking successful"
-//         : "Booking saved but payment pending",
-//       planRecord: newRecord,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
-
-import dotenv from "dotenv";
-dotenv.config();
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
-const WABA_ID = process.env.WABA_ID;
+// Send WhatsApp message
 router.post("/send-whatsapp", async (req, res) => {
-console.log("token and id: "+WHATSAPP_TOKEN+" "+PHONE_NUMBER_ID);
+  console.log("Token and phone ID:", WHATSAPP_TOKEN?.slice(0, 10) + "...", PHONE_NUMBER_ID);
+
   const { phone, name, slot } = req.body;
+
   try {
     const response = await axios.post(
-      `https://graph.facebook.com/v22.0/835859506271674/messages`,
+      `https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: "whatsapp",
         to: phone,
@@ -242,7 +202,7 @@ console.log("token and id: "+WHATSAPP_TOKEN+" "+PHONE_NUMBER_ID);
       {
         headers: {
           Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         }
       }
     );
@@ -252,24 +212,28 @@ console.log("token and id: "+WHATSAPP_TOKEN+" "+PHONE_NUMBER_ID);
       message: "WhatsApp message sent",
       response: response.data
     });
+
   } catch (error) {
+    // Standardised full error trace
+    console.error("❌ WhatsApp API Error");
+
     if (error.response) {
-      // Server responded with an error status
-      console.error("❌ API Error:");
       console.error("Status:", error.response.status);
-      console.error("Headers:", error.response.headers);
       console.error("Data:", error.response.data);
     } else if (error.request) {
-      // No response received
-      console.error("❌ No response received from server.");
-      console.error("Request:", error.request);
+      console.error("❌ No response received", error.request);
     } else {
-      // Something happened in setting up the request
-      console.error("❌ Error setting up request:", error.message);
+      console.error("❌ Error:", error.message);
     }
-    res.status(500).json({ success: false, error: "Failed to send WhatsApp" });
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to send WhatsApp",
+      details: error.response?.data || error.message
+    });
   }
 });
+
 
 
 

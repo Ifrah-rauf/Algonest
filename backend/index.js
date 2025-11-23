@@ -1,11 +1,13 @@
-// backend/index.js
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
 import session from "express-session";
 import authRoutes from "./routes/auth.js";
-import dotenv from "dotenv";
+import teacherRoutes from "./routes/teachers.js";
+import planRoutes from "./routes/plans.js";
+import bookingRoutes from "./routes/booking.js";
 
-dotenv.config();
 const app = express();
 const PORT = 5000;
 
@@ -25,12 +27,11 @@ app.use(cors({
   credentials: true               // <-- allow cookies/session to be sent
 }));
 
-// Example API route
-// app.get('/api/message', (req, res) => {
-//   res.json({ message: 'Hello from Algonest backend!' });
-// });
-app.use("/api", authRoutes);
-// Start server
-app.listen(PORT, '0.0.0.0', () => {  // <- IMPORTANT, binds to all interfaces
+app.use("/api/auth", authRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/booking", bookingRoutes);
+
+app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);
 });
