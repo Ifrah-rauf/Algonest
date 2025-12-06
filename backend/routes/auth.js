@@ -18,40 +18,45 @@ router.post("/save-user", async (req, res) => {
   const email = mail;
   const name = username;
 
-  // Check if user exists
+  // Check if user already exists
   const { data: existing } = await supabase
     .from("auth")
     .select("*")
     .eq("uid", uid)
     .single();
 
-  if (!existing) {
-    // Create new user
-    const { data, error } = await supabase
-      .from("auth")
-      .insert([
-        {
-          uid,
-          email,
-          name
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) return res.status(500).json({ error });
-
-    // Create Student entry
-    await supabase
-      .from("student")
-      .insert([{ uid, name }]);
-
-    return res.json(data);
+  if (existing) {
+    return res.json({
+      status: "existing",
+      user: existing
+    });
   }
 
-  res.json(existing);
-});
+  // Create new user WITH ROLE
+  const { data: newUser, error } = await supabase
+    .from("auth")
+    .insert([
+      {
+        uid,
+        email,
+        name,
+        role: "STUDENT"   // ⭐ FIXED: Role added
+      }
+    ])
+    .select()
+    .single();
 
+  if (error) return res.status(500).json({ error });
+
+  // Also insert into student table
+  await supabase.from("student").insert([{ uid, name }]);
+console.log("SAVE-USER returning:", existing || newUser);
+
+  return res.json({
+    status: "created",
+    user: newUser
+  });
+});
 
 router.get("/user/:uid", async (req, res) => {
   const { uid } = req.params;
@@ -69,12 +74,10 @@ router.get("/user/:uid", async (req, res) => {
 
 
 router.post("/signup", async (req, res) => {
-  console.log(">>> /signup hit");
   const { username, password, mail } = req.body;
   const email = mail;
   const name = username;
 
-  // Check existing mail
   const { data: existing } = await supabase
     .from("auth")
     .select("*")
@@ -86,26 +89,30 @@ router.post("/signup", async (req, res) => {
   const hashed = await bcrypt.hash(password, 10);
   const uid = uuidv4();
 
-  // Create user
-  console.log(">>> creating user...");
-  const { data, error } = await supabase
+  // Insert new auth record
+  const { data: newUser, error } = await supabase
     .from("auth")
-    .insert([
-      { uid, name, password: hashed, email, role: "STUDENT" }
-    ])
+    .insert([{ uid, name, password: hashed, email, role: "STUDENT" }])
     .select()
     .single();
-  
-  console.log("INSERT RESULT:", { data, error });
+
   if (error) return res.status(500).json({ error });
 
-  // Create student row too
-  await supabase.from("student").insert([{ uid, name: username }]);
+  // Insert matching student row
+  await supabase.from("student").insert([{ uid, name }]);
 
-  // Set session
-  req.session.user = { uid, name, email };
+  // session login
+  req.session.user = {
+    uid,
+    name,
+    email,
+    // role: "STUDENT",
+  };
 
-  res.json({ status: "success", uid });
+  return res.json({
+    status: "success",
+    user: req.session.user
+  });
 });
 
 
@@ -126,13 +133,19 @@ router.post("/login", async (req, res) => {
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.json({ status: "error", message: "Wrong password" });
 
-  req.session.user = {
+  // Ensure correct keys here
+  const authUser = {
     uid: user.uid,
-    username: user.name,
-    email: user.email
+    username: user.name,         // not username
+    email: user.email,
   };
 
-  res.json({ status: "success", user: req.session.user });
+  req.session.user = authUser;
+
+  return res.json({
+    status: "success",
+    user: authUser
+  });
 });
 
 
@@ -167,9 +180,8 @@ router.post("/firebase-login", async (req, res) => {
 
   req.session.user = {
     uid: user.uid,
-    name: user.name,
+    username: user.name,
     email: user.email,
-    role: user.role
   };
 
   res.json({ status: "success", user: req.session.user });
