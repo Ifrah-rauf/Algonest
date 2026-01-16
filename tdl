@@ -8,3 +8,10 @@ Then show the student a kind of preplayed video or module, that processes the in
 
 when auto-unbooking, update the date to +7days
 dashboard type of pages can't be accessed if not logged-in through links.
+
+
+editable to teachers:
+-> course outlines -> availabilty 
+
+editable to students:
+-> their profile.

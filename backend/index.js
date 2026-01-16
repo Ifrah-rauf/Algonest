@@ -6,6 +6,7 @@ import session from "express-session";
 import authRoutes from "./routes/auth.js";
 import teacherRoutes from "./routes/teachers.js";
 import planRoutes from "./routes/plans.js";
+import dashRoutes from "./routes/dashboard.js";
 import bookingRoutes from "./routes/booking.js";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(cors({
 }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/dashboard", dashRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/booking", bookingRoutes);

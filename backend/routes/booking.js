@@ -391,17 +391,17 @@ router.post("/bookPlan", async (req, res) => {
       return res.status(500).json({ success: false, message: "Failed to book timeslot.", error: slotErr });
     }
 
-    console.log("⏳ Slot booked. Will auto-unbook in 1 hour.");
+    // console.log("⏳ Slot booked. Will auto-unbook in 1 hour.");
 
     // AUTO-UNBOOK AFTER 1 HOUR
-    setTimeout(async () => {
-      console.log("⏳ Auto unbooking slot:", slot.slot_id);
+    // setTimeout(async () => {
+    //   console.log("⏳ Auto unbooking slot:", slot.slot_id);
 
-      await supabase
-        .from("timeslot")  // FIXED
-        .update({ isbooked: false })
-        .eq("slot_id", slot.slot_id);
-    }, 60 * 60 * 1000);
+    //   await supabase
+    //     .from("timeslot")  // FIXED
+    //     .update({ isbooked: false })
+    //     .eq("slot_id", slot.slot_id);
+    // }, 60 * 60 * 1000);
 
     // ============================
     // 4) PAYMENT CHECK
@@ -526,6 +526,7 @@ router.post("/bookPlan", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server crash", error: err });
   }
 });
+
 
 
 
