@@ -1,0 +1,256 @@
+import "../styles/course1.css";
+import "../styles/course2.css";
+import Navbar from "../components/navbar";
+import { useNavigate } from "react-router-dom"; 
+import { useState } from "react";
+import BookPlan from "./BookPlan";
+import TechStackGrid from "../components/TechStackGrid";
+import FadeInSection from "../components/FadeInSection";
+import PricingSection from "../components/PricingSection";
+import AddOnCard from "../components/AddOnCard.jsx";
+import github from "../static/github.png";
+import certificate from "../static/certificate.png";
+import mentor from "../static/mentor.png";
+export default function Course1Page() {
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  async function book(planId){
+    alert(":planId: "+planId);
+    const uid = localStorage.getItem("uid");
+    alert("outer, uid: "+uid);
+    if(uid === "undefined"){
+      alert("inner, uid: "+uid);
+        navigate("/signup");
+        return;
+    }
+    else{
+    alert(":planId: "+planId);
+      setSelectedPlan(planId);
+    setShowModal(true);}
+  }
+
+  const addons = [
+    {
+      icon: certificate,
+      title: "Project Certificate & Deployment Showcase",
+      tagline: "Verified credential + Live project URL hosted by Algonest",
+      price: "₹2,000",
+    },
+    {
+      icon: github,
+      title: "Resume & GitHub Review",
+      tagline: "Get your resume and GitHub reviewed by an industry expert",
+      price: "₹1,000",
+    },
+    {
+      icon: mentor,
+      title: "Extended Mentor Support",
+      tagline: "Stay connected with your mentor for code & career advice",
+      price: "₹3,000",
+    },
+  ];
+const plans = [
+  {
+    name: "Starter",
+    description: "Get started with essential project guidance and planning.",
+    sessionPrice: "₹999",
+    pricePlan: "₹999",
+    month: "1 session",
+    features: [
+      "1 45 min Consultation Session",
+      "Project Roadmap",
+      "Mentor Match",
+    ],
+    buttonText: "Current Plan",
+  },
+  {
+    name: "Pro",
+    description: "Full mentorship and project guidance with accountability.",
+    sessionPrice: "₹750",
+    pricePlan: "₹15,000",
+    month: "1-2 months",
+    features: [
+      "20 Sessions",
+      "1:1 Mentor Guidance",
+      "Git & Deployment",
+      "Priority Support",
+    ],
+    buttonText: "Upgrade to Pro",
+    popular: true,
+  },
+  {
+    name: "Elite",
+    description: "Advanced mentorship for startups & research projects.",
+    sessionPrice: "₹760",
+    pricePlan: "₹30,400",
+    month: "2-4 months",
+    features: [
+      "40 Sessions",
+      "Code Reviews",
+      "End-to-End Deployment",
+      "Dedicated Mentor",
+    ],
+    buttonText: "Upgrade to Premium",
+    color: "yellow",
+  },
+];
+
+    const handleProjectClick = (projectId) => {
+        console.log("Selected Project:", projectId);
+    };
+
+  return (
+    <div>
+    <Navbar />
+    {/* <div className="course1-page"> */}
+    <FadeInSection>
+      <section className="course1-hero">
+        <h2>Build Projects</h2>
+        <h2 style={{fontStyle:"italic",color:"#8b61c2",fontSize:"28px"}}>Offering High Value per Learner</h2>
+        <p>
+          Turn your ideas into real projects with guided mentorship. From zero to deployed product - help at every step with best industry practice.
+        </p>
+        <button className="btn-outline">Book a Demo / Consultation</button>
+      </section>
+    </FadeInSection>
+      {/* About */}
+      <section className="course1-section1">
+        <h3>About the Course</h3>
+        <p>
+          This course involves multiple tech-stacks 
+          to cover different technologies and student interests.
+          You can choose your tech stack, confirm a demo, and 
+          start with your journey for resume worthy project.
+          Idea is yours and guidance is ours.
+        </p>
+      </section>
+
+      <section className="course1-section">
+        <div className="courseOutline">
+        <h3>Course Outline</h3>
+        <ul className="course1-ul">
+          <li className="course1-li">Learn practical skills, not just theory</li>
+          <li className="course1-li">Build projects for resume/portfolio</li>
+          <li className="course1-li">Master Git, Deployment, Web Apps, ML Projects, Android Apps</li>
+          <li className="course1-li">Mentorship + Accountability</li>
+        </ul>
+        <button>Discuss with a Mentor</button>
+        </div>
+<FadeInSection>
+    <section aria-labelledby="outline-title" style={{padding:"12px 0"}}>
+      {/* <h2 id="outline-title" style={{fontSize:"22px",marginBottom:"12px"}}> What you'll get</h2> */}
+      <div className="outline-wrapper">
+      <div className="cardc1">
+      <div className="pill">STRUCTURED LESSONS</div>
+      <div className="title">Step-by-step syllabus alignment</div>
+      <div className="desc">Core topics taught in a clear sequence, aligned to your board/college syllabus so every class builds on the last.</div>
+      </div>
+
+
+      <div className="cardc1 light">
+      <div className="inner">
+      <div className="pill accent">DAILY PRACTICE &amp; ASSESSMENTS</div>
+      <div className="title" style={{marginTop:"14px",color:"#8e5ce9"}}>Small exercises & quizzes</div>
+      <div className="desc" style={{color:"#444"}}>Short practice tasks and quick quizzes to reinforce daily learning and build confidence.</div>
+      </div>
+      </div>
+
+
+      <div className="cardc1 light">
+      <div className="inner">
+      <div className="pill accent">GET FEEDBACK &amp; TRACK PROGRESS</div>
+      <div className="title" style={{marginTop:"14px",color:"#8e5ce9"}}>Personalized mentor guidance</div>
+      <div className="desc" style={{color:"#444"}}>Mentor reviews, actionable suggestions and a clear progress view so students know what to improve next.</div>
+      </div>
+      </div>
+
+
+      <div className="cardc1">
+      <div className="pill">PERIODIC TESTS &amp; REVIEWS</div>
+      <div className="title">Measure understanding regularly</div>
+      <div className="desc">Timed tests and topic reviews help identify strengths and weak areas — so study plans can be adjusted.</div>
+      </div>
+
+      </div>
+    </section>
+    </FadeInSection>
+    </section>
+
+    <TechStackGrid onProjectClick={handleProjectClick} />
+    <PricingSection
+      title="Mentorship Pricing Plans"
+      subtitle="Choose a plan that helps you build projects from idea to deployment."
+      plans={plans}
+    />
+      {/* <section className="course2-packages">
+        <h3>Choose Your Plan</h3>
+        <div className="course2-package-grid">
+          <div className="course2-package-card">
+            <h4>Starter</h4>
+            <div className="school-package-grid">
+              
+            </div>
+            <p>Consultation and Planning</p><br/>
+            <p><center>
+              45 minutes duration<br/>
+              Tech Stack discussion<br/>
+              Roadmap and Plan finalisation<br/>
+              Doubts Clearance<br/>
+              </center></p>
+            <button className="btn-outline" onClick={() => book(1)}>Book Now</button>
+          </div>
+
+          <div className="course2-package-card package-outline">
+            <h4>Pro<span style={{fontStyle:"italic"}}> -Most popular</span></h4>
+            <p>20 Sessions Plan</p>
+             <p><center>
+              1-2 months<br/>
+              Covering framework fundamentals and architecture<br/>
+              Guidance and development<br/>
+              Deployment<br/>
+              </center></p>
+            <button className="btn-outline" onClick={() => book(3)}>Book Now</button>
+          </div>
+            <div className="course2-package-card ">
+            <h4>Elite</h4>
+            <p>40 Sessions Plan</p>
+             <p><center>
+              Extended mentorship for advanced Projects<br/>
+              2-4 months<br/>
+              Covering framework fundamentals and architecture<br/>
+              Guidance and development<br/>
+              Deployment<br/>
+              </center></p>
+            <button className="btn-outline" onClick={() => book(3)}>Book Now</button>
+          </div>
+        </div>
+      </section> */}
+    <section className="py-16 px-10 bg-[#2b2b2bff] m-10 rounded-3xl">
+      <h2 className="text-3xl font-bold text-white mb-10 text-center">
+        Optional Add-Ons
+      </h2>
+
+      <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-10 justify-items-center">
+        {addons.map((addon, index) => (
+          <AddOnCard key={index} {...addon} />
+        ))}
+      </div>
+    </section>
+
+      {/* Footer */}
+      <footer className="course1-footer">
+        <p>Still have questions?</p>
+        <button>Book a Demo / Consultation</button>
+      </footer>
+    {/* </div> */}
+    {showModal && (
+        <BookPlan
+          plan={selectedPlan}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  );
+}

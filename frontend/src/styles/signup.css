@@ -1,0 +1,109 @@
+/* Container with gradient background */
+.signup-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom right, #355C7D, #C56C86, #FF7582);
+}
+
+/* Card */
+.signup-card {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.signup-title {
+  color: #355C7D;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.signup-subtitle {
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+/* Inputs */
+.signup-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.8rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.signup-input:focus {
+  border-color: #FF7582;
+  box-shadow: 0 0 0 2px rgba(255,117,130,0.3);
+}
+
+/* Sign up button */
+.signup-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #725A7A;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.signup-btn:hover {
+  background-color: #355C7D;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+  gap: 0.5rem;
+}
+
+.divider span:first-child,
+.divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: #ccc;
+}
+
+.divider span:nth-child(2) {
+  color: #555;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Google button */
+.google-btn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 0.8rem;
+  background: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.google-btn img {
+  width: 24px;
+  height: 24px;
+}
+
+.google-btn:hover {
+  background: #f5f5f5;
+}

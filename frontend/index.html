@@ -1,0 +1,84 @@
+<body>
+    <div className="home">
+    <header className="navbar">
+        <div className="logo">
+            <Link to="/"><span className="logo-purple">algo</span>
+            <span className="logo-yellow">Nest</span></Link>
+        </div>
+        <nav>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            {username ? (
+            <Link to="/Dashboard" className="user-icon">
+                {/* <button href="/Dashboard"> */}
+                <img
+                src={user}
+                alt="User"
+                className="icon-img"
+                />
+                {/* </button> */}
+            </Link>
+            ) : (
+            <Link to="/signup">Sign Up</Link>
+        )}
+        </nav>
+        </header>
+      <section className="hero">
+        <pre className="code-snippet">for(int i = 0; i &lt; goals; i++) hustle();</pre> */}
+        <h1 className="hero-title typewriter">{username ? `print("Hello, Future Coder! ${username.split(" ")[0]}");` : 'print("Hello, Future Coder!");'}</h1>
+      </section>
+
+      <section className="highlight">
+        <p>
+          <strong>1:1 sessions</strong> — <span className="orange">Build Projects</span> |{" "}
+          <span className="orange">Score Top Marks</span> | <span className="orange">Get Hired</span>
+        </p>
+        <small>One-to-one sessions for your syllabus, college projects & placement DSA.</small>
+        <a href="#" className="btn-yellow">
+          Book a free demo
+        </a>
+      </section>
+
+      <section className="services">
+        <div className="card">
+          <div className="icon">📖</div>
+          <h3>School and college Syllabus help</h3>
+          <p>Step-by-step guidance for CBSE/ICSE, university curriculum, coding basics & block-to-code transitions.</p>
+          <Link to="/course1/" className="btn-outline">
+            Know more
+          </Link>
+        </div>
+        <div className="card">
+          <div className="icon">🛠</div>
+          <h3>Projects mentorship</h3>
+          <p>Project-based learning, idea to deployment: web apps, ML proofs, documentation and demo prep.</p>
+          <a href="#" className="btn-outline">
+            Explore projects
+          </a>
+        </div>
+        <div className="card">
+          <div className="icon">📂</div>
+          <h3>DSA & Interview Coaching</h3>
+          <p>Assistance in DSA journey, structured DSA roadmap, mock interviews, system-design basics and resume/project prep.</p>
+          <a href="#" className="btn-outline">
+            Start prep
+          </a>
+        </div>
+      </section>
+
+      <section className="placeholder">
+        <h2>About Section</h2>
+        <p>Content goes here...</p>
+      </section>
+
+      <section className="placeholder">
+        <h2>More Services</h2>
+        <p>Content goes here...</p>
+      </section>
+
+      <footer className="placeholder">
+        <h2>Footer</h2>
+        <p>Footer content here...</p>
+      </footer>
+    </div>
+</body>

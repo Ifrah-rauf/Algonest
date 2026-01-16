@@ -1,0 +1,14 @@
+COMMON BUTTON:
+<a
+    href="#1-book-demo"
+    className="bg-[#FFB800] hover:bg-[#ffcb3d] text-black font-semibold px-6 py-3 rounded-lg transition-all duration-300">
+    Book a Demo
+</a>
+
+COLORS:
+:root {
+  --algo-purple: #6b46c1; 
+  --nest-yellow: #f6c90e; 
+  --sidebar-bg: #ffffff;
+  --text-dark: #333;
+}
