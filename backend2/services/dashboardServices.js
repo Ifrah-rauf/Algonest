@@ -58,3 +58,45 @@ export async function getSessions(uid) {
 
   return sessions || [];
 }
+
+export async function getDashboardfunc(uid) {
+  console.log("UID received:", uid);
+
+  const { data: user, error: userErr } = await supabase
+    .from("auth")
+    .select("*")
+    .eq("uid", uid)
+    .single();
+
+  if (userErr || !user) {
+    throw new Error("User not found");
+  }
+
+  if (user.role === "TEACHER") {
+    const { data: teacher, error } = await supabase
+      .from("teacher")
+      .select("*")
+      .eq("uid", uid)
+      .single();
+
+    if (error) throw error;
+
+    return {
+      role: "TEACHER",
+      data: teacher,
+    };
+  } else {
+    const { data: student, error } = await supabase
+      .from("student")
+      .select("*")
+      .eq("uid", uid)
+      .single();
+
+    if (error) throw error;
+
+    return {
+      role: "STUDENT",
+      data: student,
+    };
+  }
+}

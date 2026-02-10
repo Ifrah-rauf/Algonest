@@ -4,7 +4,16 @@
   --sidebar-bg: #ffffff;
   --text-dark: #333;
 }
-
+:root {
+  --color-purple-primary: #8B5CF6;
+  --color-purple-dark: #6D28D9;
+  --color-purple-light: #A78BFA;
+  --color-yellow-accent: #FCD34D;
+  --color-yellow-light: #FEF3C7;
+  --color-grey-light: #F3F4F6;
+  --color-grey-medium: #9CA3AF;
+  --color-grey-dark: #4B5563;
+}
 .App {
   text-align: center;
 }

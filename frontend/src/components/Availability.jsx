@@ -193,30 +193,7 @@ export default function AvailabilityDisplay({ teacherId,meeting_link, avail = []
     });
     const bookdata = await res.json();
     console.log("data recieved in bookSession from bookPlan: "+bookdata);
-
-    if (bookdata.paymentRequired) {
-      Swal.fire({
-        icon: "info",
-        title: "Payment Required",
-        html: `
-          <p style="font-size:14px; color:gray;">
-            This session is paid. Amount: 
-            <strong>₹${bookdata.amount}</strong>
-          </p>
-          <p style="font-size:13px; margin-top:5px;">
-            To confirm your booking, payment details will be sent to your registered email.
-          </p>
-        `,
-        confirmButtonText: "Okay",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-      });
-      return; // stop — do NOT book the session
-    }
-    if (bookdata.message==="Session Booked Successfully"){
+        if (bookdata.message==="Session Booked Successfully"){
       return Swal.fire({
         icon: "success",
         title: "Session confirmed!",
@@ -252,6 +229,55 @@ export default function AvailabilityDisplay({ teacherId,meeting_link, avail = []
       }
       window.location.reload();
       });
+    }
+    if (!bookdata.success && bookdata.message === "No remaining sessions") {
+      Swal.fire({
+        icon: "warning",
+        title: "You don't have a valid plan",
+        text: "You don't have any valid plan, please renew or purchase a plan.",
+              confirmButtonColor: "#f6c90e",
+        didOpen: () => {
+          const btn = Swal.getConfirmButton();
+          btn.style.color = "#202020ff"; // TEXT COLOR
+        }
+        });
+      return;
+    }
+    else if (!bookdata.success && bookdata.message === "not unique") {
+      Swal.fire({
+        icon: "warning",
+        title: "Already booked session at this slot",
+        text: "You already booked session at this timeslot, choose another timeslot to book another session.",
+              confirmButtonColor: "#f6c90e",
+        didOpen: () => {
+          const btn = Swal.getConfirmButton();
+          btn.style.color = "#202020ff"; // TEXT COLOR
+        }
+        });
+      return;
+    }
+    
+    if (bookdata.paymentRequired) {
+      Swal.fire({
+        icon: "info",
+        title: "Payment Required",
+        html: `
+          <p style="font-size:14px; color:gray;">
+            This session is paid. Amount: 
+            <strong>₹${bookdata.amount}</strong>
+          </p>
+          <p style="font-size:13px; margin-top:5px;">
+            To confirm your booking, payment details will be sent to your registered email.
+          </p>
+        `,
+        confirmButtonText: "Okay",
+              confirmButtonColor: "#f6c90e",
+        didOpen: () => {
+          const btn = Swal.getConfirmButton();
+          btn.style.color = "#202020ff"; // TEXT COLOR
+        }
+      });
+      return; // stop — do NOT book the session
     }
   } 
     catch (err) {

@@ -13,9 +13,11 @@ const Navbar = () => {
     const [selectedPlan, setSelectedPlan] = useState(null);
     async function book(planId) {
       if (!user) {
+        // alert("No user found, redirecting...");
         navigate("/signup");
         return;
         }
+      // alert("Selected Plan: " + planId);
       
       setSelectedPlan(planId);
       setShowModal(true);
@@ -23,7 +25,6 @@ const Navbar = () => {
   return (
     <nav className="w-full bg-white border-b border-gray-100 relative z-50">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-
             <Link to="/" className="text-xl font-semibold text-[#333333]">AlgoNest
             </Link>
             <div className="flex items-center gap-8">
@@ -38,22 +39,15 @@ const Navbar = () => {
                   onClose={() => setShowModal(false)}
                 />
                 )}
-
               <a
-                href="/#howitworks"
+                href="#howitworks"
                 className="text-sm text-gray-600 hover:text-[#333333]"
               >
-                How it works
-              </a>
-              <a
-                href="/#roadmaps"
-                className="text-sm text-gray-600 hover:text-[#333333]"
-              >
-                Roadmaps
+                how it works
               </a>
 
               <Link to="/teachers" className="text-sm text-gray-600 hover:text-[#333333]">Teachers</Link>
-              
+              <Link to="#startaplan" className="text-sm text-gray-600 hover:text-[#333333]">Start a plan</Link>
               {user?.username ? (
               <Link to="/dashboard" className="user-icon text-white py-2.5 rounded-md text-sm font-medium">
                 <img src={userimg} alt="User" className="icon-img" />
@@ -64,7 +58,6 @@ const Navbar = () => {
             </div>
           </div>
         </nav>
-    
   );
 };
 

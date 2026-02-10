@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import AlgoNest from "../static/AlgoNest.png";
 import AlgoPlane from "../static/AlgoPlane.png";
 import AlgoNest2 from "../static/AlgoNest2.PNG";
 import page from "../static/page.jpg";
@@ -16,9 +15,95 @@ import { useAuth } from "../context/AuthContext.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom"; 
 import Navbar from "../components/navbar";
-
+import { CheckCircle2 } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 import { ClipboardList, Users, TrendingUp } from "lucide-react";
-/* ================= NAVBAR ================= */
+import HowItWorksScroll from "../components/howitworks.jsx";
+import { Monitor, Smartphone, Brain, Database, Cloud, Palette, Code2, Rocket, ArrowRight } from "lucide-react";
+import RoadmapsSection from "../components/roadmaps.jsx";
+
+const technologyDomains = [
+  {
+    title: "Web Development",
+    link: "#web-development"
+  },
+  {
+    title: "Mobile Development",
+    link: "#mobile-development"
+  },
+  {
+    title: "AI & Machine Learning",
+    link: "#ai-ml"
+  },
+  {
+    title: "Data Science",
+    link: "#data-science"
+  },
+  {
+    title: "Cloud & DevOps",
+    link: "#cloud-devops"
+  },
+  {
+    title: "Backend Development",
+    link: "#backend"
+  },
+  {
+    title: "Frontend Development",
+    link: "#frontend"
+  },
+  {
+    title: "Database Management",
+    link: "#database"
+  },
+  {
+    title: "Cybersecurity",
+    link: "#cybersecurity"
+  },
+  {
+    title: "Blockchain",
+    link: "#blockchain"
+  }
+];
+
+const applicationDomains = [
+  {
+    title: "System Software",
+    link: "#fintech"
+  },
+  {
+    title: "Embedded Systems",
+    link: "#healthtech"
+  },
+  {
+    title: "E-Commerce",
+    link: "#ecommerce"
+  },
+  {
+    title: "Business Solutions",
+    link: "#edtech"
+  },
+  {
+    title: "Social Media",
+    link: "#social-media"
+  },
+  {
+    title: "SaaS Products",
+    link: "#saas"
+  },
+  {
+    title: "Gaming",
+    link: "#gaming"
+  },
+  {
+    title: "IoT & Smart Devices",
+    link: "#iot"
+  },
+  {
+    title: "Dev Tools and Utlities",
+    link: "#proptech"
+  },
+];
+
 const containerVariants = {
   hidden: {},
   show: {
@@ -46,6 +131,7 @@ const itemVariants = {
 /* ================= PAGE ================= */
 
 export default function Landing() {
+  const [activeStep, setActiveStep] = useState(0);
   return (
     <>
       <Navbar />
@@ -66,17 +152,18 @@ export default function Landing() {
   <div className="relative max-w-7xl mx-auto grid gap-24 items-center justify-center text-center">
     <div>
       <h1 className="text-5xl md:text-6xl font-bold mt-16">
-        Finish what you start.
+        Build Real Projects.<br/>
+        Become <span className="text-[#f6c90e]">Job Ready</span>.
       </h1>
 
-      <p className="mt-6 text-lg text-gray-900">
-        Structured 1-to-1 mentorship for strategic, planned learning —
-        built for completion.
+      <p className="mt-6 text-lg text-gray-600">
+        Master tech through structured roadmaps and 1:1 mentorship. <br/>
+        From web development to AI, build your portfolio with hands-on projects that matter.
       </p>
 
-      <p className="text-lg text-gray-600">
+      {/* <p className="text-lg text-gray-600">
         Projects | School & College Syllabus | Placements
-      </p>
+      </p> */}
 
       <div className="mt-10 flex gap-6 justify-center">
         <Link
@@ -180,12 +267,12 @@ export default function Landing() {
 
 
         {/* ======================================================
-            SECTION 3 — WHY STUDENTS QUIT
+            SECTION 3 — Mentorship isn’t broken
         ====================================================== */}
         <section className="max-w-6xl mx-auto px-6 py-24">
-  <div className="grid md:grid-cols-2 gap-10 items-start">
+  <div className="grid md:grid-cols-1 gap-12 items-center text-center">
 
-    {/* LEFT CONTENT */}
+    {/* CENTER CONTENT */}
     <div>
       {/* Main heading */}
       <h2 className="text-4xl font-bold leading-tight mb-6">
@@ -199,16 +286,11 @@ export default function Landing() {
         Let’s be honest.
       </p>
 
-      <p className="text-gray-700 mb-4 max-w-xl">
+      <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
         Random mentor selection, inconsistent teaching styles, and
         zero continuity make most learning systems fail — even when
         mentors are good.
       </p>
-
-      {/* <p className="text-gray-700 mb-8 max-w-xl">
-        Students keep restarting. Mentors repeat themselves.
-        Progress disappears between sessions.
-      </p> */}
 
       {/* Strong close */}
       <p className="text-2xl font-semibold leading-snug">
@@ -218,371 +300,142 @@ export default function Landing() {
       </p>
     </div>
 
-    {/* RIGHT FLOATING PROBLEMS */}
-    <div className="relative">
+    {/* HORIZONTAL PROBLEM BOXES */}
+    <div className="flex flex-wrap justify-center gap-4 mt-6">
 
-      <div className="flex flex-col gap-4 items-center">
+      {[
+        "No fixed roadmap or milestones",
+        "Getting stuck without guidance",
+        "Waiting weeks to recover lost momentum",
+        "Dropping off midway in frustration",
+      ].map((text, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white shadow-lg"
+        >
+          {/* Cross icon */}
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600 text-sm font-extrabold">
+            ✕
+          </span>
 
-        {[
-          "No fixed roadmap or milestones",
-          "Getting stuck without guidance",
-          "Waiting weeks to recover lost momentum",
-          "Dropping off midway in frustration",
-        ].map((text, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 text-s text-gray-700 bg-white shadow-lg
-              ${i === 1 ? "ml-10" : ""}
-              ${i === 3 ? "ml-20" : ""}
-            `}
-          >
-            {/* Cross icon */}
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600 text-s font-extrabold">
-              ✕
-            </span>
-
-            {/* Text */}
-            <span>{text}</span>
-          </div>
-        ))}
-
-      </div>
+          {/* Text */}
+          <span className="whitespace-nowrap">{text}</span>
+        </div>
+      ))}
 
     </div>
+
+  </div>
+</section>
+
+
+        {/* ======================================================
+            SECTION 4 — Explore domains
+        ====================================================== */}
+<div id="roadmaps">
+<RoadmapsSection/>
+
+</div>
+        {/* ======================================================
+            SECTION 4 — Stop choosing random mentors.
+        ====================================================== */}
+
+<section className="max-w-6xl mx-auto px-6 py-20">
+
+  {/* HEADING — CENTERED */}
+  <div className="text-center max-w-2xl mx-auto mb-16">
+    <h2 className="text-4xl font-semibold leading-tight mb-4">
+      Stop choosing random mentors.
+      <br />
+      Choose the right system.
+    </h2>
+
+    <p className="text-gray-600">
+      Completion doesn’t happen by chance.
+      It needs structure, flexibility, and visibility.
+    </p>
+  </div>
+
+  {/* STICKY NOTES GRID */}
+  <div className="grid md:grid-cols-3 gap-8 justify-items-center">
+
+    {/* NOTE 1 */}
+    <div className="relative bg-white p-6 w-full max-w-sm rounded-xl
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[-2deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-purple-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">1:1 Mentorship</h3>
+      <p className="text-sm text-gray-700">
+        Get personalized guidance from industry experts who help you navigate challenges and accelerate your learning."
+      </p>
+    </div>
+
+    {/* NOTE 2 */}
+    <div className="relative bg-[#fafafa] p-6 w-full max-w-sm rounded-xl
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[1.5deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-yellow-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">Real-World Projects</h3>
+      <p className="text-sm text-gray-700">
+        Build production-ready applications that solve actual problems, not just tutorial projects."
+      </p>
+    </div>
+
+    {/* NOTE 3 */}
+    <div className="relative bg-white p-6 w-full max-w-sm rounded-xl
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[-1deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-purple-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">Structured Roadmaps</h3>
+      <p className="text-sm text-gray-700">
+        Follow proven learning paths designed to take you from beginner to job-ready developer.
+      </p>
+    </div>
+
+    {/* NOTE 4 */}
+    <div className="relative bg-[#fdfdfd] p-6 w-full max-w-sm rounded-xl    
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[2deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-yellow-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">Portfolio Building</h3>
+      <p className="text-sm text-gray-700">
+        Create an impressive portfolio that showcases your skills to potential employers.
+      </p>
+    </div>
+
+    {/* NOTE 5 */}
+    <div className="relative bg-white p-6 w-full max-w-sm rounded-xl
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[-1.5deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-purple-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">Career Support</h3>
+      <p className="text-sm text-gray-700">
+        Resume reviews, interview prep, and job placement assistance to help you land your dream role."
+      </p>
+    </div>
+
+    {/* NOTE 6 */}
+    <div className="relative bg-[#fafafa] p-6 w-full max-w-sm rounded-xl
+      shadow-[4px_4px_0px_rgba(0,0,0,0.25)] rotate-[1deg]">
+      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-yellow-400 rounded-full" />
+      <h3 className="font-medium text-lg mb-2">Hands-On Experience</h3>
+      <p className="text-sm text-gray-700">
+        Learn by doing with practical coding challenges and real development workflows.
+      </p>
+    </div>
+
   </div>
 </section>
 
 
 
         {/* ======================================================
-            SECTION 4 — SYSTEM
+            SECTION 4 —how it works
         ====================================================== */}
-        <section className="max-w-7xl mx-auto px-6 py-24 bg-white rounded-xl border-2 border-[#333]" id="startaplan">
 
-  {/* Section Heading */}
-  {/* <section className="bg-gray-800"> */}
-  <div className="text-center mb-14">
-    <h2 className="text-4xl font-semibold mb-3 text-gray-800">
-      One system. Three focused modules.
-    </h2>
-    <p className="text-gray-500 text-xl mb-20">
-      Each designed to help you finish — not just start.
-    </p>
-  </div>
-
-  {/* Cards */}
-  <div className="grid md:grid-cols-3 gap-8">
-
-    {/* CARD 1 */}
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-lg">
-      {/* Illustration */}
-      <div className="h-24 mb-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm shadow-lg">
-        <img 
-        className="h-[200%] w-[60%]"
-        src={tdl}/>
-      </div>
-
-      <h3 className="font-medium mb-1 mt-10 text-[#333333] text-xl">
-        Project Development
-      </h3>
-
-      <p className="text-sm text-gray-600 mb-4">
-        Build and complete real-world projects with a fixed roadmap.
-      </p>
-
-      <div className="flex gap-2 mb-5">
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Roadmap
-        </span>
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Completion
-        </span>
-      </div>
-      <Link
-          to="/course2"
-          className="bg-[#6b46c1] text-white px-8 py-3 rounded-md font-medium"
-        >
-          Know more
-        </Link>
-    </div>
-
-    {/* CARD 2 */}
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-lg">
-      <div className="h-24 mb-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm shadow-lg">
-        <img src={oclass}
-        className="h-[200%] w-[60%]"/>
-
-      </div>
-
-      <h3 className="font-medium mb-1 mt-10 text-[#333333] text-xl">
-        School & College Help
-      </h3>
-
-      <p className="text-sm text-gray-600 mb-4">
-        Structured academic support aligned with your syllabus.
-      </p>
-
-      <div className="flex gap-2 mb-5">
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Exam-focused
-        </span>
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Weekly plan
-        </span>
-      </div>
-      <Link
-          to="/course1"
-          className="bg-[#6b46c1] text-white px-8 py-3 rounded-md font-medium"
-        >
-          know more
-        </Link>
-    </div>
-
-    {/* CARD 3 */}
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-lg">
-      <div className="h-24 mb-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm shadow-lg">
-        <img src={book}
-        className="h-[200%] w-[60%]"/>
-      </div>
-
-      <h3 className="font-medium mb-1 mt-10 text-[#333333] text-xl">
-        Placement Preparation
-      </h3>
-
-      <p className="text-sm text-gray-600 mb-4">
-        DSA tracker, platform practice, Interview-ready preparation with consistency.
-      </p>
-
-      <div className="flex gap-2 mb-5">
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Mock interviews
-        </span>
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-          Feedback
-        </span>
-      </div>
-      <Link
-          to="/course3"
-          className="bg-[#6b46c1] text-white px-8 py-3 rounded-md font-medium"
-        >
-          Know more
-        </Link>
-    </div>
-
-  </div>
-{/* </section> */}
-</section>
+<div id="howitworks">
+<HowItWorksScroll/>
+</div>
 
 
-<section className="max-w-6xl mx-auto px-6 py-32">
-
-  <div className="grid md:grid-cols-[1fr_2fr] gap-20 items-center">
-
-    {/* LEFT: HEADING */}
-    <div>
-      <h2 className="text-4xl font-semibold leading-tight mb-4 w-[300px]">
-        Stop choosing random mentors.
-        <br />
-        Choose the right system.
-      </h2>
-
-      <p className="text-gray-600 max-w-sm">
-        Completion doesn’t happen by chance.
-        It needs structure, flexibility, and visibility.
-      </p>
-    </div>
-
-    {/* RIGHT: ASYMMETRIC STICKY NOTES */}
-    <div className="grid grid-cols-2 gap-6">
-
-      {/* Sticky Note 1 */}
-      <div className="relative bg-[#fff9c4] p-6 shadow-[0_12px_24px_rgba(0,0,0,0.12)] rotate-[-2deg]">
-        {/* Pin */}
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-400 rounded-full" />
-
-        <h3 className="font-medium mb-2 flex items-center gap-2 text-xl">
-          <ClipboardList size={24} strokeWidth={1.75} className="text-[#6b46c1]" />
-          Fixed Curriculum
-        </h3>
-        <p className="text-sm text-gray-700">
-          Session-wise roadmap with defined milestones and outcomes.
-        </p>
-      </div>
-
-      {/* Sticky Note 2 */}
-      <div className="relative bg-[#e3f2fd] p-6 shadow-[0_12px_24px_rgba(0,0,0,0.12)] rotate-[1.5deg]">
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full" />
-
-        <h3 className="font-medium mb-2 flex items-center gap-2 text-xl">
-            <Users size={28} strokeWidth={1.75} className="text-[#6b46c1]" />
-          Flexible Mentors
-        </h3>
-        <p className="text-sm text-gray-700 ">
-          Switch mentors without breaking continuity or progress.
-        </p>
-      </div>
-
-      {/* Sticky Note 3 — Large */}
-      <div className="relative col-span-2 bg-[#e8f5e9] p-8 shadow-[0_18px_36px_rgba(0,0,0,0.14)] rotate-[-1deg]">
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-green-400 rounded-full" />
-
-        <h3 className="font-medium mb-3 flex items-center gap-2 text-xl">
-            <TrendingUp size={28} strokeWidth={1.75} className="text-[#6b46c1]" />
-          Trackable Progress
-        </h3>
-        <p className="text-sm text-gray-700 max-w-md" id="howitworks">
-          Every session counts. Progress is visible, measurable,
-          and tied directly to completion — not vague learning.
-        </p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<section className="relative mx-auto px-6 py-16 bg-[#333] overflow-hidden" >
-
-  {/* ================= TOP WAVE ================= */}
-  <svg
-    className="absolute top-[-1px] left-0 w-full rotate-180"
-    viewBox="0 0 1440 40"
-    preserveAspectRatio="none"
-  >
-    <path
-      fill="#ffffff"
-      d="
-        M0,20
-        C24,36 72,36 96,20
-        C120,4 168,4 192,20
-        C216,36 264,36 288,20
-        C312,4 360,4 384,20
-        C408,36 456,36 480,20
-        C504,4 552,4 576,20
-        C600,36 648,36 672,20
-        C696,4 744,4 768,20
-        C792,36 840,36 864,20
-        C888,4 936,4 960,20
-        C984,36 1032,36 1056,20
-        C1080,4 1128,4 1152,20
-        C1176,36 1224,36 1248,20
-        C1272,4 1320,4 1344,20
-        C1368,36 1416,36 1440,20
-        L1440,40 L0,40 Z
-      "
-    />
-  </svg>
-
-  {/* ================= CONTENT ================= */}
-  <h2 className="text-6xl font-semibold text-center mt-4 text-gray-200 relative z-10">
-    How it works
-  </h2>
-
-  <div className="relative flex justify-between items-start z-10">
-
-    {/* Sticky 1 */}
-    <div className="relative bg-white border-2 border-dashed border-gray-400 p-6 w-[30%] shadow-[0_12px_28px_rgba(0,0,0,0.12)] rotate-[-2deg]">
-      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#6b46c1] rounded-full" />
-      <h3 className="font-medium mb-2 text-gray-800 text-2xl">
-        1. Consult with us
-      </h3>
-      <p className="text-sm text-gray-700">
-        Tell us what you want to finish — project, syllabus, or placement.
-      </p>
-    </div>
-
-    {/* Connector */}
-    <svg
-      className="absolute left-[30%] top-20"
-      width="180"
-      height="120"
-      viewBox="0 0 180 120"
-      fill="none"
-    >
-      <path
-        d="M0 20 C60 0, 120 120, 180 100"
-        stroke="#999"
-        strokeWidth="2"
-        strokeDasharray="6 6"
-      />
-    </svg>
-
-    {/* Sticky 2 */}
-    <div className="relative bg-white border-2 border-dashed border-gray-400 p-6 w-[30%] shadow-[0_12px_28px_rgba(0,0,0,0.12)] rotate-[1.5deg] mt-16">
-      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#6b46c1] rounded-full" />
-      <h3 className="font-medium mb-2 text-2xl">
-        2. Follow a fixed plan
-      </h3>
-      <p className="text-sm text-gray-700">
-        A session-wise roadmap with milestones keeps you on track.
-      </p>
-    </div>
-
-    {/* Connector */}
-    <svg
-      className="absolute right-[30%] top-32"
-      width="180"
-      height="120"
-      viewBox="0 0 180 120"
-      fill="none"
-    >
-      <path
-        d="M0 100 C60 120, 120 0, 180 20"
-        stroke="#999"
-        strokeWidth="2"
-        strokeDasharray="6 6"
-      />
-    </svg>
-
-    {/* Sticky 3 */}
-    <div className="relative bg-white border-2 border-dashed border-gray-400 p-6 w-[30%] shadow-[0_14px_32px_rgba(0,0,0,0.14)] rotate-[-1deg] mt-32">
-      <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#6b46c1] rounded-full" />
-      <h3 className="font-medium mb-2 text-2xl">
-        3. Book & execute sessions
-      </h3>
-      <p className="text-sm text-gray-700">
-        Choose mentors per session and move forward with accountability.
-      </p>
-    </div>
-
-    {/* Airplane placeholder */}
-    <div className="absolute left-1/2 top-[110px] -translate-x-1/2 text-gray-400 text-sm">
-      ✈︎
-    </div>
-  </div>
-
-  {/* ================= BOTTOM WAVE ================= */}
-  <svg
-    className="absolute bottom-[-1px] left-0 w-full"
-    viewBox="0 0 1440 40"
-    preserveAspectRatio="none"
-  >
-    <path
-      fill="#ffffff"
-      d="
-        M0,20
-        C24,36 72,36 96,20
-        C120,4 168,4 192,20
-        C216,36 264,36 288,20
-        C312,4 360,4 384,20
-        C408,36 456,36 480,20
-        C504,4 552,4 576,20
-        C600,36 648,36 672,20
-        C696,4 744,4 768,20
-        C792,36 840,36 864,20
-        C888,4 936,4 960,20
-        C984,36 1032,36 1056,20
-        C1080,4 1128,4 1152,20
-        C1176,36 1224,36 1248,20
-        C1272,4 1320,4 1344,20
-        C1368,36 1416,36 1440,20
-        L1440,40 L0,40 Z
-      "
-    />
-  </svg>
-
-</section>
-
-
+        {/* ======================================================
+            SECTION 4 — mentors
+        ====================================================== */}
 <section className="max-w-6xl mx-auto px-6 py-28 flex items-center justify-center">
   <h2 className="text-5xl font-semibold mb-16 py-4 mr-8">
     Mentors at every stage
@@ -659,6 +512,10 @@ export default function Landing() {
   <div className="h-20" />
 </section>
 
+
+        {/* ======================================================
+            SECTION 4 — outro
+        ====================================================== */}
 <section
   className="relative mx-auto px-6 py-20 overflow-hidden"
   style={{ backgroundColor: "var(--algo-purple)" }}

@@ -3,8 +3,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { X } from "lucide-react";
 import Modal from "./Modal";
-import "../styles/common.css";
-import "../styles/BookPlan.css";
 import booking from "../static/booking.PNG";
 
 export default function BookPlan({ plan, onClose }) {

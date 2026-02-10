@@ -1,4 +1,4 @@
-import { getActiveCourse, getSessions } from "../services/dashboardServices.js";
+import { getActiveCourse, getSessions, getDashboardfunc } from "../services/dashboardServices.js";
 
 export async function activeCourse(req, res) {
   try {
@@ -21,3 +21,24 @@ export async function sessions(req, res) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
+
+export async function getDashboard(req, res) {
+  try {
+    const { uid } = req.params;
+    const dashboardData = await getDashboardfunc(uid);
+    console.log("ROLE "+ dashboardData.role+ " AND DAT FROM CONtroller "+ dashboardData.data);
+    res.json({
+      success: true,
+      message: dashboardData.role,
+      data: dashboardData.data,
+    });
+  } catch (err) {
+    console.error("❌ dashboard error:", err.message);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+}
+
+
