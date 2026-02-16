@@ -8,7 +8,7 @@ dotenv.config();
    1) CREATE BOOKING
    - Sends a confirmation email when a booking is created
 ============================================================ */
-export async function createBooking(booking) {
+export async function createBookingService(booking) {
   const senderMail = process.env.SENDER_MAIL;
 
   // Send confirmation email
@@ -35,7 +35,7 @@ export async function createBooking(booking) {
    2) BOOKING MAIL
    - Fetches student, teacher, slot info and sends session email
 ============================================================ */
-export async function bookingMail({ studentId, slot, meeting_link }) {
+export async function bookingMailService({ studentId, slot, meeting_link }) {
   const senderMail = "ifrahraufddps@gmail.com";
 
   // Fetch student
@@ -87,7 +87,7 @@ export async function bookingMail({ studentId, slot, meeting_link }) {
    3) GET PLAN
    - Checks if student has a valid plan with the teacher
 ============================================================ */
-export async function getPlan({ userId, teacherId, slot }) {
+export async function getPlanService({ userId, teacherId, slot }) {
   // Verify role
   const { data: roleData } = await supabase.from("auth").select("*").eq("uid", userId).maybeSingle();
   if (roleData.role !== "STUDENT") return { success: false, message: "You need a student plan." };
@@ -117,7 +117,7 @@ export async function getPlan({ userId, teacherId, slot }) {
    4) GET TIME SLOTS
    - Fetches available slots for a teacher
 ============================================================ */
-export async function getTimeSlots(reqdata) {
+export async function getTimeSlotsService(reqdata) {
   const { teachers_id }=reqdata;
   const { data: availSlots } = await supabase
     .from("timeslot")
@@ -131,45 +131,185 @@ export async function getTimeSlots(reqdata) {
    5) BOOK PLAN
    - Deducts session, books slot, creates session record
 ============================================================ */
-export async function bookPlan({ studentId, slot, meeting_link }) {
-  // Fetch booking
-  const { data: bookingData } = await supabase.from("booking").select("*").eq("s_id", studentId).maybeSingle();
-  if (!bookingData) return { success: false, message: "User has no active plan." };
 
-  // Check expiry & remaining sessions
-  if (new Date(bookingData.expiry_date) < new Date()) return { success: false, message: "Your plan has expired." };
-  if (bookingData.remainingsessions <= 0) return { success: false, message: "No remaining sessions." };
+
+/* ============================================================
+   CORE BOOK PLAN (NO SESSION CREATION HERE)
+============================================================ */
+export async function bookPlanCore({ studentId, slot }) {
+
+  const { data: bookingData } = await supabase
+    .from("booking")
+    .select("*")
+    .eq("s_id", studentId)
+    .maybeSingle();
+
+  if (!bookingData)
+    return { success: false, message: "User has no active plan." };
+
+  if (new Date(bookingData.expiry_date) < new Date())
+    return { success: false, message: "Your plan has expired." };
+
+  if (bookingData.remainingsessions <= 0)
+    return { success: false, message: "No remaining sessions." };
+
+  // Mark slot booked first (you said validation already done)
+  await supabase
+    .from("timeslot")
+    .update({ isbooked: true })
+    .eq("slot_id", slot.slot_id);
 
   // Deduct session
-  await supabase.from("booking").update({ remainingsessions: bookingData.remainingsessions - 1 }).eq("booking_id", bookingData.booking_id);
-
-  // Mark slot booked
-  await supabase.from("timeslot").update({ isbooked: true }).eq("slot_id", slot.slot_id);
+  await supabase
+    .from("booking")
+    .update({ remainingsessions: bookingData.remainingsessions - 1 })
+    .eq("booking_id", bookingData.booking_id);
 
   // Fetch availability
-  const { data: availability } = await supabase.from("availability").select("*").eq("a_id", slot.availabilityid).maybeSingle();
+  const { data: availability } = await supabase
+    .from("availability")
+    .select("*")
+    .eq("a_id", slot.availabilityid)
+    .maybeSingle();
+
   if (!availability.isfree && availability.type === "session") {
-    return { success: false, paymentRequired: true, amount: availability.price || 0, message: "Payment required." };
+    return {
+      success: false,
+      paymentRequired: true,
+      amount: availability.price || 0,
+      message: "Payment required."
+    };
   }
 
-  // Create slot booking
-  await supabase.from("slotbooking").insert([{ slotid: slot.slot_id, studentid: studentId, bookingid: bookingData.booking_id, requirespayment: !availability.isfree, createdat: new Date() }]);
+  // Create slotbooking
+  const { data: slotBookingData }=
+    await supabase.from("slotbooking").insert([{
+    slotid: slot.slot_id,
+    studentid: studentId,
+    bookingid: bookingData.booking_id,
+    requirespayment: !availability.isfree,
+    createdat: new Date()
+  }])
+  .select()
+  .single();
+  console.log("slot_booking created. ");
+  // Fetch outline
+  const { data: outline } = await supabase
+    .from("plan_outline")
+    .select("*")
+    .eq("s_id", studentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  // Fetch latest outline
-  const { data: outline } = await supabase.from("plan_outline").select("*").eq("s_id", studentId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (!outline) return { success: false, message: "No outline found for student." };
+  if (!outline)
+    return { success: false, message: "No outline found for student." };
 
-  // Create session
-  await supabase.from("session").insert([{
+  // const startat=slotData.startat;
+  return {
+    success: true,
     outline_id: outline.outline_id,
-    s_id: studentId,
-    t_id: slot.teacherid,
-    session_link: meeting_link,
-    start_time: slot.startat,
-    end_time: slot.endat,
-    duration: slot.durationmin,
-    feedback: null
-  }]);
-
-  return { success: true, message: "Session Booked Successfully", time: slot.startat };
+    booking_id: bookingData.booking_id,
+    sb_id: slotBookingData.sb_id,
+  };
 }
+
+
+/* ============================================================
+   FINAL SESSION CREATION (ONLY INSERT SESSION)
+============================================================ */
+export async function createSessionRecord({
+  studentId,
+  slot,
+  meeting,
+  sb_id
+}) {
+
+  const { data, error } = await supabase
+    .from("session")
+    .insert([{
+      s_id: studentId,
+      t_id: slot.teacherid,
+      zoom_meeting_id: meeting.id,
+      start_time: slot.startat,
+      end_time: slot.endat,
+      duration: slot.durationmin,
+      feedback: null,
+      status: "VALID",
+      title: "AlgoNest Session",
+      join_url: meeting.join_url,
+      start_url: meeting.start_url,
+      session_link: meeting.join_url,
+      sb_id: sb_id
+    }])
+    .select();
+
+  if (error) {
+    console.error("Session Insert Error:", error);
+    throw error;
+  }
+
+  console.log("Session created:", data);
+
+  return {
+    success: true,
+    message: "Session Booked Successfully",
+    time: slot.startat
+  };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// export async function bookPlan({ studentId, slot, meeting_link }) {
+//   // Fetch booking
+//   const { data: bookingData } = await supabase.from("booking").select("*").eq("s_id", studentId).maybeSingle();
+//   if (!bookingData) return { success: false, message: "User has no active plan." };
+
+//   // Check expiry & remaining sessions
+//   if (new Date(bookingData.expiry_date) < new Date()) return { success: false, message: "Your plan has expired." };
+//   if (bookingData.remainingsessions <= 0) return { success: false, message: "No remaining sessions." };
+
+//   // Deduct session
+//   await supabase.from("booking").update({ remainingsessions: bookingData.remainingsessions - 1 }).eq("booking_id", bookingData.booking_id);
+
+//   // Mark slot booked
+//   await supabase.from("timeslot").update({ isbooked: true }).eq("slot_id", slot.slot_id);
+
+//   // Fetch availability
+//   const { data: availability } = await supabase.from("availability").select("*").eq("a_id", slot.availabilityid).maybeSingle();
+//   if (!availability.isfree && availability.type === "session") {
+//     return { success: false, paymentRequired: true, amount: availability.price || 0, message: "Payment required." };
+//   }
+
+//   // Create slot booking
+//   await supabase.from("slotbooking").insert([{ slotid: slot.slot_id, studentid: studentId, bookingid: bookingData.booking_id, requirespayment: !availability.isfree, createdat: new Date() }]);
+
+//   // Fetch latest outline
+//   const { data: outline } = await supabase.from("plan_outline").select("*").eq("s_id", studentId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+//   if (!outline) return { success: false, message: "No outline found for student." };
+
+//   // Create session
+//   await supabase.from("session").insert([{
+//     outline_id: outline.outline_id,
+//     s_id: studentId,
+//     t_id: slot.teacherid,
+//     session_link: meeting_link,
+//     start_time: slot.startat,
+//     end_time: slot.endat,
+//     duration: slot.durationmin,
+//     feedback: null
+//   }]);
+
+//   return { success: true, message: "Session Booked Successfully", time: slot.startat };
+// }

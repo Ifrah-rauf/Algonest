@@ -8,7 +8,8 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import planRoutes from "./routes/planRoutes.js";
 import dashboardRoutes from "./routes/dashboardroutes.js";
 import bookingRoutes from "./routes/bookingroutes.js";
-
+import zoomRoutes from "./routes/zoomRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js"
 const app = express();
 const PORT = 5000;
 
@@ -33,6 +34,9 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/booking", bookingRoutes);
+app.use("/api/zoom", zoomRoutes);
+app.use("/api/session", sessionRoutes);
+
 
 app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);
