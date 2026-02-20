@@ -37,9 +37,9 @@ export async function getTimeSlots(req, res) {
   }
 }
 
-export async function bookPlan(req, res) {
+export async function bookPlanCore(req, res) {
   try {
-    const result = await bookingService.bookPlan(req.body);
+    const result = await bookingService.bookPlanCore(req.body);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: "Server crash", error: err });
