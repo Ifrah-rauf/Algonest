@@ -4,7 +4,7 @@ import {
   bookingMail,
   getPlan,
   getTimeSlots,
-  bookPlan
+  bookPlanCore
 } from "../controllers/bookingController.js";
 
 const router = express.Router();
@@ -13,6 +13,6 @@ router.post("/create", createBooking);
 router.post("/bookingMail", bookingMail);
 router.post("/getPlan", getPlan);
 router.post("/getTimeSlots", getTimeSlots);
-router.post("/bookPlan", bookPlan);
+router.post("/bookPlan", bookPlanCore);
 
 export default router;

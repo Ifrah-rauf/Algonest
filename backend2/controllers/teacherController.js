@@ -49,8 +49,8 @@ export async function getMentors(req, res) {
 
 export async function isOwner(req, res) {
   try {
-    const { uid, teacherId } = req.body;
-    const data = await checkIsOwner(uid, teacherId);
+    const { uid, teacherid } = req.body;
+    const data = await checkIsOwner(uid, teacherid);
     res.json(data);
   } catch (err) {
     console.error("isOwner error:", err);
@@ -60,8 +60,8 @@ export async function isOwner(req, res) {
 
 export async function saveAvailability(req, res) {
   try {
-    const { teacherId, slots } = req.body;
-    const data = await saveTeacherAvailability(teacherId, slots);
+    const { teacherid, slots } = req.body;
+    const data = await saveTeacherAvailability(teacherid, slots);
     res.json(data);
   } catch (err) {
     console.error("saveAvailability error:", err);
