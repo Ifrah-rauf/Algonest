@@ -46,7 +46,7 @@ const Navbar = () => {
                 How it works
               </a>
               <a
-                href="/#roadmaps"
+                href="/roadmaps"
                 className="text-sm text-gray-600 hover:text-[#333333]"
               >
                 Roadmaps

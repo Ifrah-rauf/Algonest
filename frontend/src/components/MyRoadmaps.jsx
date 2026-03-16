@@ -1,4 +1,5 @@
 import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
+import Navbar from "../components/navbar";
 
 const roadmaps = [
   {
@@ -53,10 +54,11 @@ const roadmaps = [
   },
 ];
 
-export function MyRoadmaps() {
+export default function MyRoadmaps() {
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div>
+      <Navbar />
+      <div className="flex items-center justify-between mb-8 p-8">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">My Roadmaps</h2>
           <p className="text-gray-600 mt-2">Create and manage your learning paths</p>

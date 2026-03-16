@@ -175,7 +175,7 @@ export default function AvailabilityDisplay({ teacherId,meeting_link, avail = []
 
   async function bookSession(gotData,slot,meeting_link){
     console.log("bookSession method hit!");
-    console.log("meetinglink: "+meeting_link);
+    // console.log("meetinglink: "+meeting_link);
     const studentId=gotData.studentId;
     const planData=gotData.planData;
 

@@ -15,6 +15,7 @@ export default function Dashboard() {
     logout();
     navigate("/");
   }
+
   return (
     <div>
       <main className="px-6 py-8 max-w-7xl mx-auto">
@@ -38,13 +39,13 @@ export default function Dashboard() {
             <OngoingPlan />
             <PlanRoadmap />
             <SessionsAttended />
-
           </div>
 
           {/* Right Column - Sessions and Notes */}
           <div className="space-y-6">
             <NotesAttached />
           </div>
+          
         </div>
       </main>
     </div>

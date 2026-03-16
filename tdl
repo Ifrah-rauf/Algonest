@@ -15,3 +15,18 @@ editable to teachers:
 
 editable to students:
 -> their profile.
+
+
+bugs->
+even on errors, booking is created.
+---------------------------
+when a session ends, mark it as expired. always check status and if expired, consider as past session. 
+also it will help to shoe upcming session only.
+
+const startUTC = new Date(slot.startat);
+const endUTC = new Date(startUTC.getTime() + slot.durationmin * 60000);
+
+start_time: startUTC.toISOString(),
+end_time: endUTC.toISOString()
+
+------------------------------

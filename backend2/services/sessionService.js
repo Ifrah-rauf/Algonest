@@ -27,7 +27,6 @@ export async function getSessionPreparationData(slotId, studentIdFromAuth) {
     slotId
   };
 }
-
 export async function checkSessionData(uid) {
 
   // 1️⃣ Fetch student
@@ -82,6 +81,60 @@ export async function checkSessionData(uid) {
     };
 }
 
+export async function checkTSessionData(uid) {
+
+  // 1️⃣ Fetch student
+  const { data: teacherData, error: tError } = await supabase
+    .from("teacher")
+    .select("t_id")
+    .eq("uid", uid)
+    .single();
+
+  if (tError || !teacherData) {
+    throw new Error("Student not found");
+  }
+
+  const t_id = teacherData.t_id;
+
+  // 2️⃣ Fetch latest VALID session for this student
+  const { data: sessionData, error: sessionError } = await supabase
+    .from("session")
+    .select("*")
+    .eq("t_id", t_id)
+    .eq("status", "VALID")
+    .order("start_time", { ascending: true })
+    .limit(1)
+    .maybeSingle(); // safer than single()
+
+  if (sessionError) {
+    throw new Error("Failed to fetch session");
+  }
+
+  if (!sessionData) {
+    return { exists: false };
+  }
+
+    const now = new Date();
+    const startTime = new Date(sessionData.start_time);
+    const endTime = sessionData.end_time ? new Date(sessionData.end_time) : null;
+
+    let state = "INACTIVE";
+
+    if (startTime <= now && (!endTime || endTime >= now)) {
+    state = "ACTIVE";
+    } else if (startTime > now) {
+    state = "UPCOMING";
+    } else if (endTime && endTime < now) {
+    state = "EXPIRED";
+    }
+    console.log("sessionData: ",sessionData);
+    return {
+        exists: true,
+        state,
+        session: sessionData
+    };
+}
+
 export async function sessionHistory(uid){
     const { data: studentData, error: studentError } = await supabase
         .from("student")
@@ -100,7 +153,6 @@ export async function sessionHistory(uid){
         .from("session")
         .select("*")
         .eq("s_id", s_id)
-        .eq("status", "VALID")
         .order("start_time", { ascending: false })
 
     if (sessionError) {

@@ -1,4 +1,4 @@
-import { getSessionPreparationData,checkSessionData,sessionHistory } from "../services/sessionService.js";
+import { getSessionPreparationData,checkSessionData,sessionHistory, checkTSessionData } from "../services/sessionService.js";
 
 export async function prepareSessionData(req, res) {
   try {
@@ -29,6 +29,25 @@ export async function checkSession(req, res) {
   try {
     const { uid } = req.body;
     const data = await checkSessionData(uid); 
+
+    return res.status(200).json({
+      success: true,
+      message:"success",
+      data:data,
+    });
+
+  } catch (error) {
+    console.error("No Session found:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+export async function checkTSession(req, res) {
+  try {
+    const { uid } = req.body;
+    const data = await checkTSessionData(uid); 
 
     return res.status(200).json({
       success: true,
