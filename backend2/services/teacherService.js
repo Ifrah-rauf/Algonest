@@ -213,43 +213,74 @@ export async function checkIsOwner(uid, teacherId) {
 /* ============================================================
    Save teacher availability (upsert slots)
 ============================================================ */
-export async function saveTeacherAvailability(teacherId, slots) {
+export async function saveTeacherAvailability(teacherid, slots) {
   const { data: existing, error: fetchError } = await supabase
     .from("availability")
     .select("a_id")
-    .eq("teacher_id", teacherId);
+    .eq("teacherid", teacherid);
   if (fetchError) throw fetchError;
 
   const existingIds = existing.map(s => s.a_id);
   const incomingIds = slots.filter(s => Number.isInteger(s.a_id)).map(s => s.a_id);
+const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+if (toDelete.length > 0) {
+  // Step 1: Find all timeslots linked to these availability rows
+  const { data: timeslots, error: tsFetchError } = await supabase
+    .from("timeslot")
+    .select("slot_id")
+    .in("availabilityid", toDelete);
 
-  // Delete removed slots
-  const toDelete = existingIds.filter(id => !incomingIds.includes(id));
-  if (toDelete.length > 0) {
-    const { error: deleteError } = await supabase
-      .from("availability")
+  if (tsFetchError) throw tsFetchError;
+
+  const slotIds = timeslots.map(ts => ts.slot_id);
+
+  // Step 2: Delete bookings tied to those timeslots
+  if (slotIds.length > 0) {
+    const { error: bookingDeleteError } = await supabase
+      .from("slotbooking")
       .delete()
-      .in("a_id", toDelete)
-      .eq("teacher_id", teacherId);
-    if (deleteError) throw deleteError;
+      .in("slotid", slotIds);
+
+    if (bookingDeleteError) throw bookingDeleteError;
   }
 
+  // Step 3: Delete timeslots tied to those availability rows
+  const { error: tsDeleteError } = await supabase
+    .from("timeslot")
+    .delete()
+    .in("availabilityid", toDelete);
+
+  if (tsDeleteError) throw tsDeleteError;
+
+  // Step 4: Finally delete the availability rows
+  const { error: deleteError } = await supabase
+    .from("availability")
+    .delete()
+    .in("a_id", toDelete)
+    .eq("teacherid", teacherid);
+
+  if (deleteError) throw deleteError;
+}
+
+
   // Upsert slots
-  const upsertPayload = slots.map(s => ({
-    a_id: Number.isInteger(s.a_id) ? s.a_id : undefined,
-    teacher_id: teacherId,
-    kind: s.kind,
-    day_of_week: s.kind === "WEEKLY" ? s.day_of_week : null,
-    date: s.kind === "DATE" ? s.date : null,
-    start_min: s.start_min,
-    end_min: s.end_min,
-    slot_granularity: s.slot_granularity,
-    is_free: s.is_free,
-    active: s.active,
-    type: s.type,
-    desc: s.desc,
-    price: s.price,
-  }));
+ const upsertPayload = slots.map(s => ({
+  a_id: Number.isInteger(s.a_id) ? s.a_id : undefined,
+  teacherid: teacherid,             // matches DB
+  kind: s.kind,
+  dayofweek: s.kind === "WEEKLY" ? s.dayofweek : null,
+  date: s.kind === "DATE" ? s.date : null,
+  startmin: s.startmin,
+  endmin: s.endmin,
+  slotgranularity: s.slotgranularity,
+  isfree: s.isfree,
+  active: s.active,
+  type: s.type,
+  desc: s.desc,
+  price: s.price,
+}));
+console.log("Upsert payload:", upsertPayload);
+
 
   const { error: upsertError } = await supabase
     .from("availability")

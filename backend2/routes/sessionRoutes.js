@@ -1,5 +1,5 @@
 import express from "express";
-import { prepareSessionData,checkSession,getSessionHistory } from "../controllers/sessionController";
+import { prepareSessionData,checkSession,getSessionHistory } from "../controllers/sessionController.js";
 
 const router = express.Router();
 
