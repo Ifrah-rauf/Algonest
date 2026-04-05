@@ -10,6 +10,12 @@ import dashboardRoutes from "./routes/dashboardroutes.js";
 import bookingRoutes from "./routes/bookingroutes.js";
 import zoomRoutes from "./routes/zoomRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js"
+import lessonRoutes from "./routes/lessonRoutes.js";
+import checkpointRoutes from "./routes/checkpointRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
+import courseRoutes from "./routes/courseRoutes.js";
+// import chatRoutes  from "./routes/chatRoutes.js";
+
 const app = express();
 const PORT = 5000;
 
@@ -36,7 +42,11 @@ app.use("/api/plans", planRoutes);
 app.use("/api/booking", bookingRoutes);
 app.use("/api/zoom", zoomRoutes);
 app.use("/api/session", sessionRoutes);
-
+app.use("/courses", courseRoutes);
+app.use("/api/lessons", lessonRoutes);
+app.use("/api/checkpoints", checkpointRoutes);
+app.use("/api/support", supportRoutes);
+//app.use('/api/chat', chatRoutes);
 
 app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);

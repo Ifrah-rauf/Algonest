@@ -162,3 +162,36 @@ export async function sessionHistory(uid){
         session: sessionData
     };
 }
+
+//addition
+export async function scheduleSession(studentId, teacherId, type, startTime) {
+  const { data, error } = await supabase
+    .from("session")
+    .insert({
+      s_id: studentId,
+      t_id: teacherId,
+      session_type: type,
+      start_time: startTime,
+      status: "VALID"
+    })
+    .select()
+    .single(); // return one object instead of array
+
+  if (error) throw error;
+  return data; // return the object directly
+}
+
+export async function markAttendance(sessionId, attended, markedByTeacher) {
+  const { data, error } = await supabase
+    .from("session")
+    .update({
+      attended,
+      marked_by_teacher: markedByTeacher
+    })
+    .eq("session_id", sessionId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
