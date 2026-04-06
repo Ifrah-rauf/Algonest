@@ -1,473 +1,451 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import {useNavigate} from "react-router-dom";
-import { useAuth} from "../context/AuthContext.jsx";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import Swal from "sweetalert2";
 import LoadingButton from "../components/LoadingButton";
 import { useLoading } from "../context/LoadingContext";
 
-export default function AvailabilityDisplay({ teacherId,meeting_link, avail = [],timeSlots=[] }) {
-  const { user} = useAuth();
+// ─── constants ────────────────────────────────────────────────
+const API = "http://localhost:5000/api/booking";
+
+// ─── response codes (never match on .message strings) ─────────
+const CODE = {
+  PLAN_EXPIRED:         "PLAN_EXPIRED",
+  WRONG_PLAN:           "WRONG_PLAN",
+  NO_SESSIONS:          "NO_SESSIONS",
+  NOT_UNIQUE:           "NOT_UNIQUE",
+  SESSION_BOOKED:       "SESSION_BOOKED",
+  PAYMENT_REQUIRED:     "PAYMENT_REQUIRED",
+  SESSION_OPEN:         "SESSION_OPEN",
+  PLAN_MATCH:           "PLAN_MATCH",
+};
+
+// ─── swal theme helper ────────────────────────────────────────
+function algoswal(opts) {
+  return Swal.fire({
+    confirmButtonColor: "#f6c90e",
+    didOpen: () => {
+      const btn = Swal.getConfirmButton();
+      if (btn) btn.style.color = "#202020";
+    },
+    ...opts,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+export default function AvailabilityDisplay({
+  teacherId,
+  meeting_link,
+  avail = [],
+  timeSlots = [],
+  checkpointFlow = null,
+}) {
+  const { user } = useAuth();
   const { setLoading } = useLoading();
-  const [isOwner, setIsOwner] = useState(false);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   if (!user || !teacherId) return;
-
-  //   async function checkOwnership() {
-  //     try {
-  //       const res = await fetch(
-  //         "http://localhost:5000/api/teachers/isOwner",
-  //         {
-  //           method: "POST",
-  //           headers: { "Content-Type": "application/json" },
-  //           body: JSON.stringify({
-  //             uid: user.uid,
-  //             teacherId,
-  //           }),
-  //         }
-  //       );
-
-  //       const json = await res.json();
-  //       if (json.success) {
-  //         setIsOwner(json.isOwner);
-  //       }
-  //     } catch (err) {
-  //       console.error("Ownership check failed:", err);
-  //     }
-  //   }
-
-  //   checkOwnership();
-  // }, [user, teacherId]);
-
-  async function check(slot){
-    if (!user) {
-        alert("Please login first to book sessions.");
-        window.location.href = "/login";   // optional redirect
-        return;
-    }
-    console.log("AUTH USER:", user,"meeting_link",meeting_link);
-    await checkPlan(slot,meeting_link);
-  }
-  //data is data retrieved from /getplan ->teacherPlans (teacher data)
-  async function checkPlan(slot,meeting_link) {
-  try {
-    setLoading(true);
-    const res = await fetch("http://localhost:5000/api/booking/getPlan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: user.uid,
-        teacherId: teacherId,
-        slot:slot
-      })
+  // ── group slots by calendar day (memoised — not recalculated on every render)
+  const grouped = useMemo(() => {
+    const map = {};
+    timeSlots.forEach((s) => {
+      const key = new Date(s.startat).toDateString();
+      if (!map[key]) map[key] = [];
+      map[key].push(s);
     });
-    const data = await res.json();
-    console.log("Plan Check Response:", data);
+    return map;
+  }, [timeSlots]);
 
-    // ❌ CASE 1 — User HAS NO PLAN
-    if (!data.success && data.message === "User has no plan subscription") {
-      Swal.fire({
-        icon: "warning",
-        title: "No Active Plan",
-        text: "You do not have any active plan. Please subscribe to continue.",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-        });
-      navigate("/plans"); // or "/pricing"
-      return;
-    }
-
-    // ❌ CASE 2 — Teacher DOES NOT offer this plan
-    if (!data.success && data.message === "This teacher does not offer your subscribed plan") {
-        Swal.fire({
-        icon: "warning",
-        title: "Oops!",
-        text: "Hey, this teacher does not provide your active plan... but don't worry we have plenty other mentors!",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-        });
-      return;
-    }
-
-    // ❌ CASE 3 — Any backend error
-    if (!data.success) {
-      Swal.fire({
-        icon: "warning",
-        title: "Error",
-        text: data.message,
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-        });
-      return;
-    }
-    if(data.message==="Wohoo! This Session is available for anyone!"){
-      return Swal.fire({
-        title: "<strong>Booking available!</strong>",
-        html: `
-          <p style="font-size:14px; color:gray;">
-            Wohoo! This Session is available for anyone!
-          </p>
-        `,
-        icon: "success",
-        confirmButtonText: "Click to confirm your slot",
-        confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          console.log("data in swal: ",data);
-          bookSession(data,slot,meeting_link);   
-        }
-      });
-    }
-
-    return Swal.fire({
-      title: "<strong>Booking available!</strong>",
-      html: `
-        <p style="font-size:14px; color:gray;">
-          You can now book your mentor.
-        </p>
-      `,
-      icon: "success",
-      confirmButtonText: "Click to confirm your slot",
-      confirmButtonColor: "#f6c90e",
-      didOpen: () => {
-        const btn = Swal.getConfirmButton();
-        btn.style.color = "#202020ff"; // TEXT COLOR
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        console.log("data in swal: ",data);
-        bookSession(data,slot,meeting_link);   
-      }
-    });
-
-  } catch (err) {
-    console.error(err);
-    Swal.fire({
-        icon: "warning",
-        title: "Sorry...",
-        text: "Failed to verify your plan",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-      });
-    }
-    finally {
-      setLoading(false); // HIDE GLOBAL LOADER
-    }
-  }
-
-  async function bookSession(gotData,slot,meeting_link){
-    console.log("bookSession method hit!");
-    // console.log("meetinglink: "+meeting_link);
-    const studentId=gotData.studentId;
-    const planData=gotData.planData;
-
-    try {
-    setLoading(true);
-    const res = await fetch("http://localhost:5000/api/booking/bookPlan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        studentId:studentId,
-        planData:planData,
-        slot:slot,
-        meeting_link:meeting_link
-      })
-    });
-    const bookdata = await res.json();
-    console.log("data recieved in bookSession from bookPlan: "+bookdata);
-        if (bookdata.message==="Session Booked Successfully"){
-      return Swal.fire({
-        icon: "success",
-        title: "Session confirmed!",
-        html: `
-          <p style="font-size:14px; color:gray;">
-            This session is confirmed at
-            <strong>${bookdata.time}</strong>
-          </p>
-          <p style="font-size:13px; margin-top:5px;">
-            See you in the session! Check your mail for Session info!
-          </p>
-        `,
-        confirmButtonText: "Okay",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-      }).then((result) => {
-      if (result.isConfirmed) {
-          fetch("http://localhost:5000/api/booking/bookingMail", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId: studentId,
-            planData:planData,
-            slot: slot,
-            meeting_link: meeting_link
-          })
-        })
-        .then(res => res.json())
-        .catch(console.error);
-      }
-      window.location.reload();
-      });
-    }
-    if (!bookdata.success && bookdata.message === "No remaining sessions") {
-      Swal.fire({
-        icon: "warning",
-        title: "You don't have a valid plan",
-        text: "You don't have any valid plan, please renew or purchase a plan.",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-        });
-      return;
-    }
-    else if (!bookdata.success && bookdata.message === "not unique") {
-      Swal.fire({
-        icon: "warning",
-        title: "Already booked session at this slot",
-        text: "You already booked session at this timeslot, choose another timeslot to book another session.",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-        });
-      return;
-    }
-    
-    if (bookdata.paymentRequired) {
-      Swal.fire({
-        icon: "info",
-        title: "Payment Required",
-        html: `
-          <p style="font-size:14px; color:gray;">
-            This session is paid. Amount: 
-            <strong>₹${bookdata.amount}</strong>
-          </p>
-          <p style="font-size:13px; margin-top:5px;">
-            To confirm your booking, payment details will be sent to your registered email.
-          </p>
-        `,
-        confirmButtonText: "Okay",
-              confirmButtonColor: "#f6c90e",
-        didOpen: () => {
-          const btn = Swal.getConfirmButton();
-          btn.style.color = "#202020ff"; // TEXT COLOR
-        }
-      });
-      return; // stop — do NOT book the session
-    }
-  } 
-    catch (err) {
-      console.error(err);
-    }
-    finally {
-      setLoading(false); // HIDE GLOBAL LOADER
-    }
-  }
-
-  // -------------------------------
-  // Format time — HH:MM AM/PM
-  // -------------------------------
-  const formatTime = (dateString) => {
-    const d = new Date(dateString);
-    return d.toLocaleTimeString("en-IN", {
+  // ── format helpers ────────────────────────────────────────
+  const formatTime = (dateString) =>
+    new Date(dateString).toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
     });
-  };
 
-  // -------------------------------
-  // Format date — "Mon, 25 Nov"
-  // -------------------------------
-  const formatDate = (dateString) => {
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-IN", {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("en-IN", {
       weekday: "short",
       day: "numeric",
       month: "short",
     });
-  };
 
-  // -------------------------------
-  // Group timeSlots by date
-  // -------------------------------
-  const grouped = {};
-  timeSlots.forEach((s) => {
-    const key = new Date(s.startat).toDateString(); // unique per day
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(s);
-  });
+  // ─────────────────────────────────────────────────────────
+  // PAST SLOT CHECK — true if slot start time is in the past
+  // ─────────────────────────────────────────────────────────
+  const isPast = (startat) => new Date(startat) < new Date();
 
-  // -------------------------------
-  // UI
-  // -------------------------------
-  return (
-  <div className="bg-white rounded-xl shadow-sm p-6 w-full">
-    {/* {isOwner && (
-  <div className="mt-6 flex justify-end">
-    <button
-      onClick={() =>
-        navigate(`/AvailabilitySettings/${teacherId}`, {
-          state: { avail },
-        })
+  // ─────────────────────────────────────────────────────────
+  // STEP 1 — guard + kick off plan check
+  // ─────────────────────────────────────────────────────────
+  async function check(slot) {
+    if (!user) {
+      await algoswal({
+        icon: "warning",
+        title: "Login required",
+        text: "Please log in first to book a session.",
+        confirmButtonText: "Go to Login",
+      });
+      navigate("/login");
+      return;
+    }
+    await checkPlan(slot);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // STEP 2 — verify student has a valid plan
+  // ─────────────────────────────────────────────────────────
+  async function checkPlan(slot) {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${API}/getPlan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.uid,
+          teacherId,
+          slot,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`getPlan HTTP ${res.status}`);
+      const data = await res.json();
+
+      // stop loader BEFORE showing any Swal
+      setLoading(false);
+
+      // ── no active plan
+      if (!data.success && data.code === CODE.PLAN_EXPIRED) {
+        await algoswal({
+          icon: "warning",
+          title: "No Active Plan",
+          text: "You don't have an active plan. Please subscribe to continue.",
+        });
+        navigate("/plans");
+        return;
       }
-      className="
-        px-5 py-2 rounded-lg
-        bg-[var(--algo-purple)]
-        text-white font-semibold
-        hover:bg-purple-700
-        transition
-      "
-    >
-      Edit Availability
-    </button>
-  </div>
-)} */}
 
-    <h3 className="text-xl font-semibold text-gray-800 mb-4">
-      Available Time Slots
-    </h3>
+      // ── teacher doesn't offer this plan
+      if (!data.success && data.code === CODE.WRONG_PLAN) {
+        await algoswal({
+          icon: "warning",
+          title: "Plan Mismatch",
+          text: "This mentor doesn't offer your current plan — but we have plenty of other mentors!",
+        });
+        return;
+      }
 
-    <p className="text-gray-500 text-sm mb-6">
-      Meeting Link: {meeting_link}
-    </p>
+      // ── any other backend failure
+      if (!data.success) {
+        await algoswal({
+          icon: "error",
+          title: "Something went wrong",
+          text: data.message || "Failed to verify your plan. Please try again.",
+        });
+        return;
+      }
 
-    {timeSlots.length === 0 && (
-      <p className="text-gray-500 text-sm">
-        This mentor has no upcoming slots.
-      </p>
-    )}
+      // ── plan verified — confirm with student
+      const isOpen = data.code === CODE.SESSION_OPEN;
+      const confirmResult = await algoswal({
+        title: "<strong>Slot Available!</strong>",
+        html: `<p style="font-size:14px;color:gray;">${
+          isOpen
+            ? "This session is open for anyone to book."
+            : "Your plan covers this slot. Ready to confirm?"
+        }</p>`,
+        icon: "success",
+        confirmButtonText: "Confirm Booking",
+        showCancelButton: true,
+        cancelButtonText: "Not yet",
+      });
 
-    {/* ===== WEEK GRID ===== */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
-      {Object.entries(grouped).slice(0, 7).map(([dateKey, slots]) => {
-        const displayDate = formatDate(slots[0].startat);
+      if (confirmResult.isConfirmed) {
+        await bookSession(data, slot);
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error("[checkPlan]", err);
+      await algoswal({
+        icon: "error",
+        title: "Network Error",
+        text: "Could not reach the server. Please check your connection.",
+      });
+    }
+  }
 
-        return (
-          <div
-            key={dateKey}
-            className="border rounded-xl bg-gray-100 p-4 flex flex-col shadow-xl"
-          >
-            {/* DAY HEADER */}
-            <h4 className="text-sm font-bold text-center text-[var(--algo-purple)] mb-4">
-              {displayDate}
-            </h4>
+  // ─────────────────────────────────────────────────────────
+  // STEP 3 — book the session
+  // ─────────────────────────────────────────────────────────
+  async function bookSession(planCheckData, slot) {
+    const { studentId, planData } = planCheckData;
 
-            {/* SLOTS */}
-            <div className="flex flex-col gap-3 flex-1">
-              {slots
-                .sort((a, b) => new Date(a.startat) - new Date(b.startat))
-                .map((slot) => {
-                  const desc = slot.availability?.desc;
-                  const isFree = slot.availability?.isfree;
-                  const type = slot.availability?.type?.toLowerCase?.();
-                  const isOneOff = type === "session";
+    try {
+      setLoading(true);
 
-                  const booked = Boolean(
-                    slot.isbooked ??
+      const res = await fetch(`${API}/bookPlan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId,
+          planData,
+          slot,
+          checkpointId: checkpointFlow?.checkpointId || null,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`bookPlan HTTP ${res.status}`);
+      const bookdata = await res.json();
+
+      // stop loader BEFORE showing any Swal
+      setLoading(false);
+
+      // ── payment required
+      if (bookdata.code === CODE.PAYMENT_REQUIRED) {
+        await algoswal({
+          icon: "info",
+          title: "Payment Required",
+          html: `
+            <p style="font-size:14px;color:gray;">
+              This is a paid session.
+              Amount: <strong>₹${bookdata.amount}</strong>
+            </p>
+            <p style="font-size:13px;margin-top:6px;">
+              Payment details will be sent to your registered email.
+            </p>
+          `,
+          confirmButtonText: "Okay",
+        });
+        return;
+      }
+
+      // ── no remaining sessions
+      if (!bookdata.success && bookdata.code === CODE.NO_SESSIONS) {
+        await algoswal({
+          icon: "warning",
+          title: "No Sessions Left",
+          text: "You have no remaining sessions. Please renew or purchase a plan.",
+        });
+        navigate("/plans");
+        return;
+      }
+
+      // ── duplicate booking attempt
+      if (!bookdata.success && bookdata.code === CODE.NOT_UNIQUE) {
+        await algoswal({
+          icon: "warning",
+          title: "Already Booked",
+          text: "You already have a session at this timeslot. Please choose a different one.",
+        });
+        return;
+      }
+
+      // ── any other backend failure
+      if (!bookdata.success) {
+        await algoswal({
+          icon: "error",
+          title: "Booking Failed",
+          text: bookdata.message || "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      // ── success
+      if (bookdata.success && bookdata.code === CODE.SESSION_BOOKED) {
+        const confirmed = await algoswal({
+          icon: "success",
+          title: checkpointFlow ? "Checkpoint Session Confirmed! 🎉" : "Session Confirmed! 🎉",
+          html: `
+            <p style="font-size:14px;color:gray;">
+              Your session is booked for
+              <strong>${new Date(bookdata.time).toLocaleString("en-IN", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}</strong>
+            </p>
+            <p style="font-size:13px;margin-top:6px;">
+              ${
+                checkpointFlow
+                  ? `This session is now linked to <strong>${checkpointFlow.title}</strong>.`
+                  : "Check your email for session details and joining link!"
+              }
+            </p>
+          `,
+          confirmButtonText: "Done",
+        });
+
+        sendBookingMail({ studentId, planData, slot });
+
+        if (confirmed.isConfirmed || confirmed.isDismissed) {
+          if (checkpointFlow?.returnTo) {
+            navigate(checkpointFlow.returnTo, {
+              state: {
+                checkpointBookingSuccess: {
+                  checkpointId: checkpointFlow.checkpointId,
+                  checkpointTitle: checkpointFlow.title,
+                  sessionId: bookdata.session_id || bookdata.session?.session_id || null,
+                },
+              },
+            });
+            return;
+          }
+
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error("[bookSession]", err);
+      await algoswal({
+        icon: "error",
+        title: "Booking Error",
+        text: "An unexpected error occurred. Please try again or contact support.",
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // STEP 4 — fire confirmation email (non-blocking)
+  // ─────────────────────────────────────────────────────────
+  function sendBookingMail({ studentId, planData, slot }) {
+    fetch(`${API}/bookingMail`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId, planData, slot }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.success) console.warn("[sendBookingMail] failed:", d.message);
+      })
+      .catch((err) => console.error("[sendBookingMail] network error:", err));
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // UI
+  // ─────────────────────────────────────────────────────────
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 w-full">
+      <h3 className="text-xl font-semibold text-gray-800 mb-4">
+        Available Time Slots
+      </h3>
+
+      {/* meeting_link is hidden from public view — only shown post-booking via email */}
+
+      {timeSlots.length === 0 && (
+        <p className="text-gray-500 text-sm">
+          This mentor has no upcoming slots.
+        </p>
+      )}
+
+      {/* ── week grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Object.entries(grouped)
+          .slice(0, 7)
+          .map(([dateKey, slots]) => (
+            <div
+              key={dateKey}
+              className="border rounded-xl bg-gray-100 p-4 flex flex-col shadow-xl"
+            >
+              {/* day header */}
+              <h4 className="text-sm font-bold text-center text-[var(--algo-purple)] mb-4">
+                {formatDate(slots[0].startat)}
+              </h4>
+
+              {/* slots */}
+              <div className="flex flex-col gap-3 flex-1">
+                {[...slots]
+                  .sort((a, b) => new Date(a.startat) - new Date(b.startat))
+                  .map((slot) => {
+                    const desc     = slot.availability?.desc;
+                    const isFree   = slot.availability?.isfree;
+                    const type     = slot.availability?.type?.toLowerCase?.();
+                    const isOneOff = type === "session";
+
+                    // normalise booked flag across possible key names
+                    const booked = Boolean(
+                      slot.isbooked ??
                       slot.isBooked ??
                       slot.is_booked ??
                       slot.slotbooking?.isbooked
-                  );
+                    );
 
-                  return (
-                    <div
-                      key={slot.slot_id}
-                      className={`
-                        relative p-3 rounded-lg border text-sm
-                        ${
-                          booked
-                            ? "bg-red-50 border-red-200"
+                    const past      = isPast(slot.startat);
+                    const disabled  = booked || past;
+
+                    return (
+                      <div
+                        key={slot.slot_id}
+                        className={`
+                          relative p-3 rounded-lg border text-sm
+                          ${disabled
+                            ? "bg-white border-gray-200 opacity-70"
                             : isOneOff && !isFree
                             ? "bg-yellow-50 border-yellow-300"
-                            : "bg-white border-gray-200 hover:shadow"
-                        }
-                      `}
-                    >
-                      {/* LABEL */}
-                      {desc && (
-                        <span className="absolute -top-2 -left-2 bg-[var(--algo-purple)] text-white text-xs px-2 py-1 rounded-lg font-semibold shadow">
-                          {desc}
-                        </span>
-                      )}
-
-                      {/* TIME */}
-                      <p className="font-medium text-gray-700">
-                        {formatTime(slot.startat)} – {formatTime(slot.endat)}
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-                        {slot.durationmin} min session
-                      </p>
-
-                      {/* TYPE */}
-                      {isFree ? (
-                        <p className="text-xs text-green-700 font-semibold mt-1">
-                          ✓ Free Session
-                        </p>
-                      ) : isOneOff ? (
-                        <p className="text-xs text-yellow-700 font-semibold mt-1">
-                          ₹ Paid One-Time Session
-                        </p>
-                      ) : (
-                        <p className="text-xs text-blue-700 font-semibold mt-1">
-                          ✓ Covered Under Plan
-                        </p>
-                      )}
-
-                      {/* BOOKED */}
-                      {booked && (
-                        <p className="text-xs text-red-600 font-bold mt-1">
-                          Already Booked
-                        </p>
-                      )}
-
-                      {/* CTA */}
-                      <LoadingButton
-                        disabled={booked}
-                        onClick={() => !booked && check(slot)}
-                        className={`
-                          mt-3 w-full py-2 rounded-lg font-semibold text-sm
-                          ${
-                            booked
-                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                              : "bg-[var(--nest-yellow)] hover:bg-yellow-400 text-black"
-                          }
+                            : "bg-white border-gray-200 hover:shadow"}
                         `}
                       >
-                        {booked ? "Booked" : "Book Session"}
-                      </LoadingButton>
-                    </div>
-                  );
-                })}
+                        {/* label badge */}
+                        {desc && (
+                          <span className="absolute -top-2 -left-2 bg-[var(--algo-purple)] text-white text-xs px-2 py-1 rounded-lg font-semibold shadow">
+                            {desc}
+                          </span>
+                        )}
+
+                        {/* time range */}
+                        <p className={`font-medium ${disabled ? "text-gray-500" : "text-gray-700"}`}>
+                          {formatTime(slot.startat)} – {formatTime(slot.endat)}
+                        </p>
+
+                        <p className="text-xs text-gray-400">
+                          {slot.durationmin} min session
+                        </p>
+
+                        {/* status label */}
+                        {past && !booked ? (
+                          <p className="text-xs text-gray-400 font-semibold mt-1">
+                            ✕ Slot Expired
+                          </p>
+                        ) : booked ? (
+                          <p className="text-xs text-red-500 font-bold mt-1">
+                            Already Booked
+                          </p>
+                        ) : isFree ? (
+                          <p className="text-xs text-green-700 font-semibold mt-1">
+                            ✓ Free Session
+                          </p>
+                        ) : isOneOff ? (
+                          <p className="text-xs text-yellow-700 font-semibold mt-1">
+                            ₹ Paid One-Time Session
+                          </p>
+                        ) : (
+                          <p className="text-xs text-blue-700 font-semibold mt-1">
+                            ✓ Covered Under Plan
+                          </p>
+                        )}
+
+                        {/* CTA */}
+                        <LoadingButton
+                          disabled={disabled}
+                          onClick={() => !disabled && check(slot)}
+                          className={`
+                            mt-3 w-full py-2 rounded-lg font-semibold text-sm
+                            ${disabled
+                              ? "text-gray-600 cursor-not-allowed"
+                              : "bg-[var(--nest-yellow)] hover:bg-yellow-400 text-black"}
+                          `}
+                        >
+                          {booked ? "Booked" : past ? "Expired" : "Book Session"}
+                        </LoadingButton>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          ))}
+      </div>
     </div>
-  </div>
-);
+  );
 }

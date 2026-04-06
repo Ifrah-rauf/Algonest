@@ -73,7 +73,7 @@ export default function Teachers() {
       params.set(key, value);
     }
 
-    navigate({ search: params.toString() });
+    navigate({ search: params.toString() }, { state: location.state });
   }
 
   function toggleMulti(key, value) {
@@ -88,7 +88,7 @@ export default function Teachers() {
       ? params.set(key, updated.join(","))
       : params.delete(key);
 
-    navigate({ search: params.toString() });
+    navigate({ search: params.toString() }, { state: location.state });
   }
 
 
@@ -119,6 +119,19 @@ export default function Teachers() {
       {/* HERO SECTION */}
       <FadeInSection>
         <section className="text-center py-12 px-4 bg-white shadow-sm">
+          {location.state?.checkpointFlow && (
+            <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-left shadow-sm">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-700">
+                Checkpoint Mentor Selection
+              </div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                Pick a teacher for {location.state.checkpointFlow.title}
+              </div>
+              <p className="mt-1 text-sm text-gray-600">
+                Once you book a mentor session, we&apos;ll link that session directly to this checkpoint and take you back to your roadmap.
+              </p>
+            </div>
+          )}
           <h1 className="text-4xl font-bold text-gray-800">
             Meet Our Mentors
           </h1>

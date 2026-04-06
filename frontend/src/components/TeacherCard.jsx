@@ -1,14 +1,18 @@
 import React from "react";
 import { Star, Users, Briefcase } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function TeacherCard({ teacher }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!teacher) return null;
   const openProfile = () => {
     navigate(`/TeachersProfile/${teacher.t_id}`, {
-      state: { teacher },   // optional: pass full object
+      state: {
+        teacher,
+        checkpointFlow: location.state?.checkpointFlow || null,
+      },
     });
   };
 

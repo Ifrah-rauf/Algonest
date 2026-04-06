@@ -1,4 +1,4 @@
-import { getCourseOutline, getLatestOutline, fetchPlans } from "../services/planService.js";
+import { getCourseOutline, getLatestOutline, fetchPlans, fetchCourse } from "../services/planService.js";
 
 export async function courseOutline(req, res) {
   try {
@@ -33,6 +33,15 @@ export async function getPlans(req, res) {
   try {
     const plans = await fetchPlans();
     res.json({ success: true, plans });
+  } catch (err) {
+    console.error("❌ plans fetch error:", err);
+    res.status(500).json({ success: false });
+  }
+}
+export async function getCourse(req, res) {
+  try {
+    const courses = await fetchCourse();
+    res.json({ success: true, courses });
   } catch (err) {
     console.error("❌ plans fetch error:", err);
     res.status(500).json({ success: false });

@@ -17,20 +17,24 @@ export function AuthProvider({ children }) {
   // Load user once on app start
   useEffect(() => {
     const saved = safeParse(localStorage.getItem("user"));
-    if (saved) setUser(saved);
+    if (saved) {
+      setUser(saved);
+      console.log("Loaded user role from storage:", saved.role);
+    }
   }, []);
 
   const login = async (userData) => {
-    // Ensure only clean values go into storage
     const cleanUser = {
-      uid: userData.uid,
-      username: userData.username,
-      email: userData.email
+      uid: userData?.uid,
+      username: userData?.username,
+      email: userData?.email,
+      role: userData?.role || "STUDENT",
+      token: userData?.token || null,
     };
 
+    console.log("Logged in user role:", cleanUser.role);
     setUser(cleanUser);
     localStorage.setItem("user", JSON.stringify(cleanUser));
-    return true;
   };
 
   const logout = () => {

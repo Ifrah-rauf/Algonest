@@ -90,9 +90,9 @@ async function deleteZoomMeeting(meetingId) {
  * Creates Zoom meeting + inserts into session table
  */
 export async function createSessionWithZoom(data) {
-  const { s_id, t_id, startTime, title } = data;
+  const { booking_id, t_id, startTime, title } = data;
 
-  if (!s_id || !t_id || !startTime) {
+  if (!booking_id || !t_id || !startTime) {
     throw new Error("Missing required fields");
   }
 
@@ -105,7 +105,7 @@ export async function createSessionWithZoom(data) {
       .from("session")
       .insert([
         {
-          s_id,
+          booking_id,
           t_id,
           zoom_meeting_id: meeting.id,
           session_link: meeting.join_url,

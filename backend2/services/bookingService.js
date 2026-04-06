@@ -3,15 +3,38 @@ import { supabase } from "../lib/supabase.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+/* ============================================================
+   RESPONSE CODES — must match CODE constants in Availability.jsx
+============================================================ */
+export const CODE = {
+  PLAN_EXPIRED:     "PLAN_EXPIRED",
+  WRONG_PLAN:       "WRONG_PLAN",
+  NO_SESSIONS:      "NO_SESSIONS",
+  NOT_UNIQUE:       "NOT_UNIQUE",
+  SESSION_BOOKED:   "SESSION_BOOKED",
+  PAYMENT_REQUIRED: "PAYMENT_REQUIRED",
+  SESSION_OPEN:     "SESSION_OPEN",
+  PLAN_MATCH:       "PLAN_MATCH",
+};
+
+/* ============================================================
+   HELPER — safe Supabase fetch with error throw
+   Throws if Supabase returns an error, returns data otherwise.
+============================================================ */
+async function dbFetch({ query, label }) {
+  const { data, error } = await query;
+  if (error) throw new Error(`[${label}] ${error.message}`);
+  return data;
+}
 
 /* ============================================================
    1) CREATE BOOKING
-   - Sends a confirmation email when a booking is created
+   - Sends a confirmation email when a new booking/plan is created
 ============================================================ */
 export async function createBookingService(booking) {
   const senderMail = process.env.SENDER_MAIL;
+  if (!senderMail) throw new Error("SENDER_MAIL env variable is not set");
 
-  // Send confirmation email
   await transporter.sendMail({
     from: `"AlgoNest" <${senderMail}>`,
     to: booking.email,
@@ -25,7 +48,7 @@ export async function createBookingService(booking) {
       <p><strong>Requirement:</strong> ${booking.req}</p>
       <p><strong>Role:</strong> ${booking.role}</p>
       <p>Our team will reach out soon!</p>
-    `
+    `,
   });
 
   return booking;
@@ -34,50 +57,111 @@ export async function createBookingService(booking) {
 /* ============================================================
    2) BOOKING MAIL
    - Fetches student, teacher, slot info and sends session email
+   - Called after successful session booking
 ============================================================ */
-export async function bookingMailService({ studentId, slot, meeting_link }) {
-  const senderMail = "ifrahraufddps@gmail.com";
+export async function bookingMailService({ studentId, slot }) {
+  const senderMail = process.env.SENDER_MAIL;
+  if (!senderMail) throw new Error("SENDER_MAIL env variable is not set");
 
   // Fetch student
-  const { data: student } = await supabase.from("student").select("*").eq("s_id", studentId).maybeSingle();
+  const student = await dbFetch({
+    query: supabase.from("student").select("*").eq("s_id", studentId).maybeSingle(),
+    label: "bookingMailService/student",
+  });
   if (!student) throw new Error("Student not found");
 
-  // Fetch auth record
-  const { data: auth } = await supabase.from("auth").select("*").eq("uid", student.uid).maybeSingle();
-  if (!auth) throw new Error("Auth not found");
+  // Fetch auth record for email address
+  const auth = await dbFetch({
+    query: supabase.from("auth").select("*").eq("uid", student.uid).maybeSingle(),
+    label: "bookingMailService/auth",
+  });
+  if (!auth) throw new Error("Auth record not found");
 
-  // Fetch slot + availability
-  const { data: slotData } = await supabase
-    .from("timeslot")
-    .select("*, availability:availabilityid(*)")
-    .eq("slot_id", slot.slot_id)
-    .maybeSingle();
+  // Fetch slot with nested availability in one query
+  const slotData = await dbFetch({
+    query: supabase
+      .from("timeslot")
+      .select("*, availability:availabilityid(*)")
+      .eq("slot_id", slot.slot_id)
+      .maybeSingle(),
+    label: "bookingMailService/slotData",
+  });
   if (!slotData) throw new Error("TimeSlot not found");
 
-  // Fetch teacher
-  const { data: teacher } = await supabase.from("teacher").select("*").eq("t_id", slotData.availability.teacherid).maybeSingle();
+  // Fetch teacher via availability's teacherid
+  const teacher = await dbFetch({
+    query: supabase
+      .from("teacher")
+      .select("*")
+      .eq("t_id", slotData.availability.teacherid)
+      .maybeSingle(),
+    label: "bookingMailService/teacher",
+  });
   if (!teacher) throw new Error("Teacher not found");
 
-  // Format date/time
-  const date = new Date(slotData.startat).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-  const startTime = new Date(slotData.startat).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-  const endTime = new Date(slotData.endat).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const booking = await dbFetch({
+    query: supabase
+      .from("booking")
+      .select("booking_id")
+      .eq("s_id", studentId)
+      .order("booking_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    label: "bookingMailService/booking",
+  });
 
-  // Send email
+  // Fetch the session record to get the Zoom join_url
+  const session = booking?.booking_id
+    ? await dbFetch({
+        query: supabase
+          .from("session")
+          .select("join_url")
+          .eq("booking_id", booking.booking_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        label: "bookingMailService/session",
+      })
+    : null;
+
+  // Format date/time
+  const date = new Date(slotData.startat).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const startTime = new Date(slotData.startat).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const endTime = new Date(slotData.endat).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   await transporter.sendMail({
     from: `"AlgoNest" <${senderMail}>`,
     to: auth.email,
-    subject: "Your Session Is Booked! 🎉",
+    subject: "Your AlgoNest Session is Booked! 🎉",
     html: `
-      <h2>Your Session is Successfully Booked 🎉</h2>
+      <h2 style="color:#6b46c1">Session Confirmed 🎉</h2>
       <p>Hi ${student.name}, your mentorship session has been booked.</p>
       <p><strong>Mentor:</strong> ${teacher.name}</p>
       <p><strong>Date:</strong> ${date}</p>
       <p><strong>Time:</strong> ${startTime} – ${endTime}</p>
       <p><strong>Duration:</strong> ${slotData.durationmin} mins</p>
-      ${slotData.availability.isfree ? "<p>Free Session ✔</p>" : `<p>Payment Required: ₹${slotData.availability.price}</p>`}
-      <a href="${meeting_link}">Join Meeting</a>
-    `
+      ${
+        slotData.availability.isfree
+          ? "<p>✓ Free Session</p>"
+          : `<p>Payment: ₹${slotData.availability.price}</p>`
+      }
+      ${
+        session?.join_url
+          ? `<p><a href="${session.join_url}" style="color:#6b46c1;font-weight:bold;">Join Meeting</a></p>`
+          : ""
+      }
+      <p style="color:gray;font-size:12px;">If you have any questions, contact us at support@algonest.in</p>
+    `,
   });
 
   return { student, teacher, slotData };
@@ -85,127 +169,284 @@ export async function bookingMailService({ studentId, slot, meeting_link }) {
 
 /* ============================================================
    3) GET PLAN
-   - Checks if student has a valid plan with the teacher
+   - Verifies the student's role and active plan
+   - Checks if teacher offers the student's subscribed plan
+   - Returns code + studentId + planData for the frontend to use
 ============================================================ */
 export async function getPlanService({ userId, teacherId, slot }) {
   // Verify role
-  const { data: roleData } = await supabase.from("auth").select("*").eq("uid", userId).maybeSingle();
-  if (roleData.role !== "STUDENT") return { success: false, message: "You need a student plan." };
+  const roleData = await dbFetch({
+    query: supabase.from("auth").select("role").eq("uid", userId).maybeSingle(),
+    label: "getPlanService/auth",
+  });
+  if (!roleData || roleData.role !== "STUDENT") {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "You need a student account to book sessions.",
+    };
+  }
 
   // Fetch student
-  const { data: student } = await supabase.from("student").select("*").eq("uid", userId).maybeSingle();
+  const student = await dbFetch({
+    query: supabase.from("student").select("s_id").eq("uid", userId).maybeSingle(),
+    label: "getPlanService/student",
+  });
+  if (!student) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Student record not found.",
+    };
+  }
   const studentId = student.s_id;
 
-  // Fetch booking
-  const { data: booking } = await supabase.from("booking").select("*").eq("s_id", studentId).maybeSingle();
-  if (!booking) return { success: false, message: "User has no plan subscription" };
+  // Fetch the LATEST booking only
+  const booking = await dbFetch({
+    query: supabase
+      .from("booking")
+      .select("*")
+      .eq("s_id", studentId)
+      .order("booking_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    label: "getPlanService/booking",
+  });
 
-  // Fetch teacher plans
-  const { data: teacherPlans } = await supabase.from("teacher_plan").select("*").eq("t_id", teacherId).eq("plan_id", booking.plan_id);
+  if (!booking) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "No active plan found. Please subscribe to continue.",
+    };
+  }
 
-  // Decide based on slot type
-  if (slot.availability.type === "session") {
-    return { success: true, message: "This Session is available for anyone!", planData: teacherPlans, studentId };
+  // Check expiry
+  if (new Date(booking.expiry_date) < new Date()) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Your plan has expired. Please renew to continue.",
+    };
   }
-  if (slot.availability.type === "plan") {
-    if (!teacherPlans || teacherPlans.length === 0) return { success: false, message: "This teacher does not offer your subscribed plan" };
-    return { success: true, message: "Matching teacher found!", planData: teacherPlans, studentId };
+
+  // Check remaining sessions
+  if (booking.remainingsessions <= 0) {
+    return {
+      success: false,
+      code: CODE.NO_SESSIONS,
+      message: "You have no remaining sessions. Please renew your plan.",
+    };
   }
+
+  const slotType = slot?.availability?.type;
+
+  // Open session — available to anyone with a valid plan
+  if (slotType === "session") {
+    return {
+      success: true,
+      code: CODE.SESSION_OPEN,
+      message: "This session is available for anyone with an active plan.",
+      studentId,
+      planData: null,
+    };
+  }
+
+  // Plan-only slot — check teacher offers this plan
+  if (slotType === "plan") {
+    const teacherPlans = await dbFetch({
+      query: supabase
+        .from("teacher_plan")
+        .select("*")
+        .eq("t_id", teacherId)
+        .eq("plan_id", booking.plan_id),
+      label: "getPlanService/teacherPlans",
+    });
+
+    if (!teacherPlans || teacherPlans.length === 0) {
+      return {
+        success: false,
+        code: CODE.WRONG_PLAN,
+        message: "This teacher does not offer your subscribed plan.",
+      };
+    }
+
+    return {
+      success: true,
+      code: CODE.PLAN_MATCH,
+      message: "Your plan matches. Ready to book!",
+      studentId,
+      planData: teacherPlans,
+    };
+  }
+
+  // Unknown slot type — fail safely
+  return {
+    success: false,
+    code: CODE.WRONG_PLAN,
+    message: `Unrecognised slot type: "${slotType}". Please contact support.`,
+  };
 }
 
 /* ============================================================
    4) GET TIME SLOTS
-   - Fetches available slots for a teacher
+   - Fetches available (unbooked) slots for a teacher
+   - Uses correct column name: teacherid (not t_id)
 ============================================================ */
-export async function getTimeSlotsService(reqdata) {
-  const { teachers_id }=reqdata;
-  const { data: availSlots } = await supabase
-    .from("timeslot")
-    .select("slot_id, t_id, startat, endat, durationmin, isbooked, availability:availabilityid (*)")
-    .eq("t_id", teachers_id);
+export async function getTimeSlotsService({ teachers_id }) {
+  const availSlots = await dbFetch({
+    query: supabase
+      .from("timeslot")
+      .select(
+        "slot_id, teacherid, startat, endat, durationmin, isbooked, availability:availabilityid(*)"
+      )
+      .eq("teacherid", teachers_id)
+      .eq("isbooked", false)
+      .order("startat", { ascending: true }),
+    label: "getTimeSlotsService",
+  });
 
   return { success: true, message: "Slots fetched", availSlots };
 }
 
 /* ============================================================
-   5) BOOK PLAN
-   - Deducts session, books slot, creates session record
-============================================================ */
-
-
-/* ============================================================
-   CORE BOOK PLAN (NO SESSION CREATION HERE)
+   5) BOOK PLAN CORE
+   - Order of operations (safe):
+     1. Validate booking exists, not expired, has sessions
+     2. Check payment requirement BEFORE touching any data
+     3. Mark slot as booked
+     4. Deduct session
+     5. Create slotbooking record
+     6. Fetch outline
+   - Returns codes the frontend can act on
 ============================================================ */
 export async function bookPlanCore({ studentId, slot }) {
+  // Fetch the LATEST active booking
+  const bookingData = await dbFetch({
+    query: supabase
+      .from("booking")
+      .select("*")
+      .eq("s_id", studentId)
+      .order("booking_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    label: "bookPlanCore/booking",
+  });
 
-  const { data: bookingData } = await supabase
-    .from("booking")
-    .select("*")
-    .eq("s_id", studentId)
-    .maybeSingle();
+  if (!bookingData) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "No active plan found.",
+    };
+  }
 
-  if (!bookingData)
-    return { success: false, message: "User has no active plan." };
+  if (new Date(bookingData.expiry_date) < new Date()) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Your plan has expired.",
+    };
+  }
 
-  if (new Date(bookingData.expiry_date) < new Date())
-    return { success: false, message: "Your plan has expired." };
+  if (bookingData.remainingsessions <= 0) {
+    return {
+      success: false,
+      code: CODE.NO_SESSIONS,
+      message: "No remaining sessions.",
+    };
+  }
 
-  if (bookingData.remainingsessions <= 0)
-    return { success: false, message: "No remaining sessions." };
+  // Fetch availability FIRST — check payment before touching any data
+  const availability = await dbFetch({
+    query: supabase
+      .from("availability")
+      .select("*")
+      .eq("a_id", slot.availabilityid)
+      .maybeSingle(),
+    label: "bookPlanCore/availability",
+  });
 
-  // Mark slot booked first (you said validation already done)
-  await supabase
+  if (!availability) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Availability record not found for this slot.",
+    };
+  }
+
+  // Payment check BEFORE any writes
+  if (!availability.isfree && availability.type === "session") {
+    return {
+      success: false,
+      code: CODE.PAYMENT_REQUIRED,
+      paymentRequired: true,
+      amount: availability.price || 0,
+      message: "Payment required for this session.",
+    };
+  }
+
+  // ── all validations passed — now write ──────────────────
+
+  // 1. Mark slot as booked
+  const { error: slotError } = await supabase
     .from("timeslot")
     .update({ isbooked: true })
     .eq("slot_id", slot.slot_id);
 
-  // Deduct session
-  await supabase
+  if (slotError) throw new Error(`[bookPlanCore/markSlot] ${slotError.message}`);
+
+  // 2. Deduct one session from the booking
+  const { error: deductError } = await supabase
     .from("booking")
     .update({ remainingsessions: bookingData.remainingsessions - 1 })
     .eq("booking_id", bookingData.booking_id);
 
-  // Fetch availability
-  const { data: availability } = await supabase
-    .from("availability")
-    .select("*")
-    .eq("a_id", slot.availabilityid)
-    .maybeSingle();
+  if (deductError) {
+    // Compensate — unmark the slot so it's not permanently blocked
+    await supabase
+      .from("timeslot")
+      .update({ isbooked: false })
+      .eq("slot_id", slot.slot_id);
+    throw new Error(`[bookPlanCore/deductSession] ${deductError.message}`);
+  }
 
-  if (!availability.isfree && availability.type === "session") {
+  // 3. Create slotbooking record
+  const slotBookingData = await dbFetch({
+    query: supabase
+      .from("slotbooking")
+      .insert([{
+        slotid: slot.slot_id,
+        studentid: studentId,
+        bookingid: bookingData.booking_id,
+        requirespayment: !availability.isfree,
+        createdat: new Date().toISOString(),
+      }])
+      .select()
+      .single(),
+    label: "bookPlanCore/slotbooking",
+  });
+
+  // 4. Fetch latest plan outline for this student
+  const outline = await dbFetch({
+    query: supabase
+      .from("plan_outline")
+      .select("outline_id")
+      .eq("s_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    label: "bookPlanCore/outline",
+  });
+
+  if (!outline) {
     return {
       success: false,
-      paymentRequired: true,
-      amount: availability.price || 0,
-      message: "Payment required."
+      code: CODE.PLAN_EXPIRED,
+      message: "No plan outline found for this student.",
     };
   }
 
-  // Create slotbooking
-  const { data: slotBookingData }=
-    await supabase.from("slotbooking").insert([{
-    slotid: slot.slot_id,
-    studentid: studentId,
-    bookingid: bookingData.booking_id,
-    requirespayment: !availability.isfree,
-    createdat: new Date()
-  }])
-  .select()
-  .single();
-  console.log("slot_booking created. ");
-  // Fetch outline
-  const { data: outline } = await supabase
-    .from("plan_outline")
-    .select("*")
-    .eq("s_id", studentId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!outline)
-    return { success: false, message: "No outline found for student." };
-
-  // const startat=slotData.startat;
   return {
     success: true,
     outline_id: outline.outline_id,
@@ -214,21 +455,16 @@ export async function bookPlanCore({ studentId, slot }) {
   };
 }
 
-
 /* ============================================================
-   FINAL SESSION CREATION (ONLY INSERT SESSION)
+   6) CREATE SESSION RECORD
+   - Inserts the session row after Zoom meeting is created
+   - Called by the controller after bookPlanCore succeeds
 ============================================================ */
-export async function createSessionRecord({
-  studentId,
-  slot,
-  meeting,
-  sb_id
-}) {
-
+export async function createSessionRecord({ bookingId, slot, meeting, sb_id }) {
   const { data, error } = await supabase
     .from("session")
     .insert([{
-      s_id: studentId,
+      booking_id: bookingId,
       t_id: slot.teacherid,
       zoom_meeting_id: meeting.id,
       start_time: slot.startat,
@@ -240,76 +476,21 @@ export async function createSessionRecord({
       join_url: meeting.join_url,
       start_url: meeting.start_url,
       session_link: meeting.join_url,
-      sb_id: sb_id
+      sb_id,
     }])
-    .select();
+    .select()
+    .single();
 
   if (error) {
-    console.error("Session Insert Error:", error);
-    throw error;
+    console.error("[createSessionRecord] Insert error:", error);
+    throw new Error(`Session insert failed: ${error.message}`);
   }
-
-  console.log("Session created:", data);
 
   return {
     success: true,
+    code: CODE.SESSION_BOOKED,
     message: "Session Booked Successfully",
-    time: slot.startat
+    time: slot.startat,
+    session: data,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// export async function bookPlan({ studentId, slot, meeting_link }) {
-//   // Fetch booking
-//   const { data: bookingData } = await supabase.from("booking").select("*").eq("s_id", studentId).maybeSingle();
-//   if (!bookingData) return { success: false, message: "User has no active plan." };
-
-//   // Check expiry & remaining sessions
-//   if (new Date(bookingData.expiry_date) < new Date()) return { success: false, message: "Your plan has expired." };
-//   if (bookingData.remainingsessions <= 0) return { success: false, message: "No remaining sessions." };
-
-//   // Deduct session
-//   await supabase.from("booking").update({ remainingsessions: bookingData.remainingsessions - 1 }).eq("booking_id", bookingData.booking_id);
-
-//   // Mark slot booked
-//   await supabase.from("timeslot").update({ isbooked: true }).eq("slot_id", slot.slot_id);
-
-//   // Fetch availability
-//   const { data: availability } = await supabase.from("availability").select("*").eq("a_id", slot.availabilityid).maybeSingle();
-//   if (!availability.isfree && availability.type === "session") {
-//     return { success: false, paymentRequired: true, amount: availability.price || 0, message: "Payment required." };
-//   }
-
-//   // Create slot booking
-//   await supabase.from("slotbooking").insert([{ slotid: slot.slot_id, studentid: studentId, bookingid: bookingData.booking_id, requirespayment: !availability.isfree, createdat: new Date() }]);
-
-//   // Fetch latest outline
-//   const { data: outline } = await supabase.from("plan_outline").select("*").eq("s_id", studentId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-//   if (!outline) return { success: false, message: "No outline found for student." };
-
-//   // Create session
-//   await supabase.from("session").insert([{
-//     outline_id: outline.outline_id,
-//     s_id: studentId,
-//     t_id: slot.teacherid,
-//     session_link: meeting_link,
-//     start_time: slot.startat,
-//     end_time: slot.endat,
-//     duration: slot.durationmin,
-//     feedback: null
-//   }]);
-
-//   return { success: true, message: "Session Booked Successfully", time: slot.startat };
-// }

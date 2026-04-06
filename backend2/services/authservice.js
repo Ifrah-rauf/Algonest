@@ -2,14 +2,97 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../lib/supabase.js";
 
-async function signup({ username, password, mail }) {
-  const email = mail;
+const VALID_ROLES = new Set(["STUDENT", "TEACHER"]);
 
-  const { data: existing } = await supabase
-    .from("auth")
-    .select("*")
-    .eq("email", email)
-    .single();
+function normalizeEmail(mail) {
+  return String(mail || "").trim().toLowerCase();
+}
+
+function normalizeRole(role) {
+  const upperRole = String(role || "STUDENT").trim().toUpperCase();
+  return VALID_ROLES.has(upperRole) ? upperRole : "STUDENT";
+}
+
+function toPublicUser(userRow) {
+  if (!userRow) return null;
+
+  return {
+    uid: userRow.uid,
+    username: userRow.name,
+    email: userRow.email,
+    role: userRow.role,
+  };
+}
+
+async function findAuthByUidOrEmail(uid, email) {
+  if (uid) {
+    const { data, error } = await supabase
+      .from("auth")
+      .select("*")
+      .eq("uid", uid)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (data) return data;
+  }
+
+  if (email) {
+    const { data, error } = await supabase
+      .from("auth")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data || null;
+  }
+
+  return null;
+}
+
+async function ensureProfileForRole({ uid, username, role }) {
+  const profileName = username || "AlgoNest User";
+
+  if (role === "TEACHER") {
+    const { data: teacherProfile, error } = await supabase
+      .from("teacher")
+      .select("t_id")
+      .eq("uid", uid)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!teacherProfile) {
+      const { error: insertError } = await supabase
+        .from("teacher")
+        .insert([{ uid, name: profileName }]);
+
+      if (insertError) throw new Error(insertError.message);
+    }
+    return;
+  }
+
+  const { data: studentProfile, error } = await supabase
+    .from("student")
+    .select("s_id")
+    .eq("uid", uid)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!studentProfile) {
+    const { error: insertError } = await supabase
+      .from("student")
+      .insert([{ uid, name: profileName }]);
+
+    if (insertError) throw new Error(insertError.message);
+  }
+}
+
+async function signup({ username, password, mail, role = "STUDENT" }) {
+  const email = normalizeEmail(mail);
+  const userRole = normalizeRole(role);
+  const cleanUsername = String(username || "").trim();
+
+  const existing = await findAuthByUidOrEmail(null, email);
 
   if (existing) throw new Error("Email already exists");
 
@@ -18,93 +101,91 @@ async function signup({ username, password, mail }) {
 
   const { data, error } = await supabase
     .from("auth")
-    .insert([{ uid, name: username, password: hashed, email, role: "STUDENT" }])
+    .insert([{ uid, name: cleanUsername, password: hashed, email, role: userRole }])
     .select()
     .single();
 
   if (error) throw new Error(error.message);
 
-  await supabase.from("student").insert([{ uid, name: username }]);
+  await ensureProfileForRole({
+    uid: data.uid,
+    username: data.name,
+    role: data.role,
+  });
 
-  return { uid, username, email };
+  return toPublicUser(data);
 }
 
 async function login({ mail, password }) {
-  const email = mail;
+  const email = normalizeEmail(mail);
 
-  const { data: user } = await supabase
-    .from("auth")
-    .select("*")
-    .eq("email", email)
-    .single();
+  const user = await findAuthByUidOrEmail(null, email);
 
   if (!user) throw new Error("User not found");
-  if (!user.password) throw new Error("Firebase login required");
+  if (!user.password) {
+    throw new Error("This account uses Google/GitHub login. Please continue with that provider.");
+  }
 
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw new Error("Wrong password");
-  
 
+  await ensureProfileForRole({
+    uid: user.uid,
+    username: user.name,
+    role: user.role,
+  });
 
-
-
-  return { uid: user.uid, username: user.name, email: user.email };
+  return toPublicUser(user);
 }
 
-async function firebaseLogin({ mail, uidFromFirebase }) {
-  const email = mail;
+async function firebaseLogin({ mail, uidFromFirebase, username, role = "STUDENT" }) {
+  return saveUser({
+    uid: uidFromFirebase,
+    mail,
+    username,
+    role,
+  });
+}
 
-  let { data: user } = await supabase
-    .from("auth")
-    .select("*")
-    .eq("email", email)
-    .single();
+async function saveUser({ uid, mail, username, role = "STUDENT" }) {
+  const email = normalizeEmail(mail);
+  const userRole = normalizeRole(role);
+  const cleanUsername = String(username || email.split("@")[0] || "AlgoNest User").trim();
 
-  if (!user) {
-    const { data } = await supabase
+  const existing = await findAuthByUidOrEmail(uid, email);
+
+  if (existing) {
+    await ensureProfileForRole({
+      uid: existing.uid,
+      username: existing.name,
+      role: existing.role,
+    });
+    return toPublicUser(existing);
+  }
+
+  const { data, error } = await supabase
       .from("auth")
       .insert([
         {
-          uid: uidFromFirebase || uuidv4(),
-          name: email.split("@")[0],
+          uid: uid || uuidv4(),
+          name: cleanUsername,
           email,
-          role: "STUDENT",
-          password: null
-        }
+          role: userRole,
+          password: null,
+        },
       ])
       .select()
       .single();
 
-    user = data;
-  }
-
-
-
-  return { uid: user.uid, username: user.name, email: user.email };
-}
-
-async function saveUser({ uid, mail, username }) {
-  const email = mail;
-
-  const { data: existing } = await supabase
-    .from("auth")
-    .select("*")
-    .eq("uid", uid)
-    .single();
-
-  if (existing) return existing;
-
-  const { data, error } = await supabase
-    .from("auth")
-    .insert([{ uid, email, name: username, role: "STUDENT" }])
-    .select()
-    .single();
-
   if (error) throw new Error(error.message);
 
-  await supabase.from("student").insert([{ uid, name: username }]);
+  await ensureProfileForRole({
+    uid: data.uid,
+    username: data.name,
+    role: data.role,
+  });
 
-  return data;
+  return toPublicUser(data);
 }
 
 async function getUser(uid) {
@@ -115,7 +196,7 @@ async function getUser(uid) {
     .single();
 
   if (error) throw new Error(error.message);
-  return data;
+  return toPublicUser(data);
 }
 
 

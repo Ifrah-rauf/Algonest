@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 
 const C = {
@@ -28,7 +29,7 @@ const JOB_SECTIONS = [
     cards: [
       { icon: "⚡", status: "free", pathLabel: "Full Stack", name: "MERN Stack", featured: true,
         desc: "MongoDB · Express · React · Node.js — the most in-demand full stack combo for Indian product companies.",
-        tags: [{ label: "Most Popular", type: "purple" }, { label: "High Placement", type: "green" }], duration: "4–5 months" },
+        tags: [{ label: "Most Popular", type: "purple" }, { label: "High Placement", type: "green" }], duration: "4–5 months", route: "/roadmap_express" },
       { icon: "☕", status: "paid", pathLabel: "Full Stack", name: "Spring Boot + React",
         desc: "Java backend with Spring Boot + React frontend. Target: enterprise and fintech roles.",
         tags: [{ label: "Enterprise", type: "purple" }, { label: "Fintech Ready", type: "yellow" }], duration: "4–5 months" },
@@ -176,10 +177,20 @@ function Tag({ label, type }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────
 function RoadmapCard({ card }) {
+  const navigate = useNavigate();
   const [hov, setHov] = useState(false);
   const on = hov && !card.locked;
+
+  function handleCardClick() {
+    if (card.locked) return;
+    if (card.route) {
+      navigate(card.route);
+    }
+  }
+
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      onClick={handleCardClick}
       style={{
         background: C.white, padding: 16, position: "relative", overflow: "hidden",
         opacity: card.locked ? 0.6 : 1, cursor: card.locked ? "default" : "pointer",

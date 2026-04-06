@@ -6,18 +6,17 @@ import { useEffect, useState } from 'react';
 import StudentDashboard from "../components/s_dashboard2.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  function handleLogout() {
-    logout();
-    navigate("/");
-  }
   const [role, setRole] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
 useEffect(() => {
-  if (!user || !user.uid) return;
+  if (!user?.uid) {
+    setLoading(false);
+    return;
+  }
 
   async function loadDashboard() {
     try {
@@ -28,9 +27,9 @@ useEffect(() => {
 
       if (data.success) {
         setRole(data.message);
-        console.log("ROLE: ",role);
         setDashboardData(data.data);
-        console.log("DASHBARD DATA: ",dashboardData);
+        console.log("ROLE: ", data.message);
+        console.log("DASHBOARD DATA: ", data.data);
       }
     } catch (err) {
       console.error(err);
@@ -61,13 +60,12 @@ if (!user) return <Navigate to="/login" />;
 
         {role === "STUDENT" && (
           <StudentDashboard 
-          // data={dashboardData} 
+            data={dashboardData}
           />
         )}
 
         {role === "TEACHER" && (
-          <TeacherDashboard //data={dashboardData}
-           />
+          <TeacherDashboard data={dashboardData} />
         )}
 
         {!role && (

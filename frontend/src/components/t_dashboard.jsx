@@ -5,7 +5,7 @@ import  MyRoadmaps  from './MyRoadmaps';
 import { MarketplaceRoadmaps } from './MarketplaceRoadmaps';
 import { Students } from './Students';
 import { Earnings } from './Earnings';
-
+import { EditAvailability } from './Editavailability';
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -21,6 +21,8 @@ export default function App() {
         return <Students />;
       case 'earnings':
         return <Earnings />;
+      case 'edit-avail':
+        return <EditAvailability />;
       default:
         return <DashboardOverview />;
     }

@@ -148,7 +148,12 @@ export async function fetchFilterMeta() {
 export async function fetchTeacherById(id) {
   const { data: teacherData, error: error1 } = await supabase
     .from("teacher")
-    .select("*")
+    .select(`
+    *,
+    specialisation ( sp1, sp2, sp3, sp4 ),
+    languages ( l1, l2, l3, l4 ),
+    frameworks ( f1, f2, f3 )
+  `)
     .eq("t_id", id)
     .single();
 
@@ -165,7 +170,7 @@ export async function fetchTeacherById(id) {
     .order("startat", { ascending: true });
 
   if (error1 || error2 || error3) throw (error1 || error2 || error3);
-
+  console.log("teacher video: "+teacherData.video_url);
   return {
     teacher: teacherData,
     avail: availabilityData,

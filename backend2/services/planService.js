@@ -98,3 +98,12 @@ export async function fetchPlans() {
   if (error) throw error;
   return plans;
 }
+export async function fetchCourse() {
+  const { data: courses, error } = await supabase
+    .from("courses")
+    .select("*")
+    .order("course_id");
+
+  if (error) throw error;
+  return courses;
+}

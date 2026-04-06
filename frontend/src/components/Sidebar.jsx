@@ -16,6 +16,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
     { id: "marketplace", label: "Marketplace", icon: ShoppingBag },
     { id: "students", label: "Students", icon: Users },
     { id: "earnings", label: "Earnings", icon: DollarSign },
+    { id: "edit-avail", label: "Edit Availability", icon: DollarSign },
   ];
   const { user, logout } = useAuth();
   const navigate = useNavigate();

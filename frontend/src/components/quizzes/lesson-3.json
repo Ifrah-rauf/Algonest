@@ -1,0 +1,182 @@
+{
+  "lesson_id": 3,
+  "lesson_title": "REST APIs, CRUD Operations, and Request Validation",
+  "questions": [
+    {
+      "id": 1,
+      "type": "mcq",
+      "question": "Which HTTP method is most appropriate for creating a new job entry in a REST API?",
+      "options": [
+        "GET",
+        "POST",
+        "DELETE",
+        "PATCH"
+      ],
+      "correctIndex": 1,
+      "difficulty": "easy",
+      "topic": "rest-crud"
+    },
+    {
+      "id": 2,
+      "type": "debug",
+      "question": "Why is this create-job endpoint unsafe or incomplete?",
+      "code": "app.post('/jobs', (req, res) => {\n  const { title, company } = req.body;\n  jobs.push({ title, company });\n  res.json({ success: true });\n});",
+      "options": [
+        "POST routes cannot read req.body",
+        "There is no validation, so empty or malformed job data can still be inserted",
+        "res.json() must be replaced with res.sendFile()",
+        "jobs.push() only works in async functions"
+      ],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "topic": "validation"
+    },
+    {
+      "id": 3,
+      "type": "debug",
+      "question": "What is wrong with this update route for a specific job?",
+      "code": "app.put('/jobs', (req, res) => {\n  const id = req.params.id;\n  res.json({ updated: id });\n});",
+      "options": [
+        "PUT routes cannot send JSON",
+        "The route path does not include :id, so req.params.id will be undefined",
+        "Updates must use GET instead of PUT",
+        "req.params only works with DELETE"
+      ],
+      "correctIndex": 1,
+      "difficulty": "easy",
+      "topic": "crud-routing"
+    },
+    {
+      "id": 4,
+      "type": "mcq",
+      "question": "In a REST-style API, which route shape is usually best for fetching one job by id?",
+      "options": [
+        "/getJob?id=7",
+        "/jobs/all/7",
+        "/jobs/7",
+        "/fetch/jobs?id=7"
+      ],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "topic": "rest-routing"
+    },
+    {
+      "id": 5,
+      "type": "debug",
+      "question": "Why is this validation check broken?",
+      "code": "if (!title && !company) {\n  return res.status(400).json({ error: 'Missing fields' });\n}",
+      "options": [
+        "The condition only fails when both are missing; it should likely reject if either required field is missing",
+        "status(400) cannot be used for validation",
+        "Validation must happen after res.json()",
+        "Logical operators cannot be used in Express"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "validation"
+    },
+    {
+      "id": 6,
+      "type": "debug",
+      "question": "What is the main issue with this delete route?",
+      "code": "app.delete('/jobs/:id', (req, res) => {\n  jobs.filter((job) => job.id !== req.params.id);\n  res.json({ success: true });\n});",
+      "options": [
+        "filter() returns a new array, but the result is not assigned back, so nothing is actually deleted",
+        "DELETE routes cannot use filter()",
+        "req.params.id is always a number in Express",
+        "res.json() prevents deletion from happening"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "delete-logic"
+    },
+    {
+      "id": 7,
+      "type": "mcq",
+      "question": "What status code is usually appropriate when a resource is created successfully?",
+      "options": [
+        "201",
+        "401",
+        "404",
+        "500"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "http-status-codes"
+    },
+    {
+      "id": 8,
+      "type": "debug",
+      "question": "Why can this route behave unpredictably when ids are numbers?",
+      "code": "app.get('/jobs/:id', (req, res) => {\n  const job = jobs.find((item) => item.id === req.params.id);\n  res.json(job);\n});",
+      "options": [
+        "req.params.id is a string, so strict comparison can fail if item.id is stored as a number",
+        "find() cannot be used in route handlers",
+        "res.json() only accepts arrays",
+        "Route params are always booleans"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "params-and-types"
+    },
+    {
+      "id": 9,
+      "type": "debug",
+      "question": "Why is this PATCH route not partially updating anything?",
+      "code": "app.patch('/jobs/:id', (req, res) => {\n  const job = jobs.find((item) => item.id === req.params.id);\n  job = { ...job, status: req.body.status };\n  res.json(job);\n});",
+      "options": [
+        "job is declared as const from find() and then reassigned; also the updated object is not written back into the data source",
+        "PATCH cannot be used with req.body",
+        "Spread syntax is invalid in Express",
+        "Partial updates require DELETE first"
+      ],
+      "correctIndex": 0,
+      "difficulty": "hard",
+      "topic": "patch-update"
+    },
+    {
+      "id": 10,
+      "type": "mcq",
+      "question": "Why is request validation important in an API?",
+      "options": [
+        "It helps reject bad input before it damages data flow or causes downstream errors",
+        "It automatically creates database tables",
+        "It replaces authentication",
+        "It makes every route faster by default"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "validation"
+    },
+    {
+      "id": 11,
+      "type": "debug",
+      "question": "What is the problem with this not-found handling?",
+      "code": "app.get('/jobs/:id', (req, res) => {\n  const job = jobs.find((item) => item.id === Number(req.params.id));\n  if (!job) {\n    res.status(404).json({ error: 'Job not found' });\n  }\n  res.json(job);\n});",
+      "options": [
+        "After sending the 404 response, the code should return; otherwise it may try to send another response",
+        "404 cannot be used inside GET routes",
+        "find() already sends a response automatically",
+        "res.json(job) must always come before all conditions"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "response-flow"
+    },
+    {
+      "id": 12,
+      "type": "debug",
+      "question": "Why is this validation middleware not protecting the POST /jobs route?",
+      "code": "function validateJob(req, res, next) {\n  if (!req.body.title) {\n    return res.status(400).json({ error: 'Title required' });\n  }\n}\n\napp.post('/jobs', validateJob, (req, res) => {\n  res.status(201).json({ success: true });\n});",
+      "options": [
+        "When validation passes, next() is never called, so the route handler never runs",
+        "Middleware cannot be used on POST routes",
+        "req.body.title should be req.params.title",
+        "201 responses require GET requests"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "validation-middleware"
+    }
+  ]
+}

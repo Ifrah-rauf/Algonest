@@ -1,24 +1,33 @@
 import React, { useState } from "react";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { initializeApp } from "firebase/app";
+import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import AuthExperienceShell from "../components/AuthExperienceShell";
+import { auth, githubProvider, googleProvider } from "../config/firebaseAuth";
+import githubIcon from "../static/github.png";
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyCWx-7sjZuGOseiho9EG3sdxS5BCA1cz6c",
-  authDomain: "algonest-16df7.firebaseapp.com",
-  projectId: "algonest-16df7",
-  storageBucket: "algonest-16df7.firebasestorage.app",
-  messagingSenderId: "112495157363",
-  appId: "1:112495157363:web:be9f48a5b5a61e4db30a06",
-  measurementId: "G-W8MH2QK655",
-};
+function buildOAuthPayload(firebaseUser, role) {
+  const email = firebaseUser?.email || firebaseUser?.providerData?.[0]?.email || "";
+  const username =
+    firebaseUser?.displayName ||
+    firebaseUser?.providerData?.[0]?.displayName ||
+    email.split("@")[0] ||
+    "AlgoNest User";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+  if (!email) {
+    throw new Error(
+      "Your OAuth account did not return an email. Please use an account with a public/verified email."
+    );
+  }
+
+  return {
+    uid: firebaseUser.uid,
+    mail: email,
+    username,
+    role,
+  };
+}
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -28,152 +37,193 @@ export default function Signup() {
   const [mail, setMail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [role, setRole] = useState("STUDENT");
+  const [submitting, setSubmitting] = useState(false);
 
-  // GOOGLE LOGIN
-  const handleGoogleLogin = async () => {
+  const handleProviderSignup = async (provider) => {
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
+      const payload = buildOAuthPayload(firebaseUser, role);
 
-      const response = await axios.post("http://localhost:5000/api/auth/save-user", {
-        uid: firebaseUser.uid,
-        mail: firebaseUser.email,
-        username: firebaseUser.displayName,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/save-user",
+        payload
+      );
 
-      login(response.data.user);
+      await login(response.data.user);
       navigate("/dashboard");
-
     } catch (error) {
-      console.error("Google Login Error:", error);
-      alert("Google login failed.");
+      console.error("OAuth Signup Error:", error);
+      alert(error?.response?.data?.message || error.message || "OAuth signup failed.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   // EMAIL SIGNUP
   const handleSignup = async () => {
+    if (submitting) return;
+
+    if (!username.trim() || !mail.trim() || !password.trim()) {
+      alert("Please fill all fields.");
+      return;
+    }
+
     if (password !== confirm) {
       alert("Passwords do not match!");
       return;
     }
 
-    const res = await fetch("http://localhost:5000/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, mail, password }),
-    });
+    try {
+      setSubmitting(true);
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          mail: mail.trim(),
+          password,
+          role,
+        }),
+      });
 
-    const data = await res.json();
-    if (data.status === "success") {
-      login(data.user);
-      navigate("/dashboard");
-    } else if (data.status === "mail already exists") {
-      alert("Account exists. Please login.");
-      navigate("/login");
-    } else {
-      alert("Error: " + data.message);
+      const data = await res.json();
+      if (data.status === "success") {
+        await login(data.user);
+        navigate("/dashboard");
+      } else if (data.message === "Email already exists") {
+        alert("Account exists. Please login.");
+        navigate("/login");
+      } else {
+        alert("Error: " + (data.message || "Signup failed."));
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[var(--sidebar-bg)]">
+    <AuthExperienceShell
+      eyebrow="Start Your Journey"
+      title="Send your career skyward."
+      subtitle="Choose your role, create your profile, and enter a roadmap system designed to help you build with momentum and mentorship."
+    >
+      <div>
+        <h2 className="text-2xl font-black text-[#1e1145]">Create account</h2>
+        <p className="mt-2 text-sm text-[#7b70a0]">
+          Build your student or mentor profile.
+        </p>
 
-      {/* LEFT IMAGE PANEL */}
-      <div
-        className="hidden md:flex md:w-1/2 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80')",
-          filter: "brightness(85%)",
-        }}
-      >
-        <div className="w-full h-full bg-[var(--algo-purple)] bg-opacity-40 flex items-center justify-center p-10">
-          <h1 className="text-white text-4xl font-bold drop-shadow-xl">
-            Welcome to <span className="text-[var(--nest-yellow)]">AlgoNest</span>
-          </h1>
-        </div>
-      </div>
-
-      {/* RIGHT SIGNUP PANEL */}
-      <div className="flex flex-col justify-center items-center md:w-1/2 p-4">
-        <div className="w-full max-w-md bg-white p-4 rounded-2xl shadow-xl">
-          <h2 className="text-2xl font-bold text-[var(--algo-purple)] mb-8">
-            Create your account
-          </h2>
-          {/* <p className="text-gray-600 mb-6">
-            Join AlgoNest and start your learning journey 🚀
-          </p> */}
-
-          {/* FORM */}
-          <div className="space-y-4">
+        <div className="mt-6 grid lg:grid-cols-[1.45fr_1fr] gap-5 items-start">
+          <div className="space-y-3">
             <input
               type="text"
               placeholder="Username"
+              value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-[var(--algo-purple)] focus:ring-2 focus:ring-[var(--algo-purple)] outline-none"
+              className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
             <input
               type="email"
               placeholder="Email address"
+              value={mail}
               onChange={(e) => setMail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-[var(--algo-purple)] focus:ring-2 focus:ring-[var(--algo-purple)] outline-none"
+              className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
             <input
               type="password"
               placeholder="Password"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-[var(--algo-purple)] focus:ring-2 focus:ring-[var(--algo-purple)] outline-none"
+              className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
             <input
               type="password"
               placeholder="Confirm Password"
+              value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-[var(--algo-purple)] focus:ring-2 focus:ring-[var(--algo-purple)] outline-none"
+              className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
           </div>
 
-          {/* SIGN UP BUTTON */}
-          <button
-            onClick={handleSignup}
-            className="mt-6 w-full bg-[var(--algo-purple)] hover:bg-purple-800 text-white py-3 rounded-xl font-semibold transition"
-          >
-            Create Account
-          </button>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#f6f2ff] border border-purple-100">
+              {[
+                { value: "STUDENT", label: "Student" },
+                { value: "TEACHER", label: "Teacher" },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setRole(item.value)}
+                  className={`py-3 rounded-xl font-bold text-sm transition ${
+                    role === item.value
+                      ? "bg-white text-[#6b46c1] shadow-[0_10px_20px_rgba(107,70,193,0.14)]"
+                      : "text-[#867ca8] hover:text-[#6b46c1]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
 
-          {/* LOGIN LINK */}
-          <button
-            onClick={() => navigate("/login")}
-            className="mt-2 w-full border border-[var(--algo-purple)] text-[var(--algo-purple)] py-3 rounded-xl font-semibold hover:bg-purple-50 transition"
-          >
-            Login Instead
-          </button>
+            <button
+              onClick={handleSignup}
+              disabled={submitting}
+              className="w-full py-3.5 rounded-2xl text-white font-bold shadow-[0_20px_40px_rgba(107,70,193,0.24)] hover:scale-[1.01] active:scale-[0.99] transition disabled:opacity-70"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #4C1D95)" }}
+            >
+              {submitting ? "Creating..." : "Create Account"}
+            </button>
 
-          {/* DIVIDER */}
-          <div className="my-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <span className="text-gray-500">or</span>
-            <div className="flex-1 h-px bg-gray-300"></div>
+            <button
+              onClick={() => navigate("/login")}
+              className="w-full py-3.5 rounded-2xl font-bold border border-purple-100 text-[#6b46c1] bg-[#f7f3ff] hover:bg-[#f0eaff] transition"
+            >
+              Login Instead
+            </button>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-purple-100" />
+              <span className="text-xs uppercase tracking-[0.3em] text-[#a49bc5]">
+                or
+              </span>
+              <div className="flex-1 h-px bg-purple-100" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleProviderSignup(googleProvider)}
+                disabled={submitting}
+                className="w-full border border-purple-100 py-3 rounded-2xl flex items-center justify-center gap-2 bg-white hover:bg-purple-50 transition disabled:opacity-70"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                <span className="font-semibold text-sm text-gray-700">Google</span>
+              </button>
+
+              <button
+                onClick={() => handleProviderSignup(githubProvider)}
+                disabled={submitting}
+                className="w-full border border-purple-100 py-3 rounded-2xl flex items-center justify-center gap-2 bg-white hover:bg-purple-50 transition disabled:opacity-70"
+              >
+                <img src={githubIcon} alt="GitHub" className="w-5 h-5" />
+                <span className="font-semibold text-sm text-gray-700">GitHub</span>
+              </button>
+            </div>
           </div>
-
-          {/* GOOGLE BUTTON */}
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full border border-gray-300 py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition"
-          >
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              className="w-6 h-6"
-            />
-            <span className="font-semibold text-gray-700">
-              Continue with Google
-            </span>
-          </button>
         </div>
       </div>
-    </div>
+    </AuthExperienceShell>
   );
 }
