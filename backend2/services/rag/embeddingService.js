@@ -1,16 +1,12 @@
+import { pipeline } from '@xenova/transformers';
 
-
-import OpenAI from 'openai';
-
-const openai = new OpenAI({ apiKey: process.env.CLAUDE_API_KEY });
+let embedder = null;
 
 export async function getEmbedding(text) {
-  const cleaned = text.replace(/\n/g, ' ').trim().slice(0, 8000);
-
-  const res = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: cleaned,
-  });
-
-  return res.data[0].embedding;
+  if (!embedder) {
+    embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  }
+  const cleaned = text.replace(/\n/g, ' ').trim();
+  const output = await embedder(cleaned, { pooling: 'mean', normalize: true });
+  return Array.from(output.data);
 }

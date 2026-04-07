@@ -18,7 +18,7 @@ create table public.chat_messages (
   s_id        integer not null references student(s_id) on delete cascade,
   role        text not null check (role in ('user', 'assistant')),
   content     text not null,
-  embedding   vector(1536),               -- from text-embedding-3-small
+  embedding   vector(384),               -- from Xenova/all-MiniLM-L6-v2 (local)
   lesson_id   integer references lessons(lesson_id),
   topic_id    integer references lesson_topics(topic_id),
   created_at  timestamp with time zone default now()
@@ -52,7 +52,7 @@ create table public.mentor_feedback_embeddings (
   s_id              integer not null references student(s_id) on delete cascade,
   support_id        integer references support_stages(support_id),
   feedback_text     text not null,
-  embedding         vector(1536),
+  embedding         vector(384),
   created_at        timestamp with time zone default now()
 );
 
@@ -75,7 +75,7 @@ create index mentor_feedback_embedding_idx
 -- ═══════════════════════════════════════════════════════════════════
 
 create or replace function match_student_messages(
-  query_embedding vector(1536),
+  query_embedding vector(384),
   student_id      integer,
   match_count     integer default 5
 )
@@ -99,7 +99,7 @@ $$;
 -- ═══════════════════════════════════════════════════════════════════
 
 create or replace function match_mentor_feedback(
-  query_embedding vector(1536),
+  query_embedding vector(384),
   student_id      integer,
   match_count     integer default 3
 )

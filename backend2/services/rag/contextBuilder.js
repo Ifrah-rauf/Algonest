@@ -11,7 +11,7 @@
 //   saveMessage, fetchHistoryForClient — kept exactly as they were.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { supabase } from '../../lib/supabase.js';
+import { supabase } from '../lib/supabase.js';
 import { buildContext as buildRagContext } from '../rag/contextBuilder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,19 +80,11 @@ async function fetchStudent(uid) {
   return data;
 }
 
-async function fetchRecentHistory(uid, limit = 15) {
-  const { data: studentRow, error: studentError } = await supabase
-    .from('student')
-    .select('s_id')
-    .eq('uid', uid)
-    .single();
-
-  if (studentError || !studentRow) return [];
-
+async function fetchRecentHistory(sId, limit = 15) {
   const { data, error } = await supabase
     .from('conv_history')
     .select('role, content, created_at')
-    .eq('student_id', studentRow.s_id)
+    .eq('student_id', sId)
     .order('created_at', { ascending: false })
     .limit(limit);
 

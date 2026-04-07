@@ -2,7 +2,7 @@
 // All database queries for the RAG layer.
 
 
-import supabase from '../../lib/supabase.js';
+import {supabase} from '../lib/supabase.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STUDENT
