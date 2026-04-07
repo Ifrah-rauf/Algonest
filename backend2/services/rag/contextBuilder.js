@@ -11,7 +11,7 @@
 //   saveMessage, fetchHistoryForClient — kept exactly as they were.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { supabase } from '../lib/supabase.js';
+import { supabase } from '../../lib/supabase.js';
 import { buildContext as buildRagContext } from '../rag/contextBuilder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
