@@ -20,7 +20,7 @@ async function activateNextLesson(currentLesson) {
 
   const { data: nextLesson, error: nextFetchError } = await supabase
     .from("lessons")
-    .select("lesson_id, status, order_index, course_id")
+    .select("lesson_id, order_index, course_id")
     .eq("course_id", currentLesson.course_id)
     .eq("order_index", currentLesson.order_index + 1)
     .maybeSingle();
@@ -28,19 +28,9 @@ async function activateNextLesson(currentLesson) {
   if (nextFetchError) throw nextFetchError;
   if (!nextLesson) return null;
 
-  if (nextLesson.status === "active") {
-    return nextLesson;
-  }
-
-  const { data: updatedNextLesson, error: nextUpdateError } = await supabase
-    .from("lessons")
-    .update({ status: "active" })
-    .eq("lesson_id", nextLesson.lesson_id)
-    .select("lesson_id, status, order_index, course_id")
-    .single();
-
-  if (nextUpdateError) throw nextUpdateError;
-  return updatedNextLesson;
+  // Previously this code checked and updated `lessons.status` to "active".
+  // That decision and the status column are removed — simply return the next lesson if present.
+  return nextLesson;
 }
 
 async function upsertLessonProgress(studentId, lessonId, score, passed) {
@@ -114,7 +104,7 @@ export async function saveLessonQuizResult({
 
   const { data: currentLesson, error: lessonError } = await supabase
     .from("lessons")
-    .select("lesson_id, order_index, course_id, status")
+    .select("lesson_id, order_index, course_id")
     .eq("lesson_id", numericLessonId)
     .single();
 

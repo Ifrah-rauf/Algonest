@@ -48,6 +48,94 @@ export async function fetchCheckpoints() {
   return data;
 }
 
+export async function getCheckpointBookingStatus(checkpointId) {
+  if (!checkpointId) {
+    throw new Error("checkpointId is required");
+  }
+
+  const { data, error } = await supabase
+    .from("checkpoints")
+    .select(`
+      checkpoint_id,
+      title,
+      session_id,
+      session:session_id (
+        session_id,
+        start_time,
+        end_time,
+        marked_by_teacher
+      )
+    `)
+    .eq("checkpoint_id", checkpointId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error("Checkpoint not found");
+  }
+
+  const session = data.session || null;
+  const now = new Date();
+  const endTime = session?.end_time ? new Date(session.end_time) : null;
+  const markedByTeacher = session?.marked_by_teacher === true;
+  const cooldownEndsAt = endTime
+    ? new Date(endTime.getTime() + 24 * 60 * 60 * 1000)
+    : null;
+
+  if (!data.session_id || !session) {
+    return {
+      checkpointId: data.checkpoint_id,
+      sessionId: null,
+      status: "AVAILABLE",
+      canBook: true,
+      disableReason: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  if (markedByTeacher) {
+    return {
+      checkpointId: data.checkpoint_id,
+      sessionId: session.session_id,
+      status: "COMPLETED",
+      canBook: false,
+      disableReason: "Checkpoint already completed.",
+      cooldownEndsAt: null,
+    };
+  }
+
+  if (!endTime || endTime > now) {
+    return {
+      checkpointId: data.checkpoint_id,
+      sessionId: session.session_id,
+      status: "AWAITING_COMPLETION",
+      canBook: false,
+      disableReason: "You already have a checkpoint session pending completion.",
+      cooldownEndsAt: endTime ? endTime.toISOString() : null,
+    };
+  }
+
+  if (cooldownEndsAt && now < cooldownEndsAt) {
+    return {
+      checkpointId: data.checkpoint_id,
+      sessionId: session.session_id,
+      status: "COOLDOWN",
+      canBook: false,
+      disableReason: "You can book another class for this checkpoint one day after the previous session expires.",
+      cooldownEndsAt: cooldownEndsAt.toISOString(),
+    };
+  }
+
+  return {
+    checkpointId: data.checkpoint_id,
+    sessionId: session.session_id,
+    status: "REBOOK_ALLOWED",
+    canBook: true,
+    disableReason: null,
+    cooldownEndsAt: cooldownEndsAt ? cooldownEndsAt.toISOString() : null,
+  };
+}
+
 export async function getLessonById(lessonId) {
   const { data, error } = await supabase
     .from("lessons")

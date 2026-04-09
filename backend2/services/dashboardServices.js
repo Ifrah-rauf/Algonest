@@ -86,7 +86,7 @@ export async function getActiveCourse(uid) {
     title: course?.title || plan.plan_name,
     domain: course?.domain || null,
     courseStatus: course?.status || null,
-    outline_id: booking.outline_id,
+    plan_id: booking.plan_id,
     planTitle: plan.plan_name,
     totalSessions: plan.sessions,
     remainingSessions: booking.remainingsessions,

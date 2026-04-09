@@ -1,0 +1,151 @@
+{
+  "lesson_id": 5,
+  "lesson_title": "Databases & Transactions — SQL Basics and ACID",
+  "questions": [
+    {
+      "id": 1,
+      "type": "debug",
+      "question": "Why does this SQL UPDATE not change any rows even though the WHERE looks correct?",
+      "code": "UPDATE booking SET remainingsessions = remainingsessions - 1 WHERE booking_id = '123';",
+      "options": [
+        "The booking_id column is numeric, but the query uses a string literal — types must match or be cast",
+        "UPDATE queries cannot use WHERE clauses",
+        "remainingsessions cannot be decremented without a transaction",
+        "The table name must be quoted with double quotes"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "sql-types"
+    },
+    {
+      "id": 2,
+      "type": "mcq",
+      "question": "What is the main guarantee provided by a database transaction's ACID properties?",
+      "options": [
+        "Atomicity, Consistency, Isolation, Durability — grouped operations behave as one unit",
+        "Automatic Caching, Inline Delivery",
+        "Asynchronous Calls, Cached Data",
+        "Aggregated, Concurrent, Isolated, Distributed"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "transactions"
+    },
+    {
+      "id": 3,
+      "type": "debug",
+      "question": "Why is this LEFT JOIN returning more rows than expected?",
+      "code": "SELECT s.s_id, s.name, b.booking_id FROM student s LEFT JOIN booking b ON s.s_id = b.s_id WHERE b.plan_id = 2;",
+      "options": [
+        "The WHERE clause converts the LEFT JOIN into an INNER JOIN because it filters on the joined table — move the condition into the JOIN or use OR b.plan_id IS NULL",
+        "LEFT JOINs always duplicate rows by design",
+        "plan_id must be in the SELECT to work",
+        "You must use DISTINCT with LEFT JOINs"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "sql-joins"
+    },
+    {
+      "id": 4,
+      "type": "mcq",
+      "question": "Which SQL clause limits rows returned after aggregation?",
+      "options": [
+        "HAVING",
+        "WHERE",
+        "GROUP BY",
+        "ORDER BY"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "sql-aggregation"
+    },
+    {
+      "id": 5,
+      "type": "debug",
+      "question": "Why does this transaction still show partially applied changes to another connection?",
+      "code": "BEGIN; UPDATE booking SET remainingsessions = remainingsessions - 1 WHERE booking_id=5; -- long work here\n-- other connection reads booking.remainingsessions and sees new value before COMMIT",
+      "options": [
+        "Isolation level may be READ UNCOMMITTED — increase isolation or use SELECT ... FOR UPDATE to lock rows",
+        "Transactions require explicit ROLLBACK to be visible",
+        "You must call COMMIT before the other connection can connect",
+        "Updates are eventually consistent and should be polled"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "transactions-isolation"
+    },
+    {
+      "id": 6,
+      "type": "mcq",
+      "question": "Which index type is best when you need exact equality lookups on a unique id?",
+      "options": [
+        "B-tree index",
+        "Full-text index",
+        "GIN index",
+        "Hash index for all workloads"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "indexes"
+    },
+    {
+      "id": 7,
+      "type": "debug",
+      "question": "What is wrong in this migration snippet that creates a foreign key?",
+      "code": "ALTER TABLE session ADD CONSTRAINT fk_teacher FOREIGN KEY (t_id) REFERENCES teacher(uid);",
+      "options": [
+        "REFERENCES target column types must match; teacher.uid is text while session.t_id is integer — reference teacher.t_id instead",
+        "Foreign keys cannot be added after table creation",
+        "You must DROP constraints before adding new ones",
+        "CONSTRAINT names cannot include underscore"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "db-schema"
+    },
+    {
+      "id": 8,
+      "type": "mcq",
+      "question": "Which statement best describes an idempotent database operation?",
+      "options": [
+        "Applying the operation multiple times has the same effect as applying it once",
+        "The operation always returns the same result regardless of input",
+        "Idempotent operations are faster than others",
+        "They are only supported by NoSQL databases"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "idempotency"
+    },
+    {
+      "id": 9,
+      "type": "debug",
+      "question": "Why can this bulk insert be slow and how to improve it?",
+      "code": "for (const row of rows) { await db.insert('booking').values(row); }",
+      "options": [
+        "Inserting in a loop issues many separate transactions — use a single bulk insert or batch and wrap in one transaction",
+        "Await inside for is fine; slowness is from network latency only",
+        "Use JSON columns instead of rows to speed up inserts",
+        "You must call COMMIT after each insert for performance"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "bulk-insert"
+    },
+    {
+      "id": 10,
+      "type": "mcq",
+      "question": "Which is a common strategy to avoid deadlocks in transactional code?",
+      "options": [
+        "Access resources in a consistent order across code paths",
+        "Open many transactions concurrently",
+        "Use random backoff without retries",
+        "Disable indexes before transactions"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "deadlocks"
+    }
+  ]
+}

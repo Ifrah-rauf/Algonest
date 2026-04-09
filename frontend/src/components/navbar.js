@@ -106,10 +106,10 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
 
             {user?.username ? (
               <div className="flex items-center gap-2">
-                <Link to="/dashboard"
+                {/* <Link to="/dashboard"
                   className="flex items-center justify-center px-2.5 py-1 rounded-lg border border-gray-200 hover:border-purple-300 transition-all">
                   <img src={userimg} alt="User" className="w-4 h-4 rounded-full object-cover" />
-                </Link>
+                </Link> */}
                 <button
                   type="button"
                   onClick={handleLogout}

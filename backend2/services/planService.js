@@ -1,56 +1,56 @@
 import { supabase } from "../lib/supabase.js";
 
 export async function getCourseOutline(planId) {
-  const { data: outlineArr } = await supabase
-    .from("plan_outline")
-    .select("*")
-    .eq("outline_id", planId)
-    .order("created_at", { ascending: false })
-    .limit(1);
+  // plan_outline table is deprecated. Build outline-like response using bookings and sessions tied to the planId.
+  // 1) fetch bookings that reference this plan
+  const { data: bookings, error: bookingsError } = await supabase
+    .from("booking")
+    .select("booking_id, plan_id, remainingsessions")
+    .eq("plan_id", planId);
 
-  if (!outlineArr?.length) return null;
-  const outline = outlineArr[0];
+  if (bookingsError) {
+    console.error("getCourseOutline: failed to fetch bookings for planId", planId, bookingsError);
+    return null;
+  }
 
-  const { data: sessions } = await supabase
+  if (!bookings || bookings.length === 0) return null;
+
+  // use the first booking to report remaining sessions and plan association
+  const booking = bookings[0];
+
+  // 2) fetch sessions linked to any booking for this plan
+  const bookingIds = bookings.map((b) => b.booking_id).filter(Boolean);
+  const { data: sessions, error: sessionsError } = await supabase
     .from("session")
     .select(`
       session_id,
-      outline_id,
       start_time,
       end_time,
       duration,
       status,
       title,
       session_link,
-      mentor:teacher (
-        t_id,
-        name,
-        pfp,
-        experience
-      )
+      t_id
     `)
-    .eq("outline_id", outline.outline_id)
+    .in("booking_id", bookingIds)
     .order("start_time", { ascending: true });
 
-  const { data: bookingArr } = await supabase
-    .from("booking")
-    .select("*")
-    .eq("outline_id", outline.outline_id)
-    .limit(1);
+  if (sessionsError) {
+    console.error("getCourseOutline: failed to fetch sessions for planId", planId, sessionsError);
+    return null;
+  }
 
-  if (!bookingArr?.length) return null;
-  const booking = bookingArr[0];
-
-  const { data: planArr } = await supabase
+  // 3) fetch plan metadata
+  const { data: planArr, error: planError } = await supabase
     .from("plan")
-    .select("*")
-    .eq("plan_id", booking.plan_id)
+    .select("plan_id, plan_name, sessions")
+    .eq("plan_id", planId)
     .limit(1);
 
-  if (!planArr?.length) return null;
+  if (planError || !planArr?.length) return null;
   const plan = planArr[0];
 
-  const sessionIds = sessions.map((s) => s.session_id);
+  const sessionIds = (sessions || []).map((s) => s.session_id);
   let attachments = [];
   if (sessionIds.length > 0) {
     const { data: attData } = await supabase
@@ -61,7 +61,7 @@ export async function getCourseOutline(planId) {
   }
 
   return {
-    outline,
+    outline: null, // plan_outline removed; returning null
     sessions,
     attachments,
     totalSessions: plan.sessions,
@@ -70,23 +70,25 @@ export async function getCourseOutline(planId) {
 }
 
 export async function getLatestOutline(uid) {
-  const { data: students } = await supabase
+  // plan_outline removed. Return latest booking for the student as an alternative.
+  const { data: students, error: studentErr } = await supabase
     .from("student")
-    .select("*")
+    .select("s_id")
     .eq("uid", uid)
     .limit(1);
 
-  if (!students?.length) return null;
+  if (studentErr || !students?.length) return null;
   const student = students[0];
 
-  const { data: outlines } = await supabase
-    .from("plan_outline")
-    .select("*")
+  const { data: bookings, error: bookingsError } = await supabase
+    .from("booking")
+    .select("booking_id, plan_id, remainingsessions, booking_date")
     .eq("s_id", student.s_id)
-    .order("created_at", { ascending: false })
+    .order("booking_date", { ascending: false })
     .limit(1);
 
-  return outlines?.[0] || null;
+  if (bookingsError || !bookings?.length) return null;
+  return bookings[0];
 }
 
 export async function fetchPlans() {

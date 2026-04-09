@@ -16,7 +16,8 @@ import RoadmapsSection from "../components/roadmaps.jsx";
 import Illustration from "../components/illustration.jsx";
 import roadmap from "../static/roadmap.png"
 import review from "../static/review.png"
-
+import StudentDashboard from "../components/s_dashboard2.jsx"
+import TeacherDashboard from "../components/t_dashboard.jsx"
 const containerVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.18 } },
@@ -146,15 +147,65 @@ function CollageSection({ label, headline, sub, cta, ctaLink, children, dark, fl
 ══════════════════════════════════════════════ */
 export default function Landing() {
   const [aiTab, setAiTab] = useState("free");
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [role, setRole] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  if (!user?.uid) {
+    setLoading(false);
+    return;
+  }
+
+  async function loadDashboard() {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/dashboard/getDashboard/${user.uid}`
+      );
+      const data = await res.json();
+
+      if (data.success) {
+        setRole(data.message);
+        setDashboardData(data.data);
+        console.log("ROLE: ", data.message);
+        console.log("DASHBOARD DATA: ", data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadDashboard();
+}, [user]);
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="h-[60vh] flex items-center justify-center text-gray-500">
+          Loading your dashboard...
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <Navbar />
-      <main className="text-[#333333] overflow-x-hidden">
+        {role === "STUDENT" && (
+          <StudentDashboard 
+            data={dashboardData}
+          />
+        )}
 
-        {/* ══════════════════════════════════════════
-            HERO
-        ══════════════════════════════════════════ */}
+        {role === "TEACHER" && (
+          <TeacherDashboard data={dashboardData} />
+        )}
+        {!role && (
+        <main className="text-[#333333] overflow-x-hidden">
         <section
           className="relative bg-no-repeat bg-cover bg-center overflow-hidden"
           style={{ backgroundImage: `url(${bg7})` }}
@@ -189,9 +240,9 @@ export default function Landing() {
             <motion.p
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.25 }}
-              className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed"
+              className="mt-6 text-lg text-gray-800 max-w-2xl mx-auto leading-relaxed"
             >
-              Self-paced. AI-powered. Mentor-tracked. Learn industry fundamentals
+              Take your ownership on the project. Learn industry fundamentals
               and build your capstone project in parallel — with someone who vouches
               for you at the end.
             </motion.p>
@@ -203,13 +254,11 @@ export default function Landing() {
               className="mt-8 flex flex-wrap justify-center gap-2.5"
             >
               {[
-                ["AI Build Companion"],
-                ["Network of Mentors"],
-                ["Interview Prep"],
-                ["Compete & Win"],
-                // ["Build · Host · Git"],
-                ["Verified Portfolio"],
-                ["Job Opportunities"],
+                ["• Build your own idea on structured path"],
+                ["• Mentors who guide you on your idea and tech stack"],
+                ["• Interview Preparation of the same idea"],
+                ["• Deploy and showcase publicly"],
+                ["• Unlock Job Opportunities"],
               ].map(([icon, label]) => (
                 <span key={label} className="inline-flex items-center gap-1.5 bg-white/80 border border-purple-100 rounded-full px-4 py-2 text-sm font-medium text-[#4a3080] shadow-sm backdrop-blur-sm">
                   <span>{icon}</span> {label}
@@ -232,15 +281,6 @@ export default function Landing() {
                 See how it works ↓
               </Link>
             </motion.div>
-
-            {/* Hero image */}
-            {/* <motion.div
-              initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden md:flex justify-center mt-10"
-            >
-              <img src={AlgoNest2} alt="AlgoNest platform" className="w-[400px] drop-shadow-2xl" />
-            </motion.div> */}
           </div>
 
           {/* Wave */}
@@ -265,8 +305,8 @@ export default function Landing() {
               className="text-3xl md:text-4xl font-medium leading-relaxed max-w-3xl mx-auto"
             >
               AlgoNest doesn't sell courses.{" "}
-              <span className="bg-[#f6c90e] text-[#1a0533] px-2 rounded font-bold">It sells completion</span>{" "}
-              — with an AI that guides you and a human who vouches for you.
+              <span className="bg-[#f6c90e] text-[#1a0533] px-2 rounded font-bold">It sells ownership</span>{" "}
+              — bring your ideas live, with personal study plan.
             </motion.p>
 
             <motion.div
@@ -315,6 +355,7 @@ export default function Landing() {
 
                 <motion.div variants={itemVariants} className="flex flex-wrap gap-3 mb-8">
                   {[
+                    "Don't know which cohort or bootcamp is reliable?",
                     "No fixed roadmap or guidance",
                     "Few months before job applications",
                     "Studies, DSA and work exhaustion",
@@ -395,7 +436,7 @@ export default function Landing() {
         ══════════════════════════════════════════ */}
         <CollageSection
           label="Learn & Build in Parallel"
-          headline='Roadmap. Quizzes.<br /><span class="text-[#6b46c1]">AI that never writes your code.</span>'
+          headline='Roadmap + Quizzes +<br /><span class="text-[#6b46c1]">The AI teaches you how to think like the engineer you will claim to be</span>'
           sub="Follow a structured path built from 100+ real job descriptions. Learn exactly what companies hire for — in the order your project needs it. Every topic has a quiz, a build task, and an AI guide."
           cta="Explore Roadmaps"
           ctaLink="/roadmaps"
@@ -1020,7 +1061,7 @@ export default function Landing() {
             </div>
           </div>
         </footer>
-      </main>
+      </main>)}
     </>
   );
 }

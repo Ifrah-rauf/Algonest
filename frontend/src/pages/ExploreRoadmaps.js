@@ -422,7 +422,7 @@ export default function AlgoNestRoadmapExplorer() {
 
       {/* HERO */}
       <div style={{ background: C.purple,
-        padding: isMobile ? "18px 16px" : isTablet ? "24px 32px" : "28px 40px",
+        padding: isMobile ? "18px 16px" : isTablet ? "24px 32px" : "78px 40px",
         position: "relative", overflow: "hidden", textAlign:"center" }}>
         <div style={{ position: "absolute", right: -60, top: -60, width: 350, height: 280,
           borderRadius: "50%", background: "rgba(246,201,14,0.08)", pointerEvents: "none" }} />
@@ -435,9 +435,6 @@ export default function AlgoNestRoadmapExplorer() {
           {!isMobile && <> We handle the rest.</>}
           {isMobile && " We handle the rest."}
         </div>
-        {/* <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.6)", maxWidth: 480, lineHeight: 1.6 }}>
-          Every roadmap is built backwards from real job descriptions — not textbooks.
-        </div> */}
         <div style={{ display: "flex", gap: isMobile ? 14 : 28, marginTop: 16, flexWrap: "wrap",  justifyContent:"center" }}>
           {[["24+","Stack Roadmaps"],["7","Job Targets"],["100+","JDs Analysed"],["Free","To Start"]].map(([n,l]) => (
             <div key={l}>
@@ -446,6 +443,21 @@ export default function AlgoNestRoadmapExplorer() {
             </div>
           ))}
         </div>
+        <div style={{ fontSize: isMobile ? 13 : 20, fontWeight: 700, color: C.white, padding:5,marginTop:48 }}>
+                Not sure where to start?{" "}
+                <span style={{ color: C.yellow }}>Take the 2-min path quiz.</span>
+              </div>
+              {!isMobile && (
+                <div style={{ fontSize: 16, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
+                  We'll recommend the right job target and stack based on your background.
+                </div>
+              )}
+              <div style={{ margin:"auto",marginTop:"22px",maxWidth:"300px", background: C.yellow, color: C.ink, fontSize: 11, fontWeight: 700,
+              padding: "9px 18px", letterSpacing: "0.06em", textTransform: "uppercase",
+              cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap", ...font,
+              alignSelf: isMobile ? "stretch" : "auto", textAlign: "center" }}>
+              Find My Path →
+            </div>
       </div>
 
       {/* LAYOUT */}
@@ -528,7 +540,7 @@ export default function AlgoNestRoadmapExplorer() {
           </div>
 
           {/* Featured Banner */}
-          <div style={{
+          {/* <div style={{
             background: `linear-gradient(135deg, ${C.purple} 0%, ${C.purpleDark} 100%)`,
             padding: isMobile ? "14px 16px" : "18px 22px",
             display: "flex", flexDirection: isMobile ? "column" : "row",
@@ -554,7 +566,7 @@ export default function AlgoNestRoadmapExplorer() {
               alignSelf: isMobile ? "stretch" : "auto", textAlign: "center" }}>
               Find My Path →
             </div>
-          </div>
+          </div> */}
 
           {/* Sections */}
           {JOB_SECTIONS.map(section => (

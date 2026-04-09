@@ -18,6 +18,7 @@ const CODE = {
   PAYMENT_REQUIRED:     "PAYMENT_REQUIRED",
   SESSION_OPEN:         "SESSION_OPEN",
   PLAN_MATCH:           "PLAN_MATCH",
+  CHECKPOINT_BLOCKED:   "CHECKPOINT_BLOCKED",
 };
 
 // ─── swal theme helper ────────────────────────────────────────
@@ -43,6 +44,35 @@ export default function AvailabilityDisplay({
   const { user } = useAuth();
   const { setLoading } = useLoading();
   const navigate = useNavigate();
+  const [checkpointStatus, setCheckpointStatus] = useState(null);
+
+  useEffect(() => {
+    async function loadCheckpointStatus() {
+      if (!user?.uid) {
+        setCheckpointStatus(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/booking/checkpointBookingGuard`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.uid,
+            checkpointId: checkpointFlow?.checkpointId || null,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCheckpointStatus(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to load checkpoint booking status:", error);
+      }
+    }
+
+    loadCheckpointStatus();
+  }, [checkpointFlow?.checkpointId, user?.uid]);
 
   // ── group slots by calendar day (memoised — not recalculated on every render)
   const grouped = useMemo(() => {
@@ -73,6 +103,7 @@ export default function AvailabilityDisplay({
   // PAST SLOT CHECK — true if slot start time is in the past
   // ─────────────────────────────────────────────────────────
   const isPast = (startat) => new Date(startat) < new Date();
+  const isStudent = user?.role === "STUDENT";
 
   // ─────────────────────────────────────────────────────────
   // STEP 1 — guard + kick off plan check
@@ -199,6 +230,15 @@ export default function AvailabilityDisplay({
 
       // stop loader BEFORE showing any Swal
       setLoading(false);
+
+      if (!bookdata.success && bookdata.code === CODE.CHECKPOINT_BLOCKED) {
+        await algoswal({
+          icon: "warning",
+          title: "Checkpoint booking unavailable",
+          text: bookdata.message || "You cannot book another class for this checkpoint right now.",
+        });
+        return;
+      }
 
       // ── payment required
       if (bookdata.code === CODE.PAYMENT_REQUIRED) {
@@ -332,6 +372,26 @@ export default function AvailabilityDisplay({
         Available Time Slots
       </h3>
 
+      {checkpointStatus && !checkpointStatus.canBook && (
+        <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
+          <p className="text-sm font-semibold text-yellow-800">
+            {checkpointStatus.message || "Checkpoint booking is temporarily disabled."}
+          </p>
+          {checkpointStatus.cooldownEndsAt && (
+            <p className="mt-1 text-xs text-yellow-700">
+              You can try again after{" "}
+              {new Date(checkpointStatus.cooldownEndsAt).toLocaleString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* meeting_link is hidden from public view — only shown post-booking via email */}
 
       {timeSlots.length === 0 && (
@@ -373,7 +433,11 @@ export default function AvailabilityDisplay({
                     );
 
                     const past      = isPast(slot.startat);
-                    const disabled  = booked || past;
+                    const checkpointBlocked = Boolean(
+                      checkpointFlow && checkpointStatus && !checkpointStatus.canBook
+                    );
+                    const notStudent = Boolean(user && !isStudent);
+                    const disabled  = booked || past || checkpointBlocked || notStudent;
 
                     return (
                       <div
@@ -437,7 +501,15 @@ export default function AvailabilityDisplay({
                               : "bg-[var(--nest-yellow)] hover:bg-yellow-400 text-black"}
                           `}
                         >
-                          {booked ? "Booked" : past ? "Expired" : "Book Session"}
+                          {booked
+                            ? "Booked"
+                            : past
+                            ? "Expired"
+                            : notStudent
+                            ? "Students only"
+                            : checkpointBlocked
+                            ? "Book Session"
+                            : "Book Session"}
                         </LoadingButton>
                       </div>
                     );

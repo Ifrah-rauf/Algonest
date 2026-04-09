@@ -21,8 +21,9 @@ export async function getOutline(req, res) {
     const { uid } = req.params;
     if (!uid) return res.status(400).json({ success: false, message: "uid not provided" });
 
-    const outline = await getLatestOutline(uid);
-    res.json({ success: true, outline_id: outline ? outline.outline_id : null });
+    const latestBooking = await getLatestOutline(uid);
+    // plan_outline removed — return latest booking info if available
+    res.json({ success: true, booking: latestBooking || null });
   } catch (err) {
     console.error("❌ getOutline error:", err);
     res.status(500).json({ success: false, message: "Server error" });

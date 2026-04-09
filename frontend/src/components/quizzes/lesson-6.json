@@ -1,0 +1,151 @@
+{
+  "lesson_id": 6,
+  "lesson_title": "Testing & CI — Unit, Integration, and Workflow Automation",
+  "questions": [
+    {
+      "id": 1,
+      "type": "debug",
+      "question": "Why does this Jest test always pass even when the function returns the wrong value?",
+      "code": "test('adds numbers', () => {\n  const result = add(1, 2);\n  expect(result).toBe(4);\n});",
+      "options": [
+        "The test expectation is incorrect — it's asserting the wrong value; fix expected toBe(3)",
+        "Jest automatically mocks numbers so the assertion is ignored",
+        "add() must be async for tests to work",
+        "toBe compares objects and always returns true for numbers"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "unit-testing"
+    },
+    {
+      "id": 2,
+      "type": "mcq",
+      "question": "Which test type verifies the interaction between components and external systems like a database?",
+      "options": [
+        "Integration tests",
+        "Unit tests",
+        "Smoke tests",
+        "Static analysis"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "testing-types"
+    },
+    {
+      "id": 3,
+      "type": "debug",
+      "question": "Why is this API integration test flaky?",
+      "code": "beforeAll(() => startServer());\nafterAll(() => stopServer());\n// tests make real HTTP calls without waiting for server ready",
+      "options": [
+        "The test does not wait for the server to be fully started before running requests — return/await the start promise or use setup hooks properly",
+        "HTTP calls must be mocked always",
+        "afterAll should be beforeAll",
+        "Integration tests cannot use beforeAll"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "flaky-tests"
+    },
+    {
+      "id": 4,
+      "type": "mcq",
+      "question": "Which of these best describes continuous integration (CI)?",
+      "options": [
+        "Automatically building and testing code on each change to detect regressions early",
+        "Deploying to production on every commit without tests",
+        "Manually running tests before every pull request",
+        "Storing test data in version control"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "ci-cd"
+    },
+    {
+      "id": 5,
+      "type": "debug",
+      "question": "Why does this mock not intercept the database call in the module under test?",
+      "code": "// module.js\nconst db = require('./db');\nmodule.exports = () => db.query('select 1');\n// test.js\njest.mock('./db', () => ({ query: jest.fn().mockResolvedValue([]) }));\nconst module = require('./module');",
+      "options": [
+        "Module under test imports db before jest.mock runs — mock must be hoisted or use jest.mock at top-level before importing the module",
+        "db.query cannot be mocked in Jest",
+        "jest.mock only works with ES modules",
+        "Mocks must be replaced with sinon"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "jest-mocks"
+    },
+    {
+      "id": 6,
+      "type": "mcq",
+      "question": "Which practice reduces test suite runtime for fast feedback?",
+      "options": [
+        "Parallelizing tests and only running changed tests in CI",
+        "Running full integration tests on every local save",
+        "Adding more end-to-end tests for every component",
+        "Disabling assertions in CI"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "test-performance"
+    },
+    {
+      "id": 7,
+      "type": "debug",
+      "question": "Why does this snapshot test fail on minor changes like whitespace?",
+      "code": "expect(renderComponent()).toMatchSnapshot();",
+      "options": [
+        "Snapshot tests are brittle — they capture full render output; focus snapshots on meaningful parts or update snapshots intentionally",
+        "Snapshots must be stored in the database",
+        "toMatchSnapshot only works with numbers",
+        "You must stringify output before snapshotting"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "snapshot-testing"
+    },
+    {
+      "id": 8,
+      "type": "mcq",
+      "question": "What is a good use-case for end-to-end (E2E) tests like Cypress?",
+      "options": [
+        "Verify critical user journeys across the entire stack (login, purchase flow)",
+        "Replace all unit tests",
+        "Speed up local development",
+        "Automatically generate API docs"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "e2e-tests"
+    },
+    {
+      "id": 9,
+      "type": "debug",
+      "question": "Why does this CI job fail on secrets access but succeed locally?",
+      "code": "// CI logs show missing env var DB_PASSWORD",
+      "options": [
+        "CI environment variables must be configured in the pipeline settings — avoid committing secrets; use the CI provider's secret store",
+        "Local machines always have access to secrets",
+        "You must hardcode secrets in .env for CI",
+        "CI cannot run database migrations"
+      ],
+      "correctIndex": 0,
+      "difficulty": "medium",
+      "topic": "ci-secrets"
+    },
+    {
+      "id": 10,
+      "type": "mcq",
+      "question": "Which tool is commonly used for running tests and generating coverage in Node.js projects?",
+      "options": [
+        "Jest",
+        "Gulp",
+        "Webpack",
+        "Sass"
+      ],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "topic": "tooling"
+    }
+  ]
+}

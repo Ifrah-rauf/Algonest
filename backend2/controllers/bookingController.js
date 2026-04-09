@@ -5,6 +5,7 @@ import {
   bookingMailService,
   getPlanService,
   getTimeSlotsService,
+  getStudentCheckpointBookingGuard,
   CODE,
 } from "../services/bookingService.js";
 import { createZoomMeeting } from "../services/zoomService.js";
@@ -82,6 +83,32 @@ export async function getPlan(req, res) {
   }
 }
 
+export async function getCheckpointBookingGuard(req, res) {
+  try {
+    const { userId, checkpointId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        message: "Missing userId",
+      });
+    }
+
+    const data = await getStudentCheckpointBookingGuard({
+      userId,
+      checkpointId: checkpointId || null,
+    });
+
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    return serverError(res, "getCheckpointBookingGuard", err);
+  }
+}
+
 /* ============================================================
    4) GET TIME SLOTS
    POST /api/booking/getTimeSlots
@@ -127,7 +154,7 @@ export async function bookPlan(req, res) {
   // ── STEP 1: validate + write booking data ──────────────
   let coreResult;
   try {
-    coreResult = await bookPlanCore({ studentId, slot });
+    coreResult = await bookPlanCore({ studentId, slot, checkpointId: checkpointId || null });
   } catch (err) {
     return serverError(res, "bookPlan/bookPlanCore", err);
   }

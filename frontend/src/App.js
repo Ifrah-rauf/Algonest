@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation  } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
 import Home from "./pages/Main";
 import Sign from "./pages/Signup";
 import Login from "./pages/Login";
@@ -9,13 +9,14 @@ import TeachersProfile from "./pages/TeachersProfile";
 import CourseOne from "./pages/Course1";
 import Test from "./pages/test";
 import CourseOutline from "./pages/CourseOutline"
-import Roadmap from "./pages/roadmap";
 import RoadmapExpress from "./pages/roadmap_express";
 import ScrollToHash from "./components/ScrollToHash";
 import Roadmaps from "./components/roadmaps";
 import Howitworks from "./components/howitworks";
 import MyRoadmaps from "./pages/ExploreRoadmaps";
 import CareerQuiz from "./pages/CareerQuiz";
+// Assuming authContext is imported; adjust if needed
+import { useAuth } from "./context/AuthContext.jsx";// Replace with actual path
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -24,13 +25,28 @@ function ScrollToTop() {
   }, [pathname]);
   return null;
 }
+
+function Landing() {
+  const { user } = useAuth(); // Assuming AuthContext provides user with role
+  // Assuming user object has a role property; adjust based on your auth structure
+  const role = user?.role; // e.g., 'STUDENT', 'TEACHER', or undefined
+
+  if (role === 'STUDENT') {
+    return <Dashboard />;
+  } else if (role === 'TEACHER') {
+    return <Dashboard />;
+  } else {
+    return <Home />;
+  }
+}
+
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <ScrollToHash/>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Sign />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/teachers" element={<Teachers />} />
@@ -39,7 +55,7 @@ function App() {
         <Route path="/course-outline/:id" element={<CourseOutline />} />
         <Route path="/login" element={<Login />} />
         <Route path="/test" element={<Test />} />
-        <Route path="/roadmap" element={<Roadmap />} />
+        {/* <Route path="/roadmap" element={<Roadmap />} /> */}
         <Route path="/roadmap_express" element={<RoadmapExpress />} />
         <Route path="/howitworks" element={<Howitworks />} />
         <Route path="/roadmaps" element={<MyRoadmaps />} />

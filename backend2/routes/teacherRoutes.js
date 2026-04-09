@@ -9,6 +9,7 @@ import {
   isOwner,
   saveAvailability
 } from "../controllers/teacherController.js";
+import { getTeacherStudents } from "../controllers/teacherDashboardController.js";
 
 const router = express.Router();
 
@@ -18,5 +19,7 @@ router.get("/getTeacher/:id", getTeacher);
 router.post("/getMentors", getMentors);
 router.post("/isOwner", isOwner);
 router.post("/save", saveAvailability);
+// returns students connected to the teacher (expects teacher uid in body/query/params)
+router.post("/students", getTeacherStudents);
 
 export default router;

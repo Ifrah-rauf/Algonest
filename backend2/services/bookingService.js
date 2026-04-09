@@ -15,6 +15,7 @@ export const CODE = {
   PAYMENT_REQUIRED: "PAYMENT_REQUIRED",
   SESSION_OPEN:     "SESSION_OPEN",
   PLAN_MATCH:       "PLAN_MATCH",
+  CHECKPOINT_BLOCKED:"CHECKPOINT_BLOCKED",
 };
 
 /* ============================================================
@@ -25,6 +26,182 @@ async function dbFetch({ query, label }) {
   const { data, error } = await query;
   if (error) throw new Error(`[${label}] ${error.message}`);
   return data;
+}
+
+async function getStudentIdByUid(userId) {
+  if (!userId) return null;
+
+  const student = await dbFetch({
+    query: supabase.from("student").select("s_id").eq("uid", userId).maybeSingle(),
+    label: "getStudentIdByUid/student",
+  });
+
+  return student?.s_id || null;
+}
+
+export async function getStudentCheckpointBookingGuard({ userId = null, studentId = null, checkpointId = null }) {
+  let resolvedStudentId = studentId;
+
+  if (!resolvedStudentId && userId) {
+    resolvedStudentId = await getStudentIdByUid(userId);
+  }
+
+  if (!resolvedStudentId) {
+    return {
+      canBook: true,
+      status: "AVAILABLE",
+      message: null,
+      checkpointId: checkpointId || null,
+      sessionId: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  const bookings = await dbFetch({
+    query: supabase.from("booking").select("booking_id").eq("s_id", resolvedStudentId),
+    label: "checkpointGuard/bookings",
+  });
+
+  const bookingIds = (bookings || []).map((booking) => booking.booking_id).filter(Boolean);
+  if (!bookingIds.length) {
+    return {
+      canBook: true,
+      status: "AVAILABLE",
+      message: null,
+      checkpointId: checkpointId || null,
+      sessionId: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  const sessions = await dbFetch({
+    query: supabase
+      .from("session")
+      .select("session_id, end_time, marked_by_teacher")
+      .in("booking_id", bookingIds),
+    label: "checkpointGuard/sessions",
+  });
+
+  const sessionIds = (sessions || []).map((session) => session.session_id).filter(Boolean);
+  if (!sessionIds.length) {
+    return {
+      canBook: true,
+      status: "AVAILABLE",
+      message: null,
+      checkpointId: checkpointId || null,
+      sessionId: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  let checkpointQuery = supabase
+    .from("checkpoints")
+    .select("checkpoint_id, title, session_id")
+    .in("session_id", sessionIds);
+
+  if (checkpointId) {
+    checkpointQuery = checkpointQuery.eq("checkpoint_id", checkpointId);
+  }
+
+  const checkpoints = await dbFetch({
+    query: checkpointQuery,
+    label: "checkpointGuard/checkpoints",
+  });
+
+  if (!checkpoints?.length) {
+    return {
+      canBook: true,
+      status: "AVAILABLE",
+      message: null,
+      checkpointId: checkpointId || null,
+      sessionId: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  const sessionById = Object.fromEntries(
+    (sessions || []).map((session) => [session.session_id, session])
+  );
+  const now = new Date();
+
+  const pendingCheckpoint = checkpoints
+    .map((checkpoint) => ({
+      checkpoint,
+      session: sessionById[checkpoint.session_id] || null,
+    }))
+    .filter(({ session }) => session)
+    .sort((a, b) => new Date(b.session.end_time || 0) - new Date(a.session.end_time || 0))[0];
+
+  if (!pendingCheckpoint) {
+    return {
+      canBook: true,
+      status: "AVAILABLE",
+      message: null,
+      checkpointId: checkpointId || null,
+      sessionId: null,
+      cooldownEndsAt: null,
+    };
+  }
+
+  const { checkpoint, session } = pendingCheckpoint;
+  const endTime = session.end_time ? new Date(session.end_time) : null;
+  const markedByTeacher = session.marked_by_teacher === true;
+  const cooldownEndsAt = endTime
+    ? new Date(endTime.getTime() + 24 * 60 * 60 * 1000)
+    : null;
+
+  if (markedByTeacher) {
+    if (!checkpointId || checkpoint.checkpoint_id !== checkpointId) {
+      return {
+        canBook: true,
+        status: "AVAILABLE",
+        message: null,
+        checkpointId: checkpoint.checkpoint_id,
+        sessionId: session.session_id,
+        cooldownEndsAt: null,
+      };
+    }
+
+    return {
+      canBook: false,
+      status: "COMPLETED",
+      message: "This checkpoint is already completed.",
+      checkpointId: checkpoint.checkpoint_id,
+      sessionId: session.session_id,
+      cooldownEndsAt: null,
+    };
+  }
+
+  if (!endTime || endTime > now) {
+    return {
+      canBook: false,
+      status: "AWAITING_COMPLETION",
+      message: "You already have a checkpoint session pending completion.",
+      checkpointId: checkpoint.checkpoint_id,
+      sessionId: session.session_id,
+      cooldownEndsAt: endTime ? endTime.toISOString() : null,
+    };
+  }
+
+  if (checkpointId && checkpoint.checkpoint_id === checkpointId && cooldownEndsAt && now < cooldownEndsAt) {
+    return {
+      canBook: false,
+      status: "COOLDOWN",
+      message: "You can rebook this checkpoint one day after the previous session expires.",
+      checkpointId: checkpoint.checkpoint_id,
+      sessionId: session.session_id,
+      cooldownEndsAt: cooldownEndsAt.toISOString(),
+    };
+  }
+
+  return {
+    canBook: true,
+    status: "AVAILABLE",
+    message: null,
+    checkpointId: checkpoint.checkpoint_id,
+    sessionId: session.session_id,
+    cooldownEndsAt: cooldownEndsAt ? cooldownEndsAt.toISOString() : null,
+  };
 }
 
 /* ============================================================
@@ -201,6 +378,16 @@ export async function getPlanService({ userId, teacherId, slot }) {
   }
   const studentId = student.s_id;
 
+  const checkpointGuard = await getStudentCheckpointBookingGuard({ userId, studentId });
+  if (!checkpointGuard.canBook) {
+    return {
+      success: false,
+      code: CODE.CHECKPOINT_BLOCKED,
+      message: checkpointGuard.message || "You already have a checkpoint session pending completion.",
+      checkpointStatus: checkpointGuard,
+    };
+  }
+
   // Fetch the LATEST booking only
   const booking = await dbFetch({
     query: supabase
@@ -320,7 +507,52 @@ export async function getTimeSlotsService({ teachers_id }) {
      6. Fetch outline
    - Returns codes the frontend can act on
 ============================================================ */
-export async function bookPlanCore({ studentId, slot }) {
+export async function bookPlanCore({ studentId, slot, checkpointId = null }) {
+  // Verify student exists and has STUDENT role in auth table
+  if (!studentId) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Student id not provided.",
+    };
+  }
+
+  const studentRecord = await dbFetch({
+    query: supabase.from("student").select("s_id, uid").eq("s_id", studentId).maybeSingle(),
+    label: "bookPlanCore/student",
+  });
+
+  if (!studentRecord) {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "Student record not found.",
+    };
+  }
+
+  const authRecord = await dbFetch({
+    query: supabase.from("auth").select("role").eq("uid", studentRecord.uid).maybeSingle(),
+    label: "bookPlanCore/auth",
+  });
+
+  if (!authRecord || authRecord.role !== "STUDENT") {
+    return {
+      success: false,
+      code: CODE.PLAN_EXPIRED,
+      message: "You need a student account to book sessions.",
+    };
+  }
+
+  const checkpointStatus = await getStudentCheckpointBookingGuard({ studentId, checkpointId });
+  if (!checkpointStatus.canBook) {
+    return {
+      success: false,
+      code: CODE.CHECKPOINT_BLOCKED,
+      message: checkpointStatus.message || "Checkpoint booking is currently blocked.",
+      checkpointStatus,
+    };
+  }
+
   // Fetch the LATEST active booking
   const bookingData = await dbFetch({
     query: supabase
@@ -428,28 +660,12 @@ export async function bookPlanCore({ studentId, slot }) {
   });
 
   // 4. Fetch latest plan outline for this student
-  const outline = await dbFetch({
-    query: supabase
-      .from("plan_outline")
-      .select("outline_id")
-      .eq("s_id", studentId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    label: "bookPlanCore/outline",
-  });
-
-  if (!outline) {
-    return {
-      success: false,
-      code: CODE.PLAN_EXPIRED,
-      message: "No plan outline found for this student.",
-    };
-  }
+  // plan_outline is deprecated — do not require an outline to complete booking.
+  // Return booking identifiers; frontend should use booking.plan_id from booking record if needed.
+  console.debug("bookPlanCore: skipping plan_outline lookup (deprecated)");
 
   return {
     success: true,
-    outline_id: outline.outline_id,
     booking_id: bookingData.booking_id,
     sb_id: slotBookingData.sb_id,
   };

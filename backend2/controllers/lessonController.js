@@ -4,7 +4,8 @@ import {
   fetchLessonTopicMaterials,
   fetchCheckpoints,
   getLessonById,
-  fetchLessonProgressByUid
+  fetchLessonProgressByUid,
+  getCheckpointBookingStatus
 } from "../services/lessonService.js";
 
 export async function getAllLessons(req, res) {
@@ -118,6 +119,32 @@ export async function getLessonProgress(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch lesson progress",
+    });
+  }
+}
+
+export async function getCheckpointStatus(req, res) {
+  try {
+    const { checkpointId } = req.params;
+
+    if (!checkpointId) {
+      return res.status(400).json({
+        success: false,
+        message: "checkpointId is required",
+      });
+    }
+
+    const data = await getCheckpointBookingStatus(Number(checkpointId));
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.error("getCheckpointStatus error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch checkpoint booking status",
     });
   }
 }

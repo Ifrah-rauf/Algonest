@@ -1,5 +1,5 @@
 
-import supabase         from '../../lib/supabase.js';
+import {supabase}         from '../../lib/supabase.js';
 import { getEmbedding } from './embeddingService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────

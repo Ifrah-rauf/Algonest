@@ -9,25 +9,25 @@ export default function HowItWorksScroll() {
       number: 1,
       title: "Consult & Assess",
       description:
-        "We understand your level, goals, and constraints before planning.",
+        "Drop us a query, 'Where do I begin?' We understand your level, goals, and constraints before planning.",
     },
     {
       number: 2,
       title: "Structured Plan",
       description:
-        "A fixed roadmap replaces random sessions and confusion.",
+        "Choose a fixed roadmap on what you aim to build that replaces cohorts, bootcamps, random sessions and confusion. Select your own project or take smart suggestions",
     },
     {
       number: 3,
-      title: "Execute with Mentors",
+      title: "Execute it with Mentors personally",
       description:
-        "Daily accountability, pattern training, and guidance.",
+        "We'll make possible! According to you we'll plan daily accountability, tracking, pattern training, guidance and interviews",
     },
     {
       number: 4,
       title: "Track & Finish",
       description:
-        "Visible progress until completion — not drop-offs.",
+        "You end up being creating your own product! deploy, compete and see visible progress until completion",
     },
   ];
 

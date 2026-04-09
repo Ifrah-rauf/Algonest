@@ -1,0 +1,65 @@
+import { callClaude } from "./claudeProvider.js";
+import { buildContext, saveMessage } from "../context/contextBuilder.js";
+
+// ❌ RAG disabled
+// import {
+//   buildContext,
+//   saveMessage,
+//   maybeSummarize
+// } from "../rag/index.js";
+
+const DEFAULT_SYSTEM = `
+You are the AlgoNest AI Build Companion — an expert engineering tutor.
+YOUR ONE HARD RULE: Don't write complete code initially for the student. Do scaffold thinking.
+If a student is genuinely stuck after trying, give a partial pattern with blanks to fill and then code. 
+Try to give answers in pointers.
+Ask one focused question at a time. Be crisp — max 3 sentences unless explaining a concept.
+`.trim();
+
+export async function generateAIResponse({
+  uid,
+  message,
+  systemPrompt,
+  lessonId = null
+}) {
+  console.log("AI_PROVIDER value:", JSON.stringify(process.env.AI_PROVIDER));
+
+  // 1. Save user message
+  await saveMessage(uid, "user", message, lessonId);
+
+  // 2. Build SIMPLE context (no message param needed)
+  const context = await buildContext(uid);
+
+  // 3. Build prompt manually (OLD SYSTEM)
+  const fullSystemPrompt = `${systemPrompt || DEFAULT_SYSTEM}
+
+--- Student Profile ---
+Name: ${context.student?.name ?? "Student"}
+Education: ${context.student?.education ?? "Not provided"}
+
+--- Student Context ---
+Project: hardcoded for now
+Current lesson: not integrated yet
+
+--- Conversation History ---
+${
+  context.recentHistory?.length > 0
+    ? context.recentHistory
+        .map(m => `${m.role === "user" ? "Student" : "Companion"}: ${m.content}`)
+        .join("\n")
+    : "No prior conversation."
+}
+`.trim();
+
+  // 4. Call Claude (no RAG history)
+  const reply = await callClaude({
+    systemPrompt: fullSystemPrompt,
+    history: [],
+    message,
+  });
+
+  // 5. Save AI response
+  await saveMessage(uid, "assistant", reply, lessonId);
+
+  return reply;
+}

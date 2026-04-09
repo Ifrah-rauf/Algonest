@@ -360,7 +360,7 @@ function HomeTab({ data, hasAnyBooking }) {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18}}>
       <div
         style={{
           position: "relative",
@@ -827,7 +827,7 @@ export default function AlgoNestDashboard({ data }) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", width: "100%", fontFamily: font }}>
+    <div style={{ minHeight: "100vh", width: "100%", fontFamily: font, marginTop:18 }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div
           style={{

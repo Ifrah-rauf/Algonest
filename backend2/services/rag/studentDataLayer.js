@@ -2,7 +2,7 @@
 // All database queries for the RAG layer.
 
 
-import supabase from '../../lib/supabase.js';
+import {supabase} from '../../lib/supabase.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STUDENT
@@ -44,7 +44,7 @@ export async function getCurrentLesson(sId) {
     .select(`
       progress_id,
       completed,
-      lessons ( lesson_id, title, order_index, status )
+      lessons ( lesson_id, title, order_index )
     `)
     .eq('s_id', sId)
     .eq('completed', false)
@@ -238,13 +238,25 @@ export async function getOlderMessages(sId, skipLast = 6) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function searchRelevantMessages(sId, queryEmbedding, count = 5) {
-  const { data } = await supabase.rpc('match_student_messages', {
+  const { data, error } = await supabase.rpc('match_student_messages', {
     query_embedding: queryEmbedding,
     student_id:      sId,
     match_count:     count,
   });
 
-  return (data ?? []).filter((m) => m.similarity > 0.72);
+  if (error) {
+    console.error('[RAG] searchRelevantMessages RPC error:', error.message || error);
+    return [];
+  }
+
+  const results = data ?? [];
+  console.log(`[RAG] searchRelevantMessages: found ${results.length} candidates for sId=${sId}`);
+
+  // Lower similarity threshold — 0.72 is very strict for semantic matches from different models.
+  const threshold = parseFloat(process.env.RAG_SIMILARITY_THRESHOLD || '0.50');
+  const filtered = results.filter((m) => (m.similarity ?? 0) >= threshold);
+  console.log(`[RAG] searchRelevantMessages: ${filtered.length} passed threshold ${threshold}`);
+  return filtered;
 }
 
 export async function searchRelevantFeedback(sId, queryEmbedding, count = 3) {
