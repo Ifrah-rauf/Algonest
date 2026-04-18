@@ -55,3 +55,7 @@
 .swal-btn-color{
   color:rgb(35, 35, 35) !important;
 }
+body {
+  margin: 0;
+  padding: 0;
+}

@@ -4,7 +4,8 @@ import {
   fetchTeacherById,
   fetchMentors,
   checkIsOwner,
-  saveTeacherAvailability
+  saveTeacherAvailability,
+  getMentorsByDomain
 } from "../services/teacherService.js";
 
 export async function getAllTeachers(req, res) {
@@ -44,6 +45,19 @@ export async function getMentors(req, res) {
   } catch (err) {
     console.error("getMentors error:", err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+
+
+export async function recommendMentors(req, res) {
+  try {
+    const { domain } = req.body;
+    const result = await getMentorsByDomain(domain);
+    res.status(200).json(result); // ✅ always { mentors: [...] }
+  } catch (err) {
+    console.error("Mentor recommendation failed:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 }
 

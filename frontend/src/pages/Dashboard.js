@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 // import StudentDashboard from "../components/s_dashboard.jsx"
-import StudentDashboard from "../components/s_dashboard2.jsx"
+import StudentDashboard from "../components/s_dashboard3.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
 export default function Dashboard() {
   const { user } = useAuth();

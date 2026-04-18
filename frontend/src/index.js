@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { LoadingProvider } from "./context/LoadingContext";
 
+
 // Auth and LoadingProvider are contexts. We wrap our app in react's "state stystem"
 // Context = A shared “global storage” for your whole UI
 // Without context:
