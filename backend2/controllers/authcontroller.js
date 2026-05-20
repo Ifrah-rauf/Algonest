@@ -52,6 +52,15 @@ async function getUser(req, res) {
   }
 }
 
+async function updateStudentProfile(req, res) {
+  try {
+    const result = await authService.updateStudentProfile(req.body);
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+}
+
 
 export {
   signup,
@@ -59,5 +68,6 @@ export {
   firebaseLogin,
   logout,
   saveUser,
-  getUser
+  getUser,
+  updateStudentProfile
 };

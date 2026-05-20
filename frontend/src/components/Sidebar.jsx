@@ -1,10 +1,11 @@
 import {
   LayoutDashboard,
   Map,
-  ShoppingBag,
+  FileText,
   Users,
   DollarSign,
   Settings,
+  UserCog,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -13,10 +14,12 @@ export default function Sidebar({ activeTab, onTabChange }) {
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "my-roadmaps", label: "My Roadmaps", icon: Map },
-    { id: "marketplace", label: "Marketplace", icon: ShoppingBag },
+    { id: "content", label: "Content", icon: FileText },
     { id: "students", label: "Students", icon: Users },
     { id: "earnings", label: "Earnings", icon: DollarSign },
     { id: "edit-avail", label: "Edit Availability", icon: DollarSign },
+    { id: "edit-profile", label: "Edit Profile", icon: UserCog },
+    // { id: "settings", label: "Settings", icon: Settings },
   ];
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -64,7 +67,12 @@ export default function Sidebar({ activeTab, onTabChange }) {
 
       {/* ================= FOOTER ================= */}
       <div className="p-4 border-t border-gray-800">
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors mb-2">
+        <button
+          onClick={() => onTabChange("settings")}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mb-2 ${
+            activeTab === "settings" ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-gray-800"
+          }`}
+        >
           <Settings className="w-5 h-5" />
           <span className="hidden md:inline text-sm">Settings</span>
         </button>

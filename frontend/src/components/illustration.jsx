@@ -206,7 +206,7 @@ export default function JourneyIllustration() {
         </defs>
 
         {/* Background */}
-        <rect width={W} height={H} rx="24" fill="#faf9ff" />
+        <rect width={W} height={H} rx="24" fill="#0f0020" />
 
         {/* Dot grid */}
         {Array.from({ length: 21 }).map((_, col) =>
@@ -297,10 +297,10 @@ export default function JourneyIllustration() {
         })}
 
         {/* Bottom tagline */}
-        <text x={W / 2} y={H - 5} textAnchor="middle"
+        {/* <text x={W / 2} y={H - 5} textAnchor="middle"
           fill="#94a3b8" fontSize={11} fontWeight="500">
           Free to start · Mentorship at checkpoints · One verified outcome
-        </text>
+        </text> */}
       </svg>
     </section>
   );

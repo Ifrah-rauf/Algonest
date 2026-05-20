@@ -1,32 +1,41 @@
-i must decide, how the flow of my site must go. 
-I may let my terminal window the identifier.
+editable to students-> their profile.
+roadmaps->
+    simple roadmaps all accessible, count number of prompts (15 allowed)
+    advanced/fang roadmaps current logic.
+    apply three options: At the top of your page, before the roadmap categories, add a row of three 
+    intent cards. Not tabs — cards with a clear label and one-line description.
+        "I need to build a project" → leads to your current roadmap section. "I need to master CS fundamentals" → leads to the Fundamentals track. "I have interviews coming" → leads to the Grill package.
+        This makes the page read like a conversation: what are you here for? — rather than forcing everyone through the same funnel.
 
-MODULE-1 
-I must take a questionnaire like what you are, your preffered technology/domain, your interests(whhat they wanna achieve in this app). 
-Then show the student a kind of preplayed video or module, that processes the info and give suggested course outlines.
+teachers->
+    filter teachers beforehand, param=domain if signed up and domain filled. option to remove as well.
+    change the param list
+    sessions are open despite teachers does not match, so build it better
 
+urgent 
+    add three components in roadmap. If student has choosen domain, show that by default
+    prepare grill session roadmaps, scorecard and UI. 
+        ->(buy grill session-1 or package and allow choosing teachers)
+    prepare CS fundamentals roadmaps, UI. 
+        ->(buy grill session-1 or package and allow choosing teachers)
 
-when auto-unbooking, update the date to +7days
-dashboard type of pages can't be accessed if not logged-in through links.
+        
+general (important)
+    basic:
+        reduce text (too much content)
+        dark theme
+        easy navigation (right now too much text and cluttered, entry not clear)
+        system ad AI feeding of student's data (profile) and adapted by AI on every change. 
+        teacher page (like topmate, kind of portoflio) [current is also good though, but may add it]
+        of possible modify teachers page too
+    advanced:
+        gateway
 
-
-editable to teachers:
--> course outlines -> availabilty 
-
-editable to students:
--> their profile.
-
+can be done later on-
+    zoom summarisation
+    mentor feedbacks/remarks
 
 bugs->
-even on errors, booking is created.
----------------------------
-when a session ends, mark it as expired. always check status and if expired, consider as past session. 
-also it will help to shoe upcming session only.
+even on errors, booking is created. (check now)
 
-const startUTC = new Date(slot.startat);
-const endUTC = new Date(startUTC.getTime() + slot.durationmin * 60000);
-
-start_time: startUTC.toISOString(),
-end_time: endUTC.toISOString()
-
-------------------------------
+27,28 - 

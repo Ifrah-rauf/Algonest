@@ -21,3 +21,23 @@ export async function createSupport(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
+export async function sendTeacherQuery(req, res) {
+  try {
+    const { uid, subject, body } = req.body || {};
+    const data = await supportService.sendTeacherQueryMail({ uid, subject, body });
+    return res.json({ success: true, data });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+}
+
+export async function sendAccountDeletionRequest(req, res) {
+  try {
+    const { uid } = req.body || {};
+    const data = await supportService.sendAccountDeletionRequestMail({ uid });
+    return res.json({ success: true, data });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+}

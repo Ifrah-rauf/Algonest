@@ -19,6 +19,7 @@ const CODE = {
   SESSION_OPEN:         "SESSION_OPEN",
   PLAN_MATCH:           "PLAN_MATCH",
   CHECKPOINT_BLOCKED:   "CHECKPOINT_BLOCKED",
+  INTERVIEW_BLOCKED:    "INTERVIEW_BLOCKED",
 };
 
 // ─── swal theme helper ────────────────────────────────────────
@@ -39,40 +40,52 @@ export default function AvailabilityDisplay({
   meeting_link,
   avail = [],
   timeSlots = [],
+  gateFlow = null,
   checkpointFlow = null,
 }) {
   const { user } = useAuth();
   const { setLoading } = useLoading();
   const navigate = useNavigate();
-  const [checkpointStatus, setCheckpointStatus] = useState(null);
+  const activeFlow = gateFlow || checkpointFlow || null;
+  const activeFlowKind = activeFlow?.kind || (activeFlow?.interviewId ? "interview" : activeFlow?.checkpointId ? "checkpoint" : null);
+  const [gateStatus, setGateStatus] = useState(null);
 
   useEffect(() => {
-    async function loadCheckpointStatus() {
+    async function loadGateStatus() {
       if (!user?.uid) {
-        setCheckpointStatus(null);
+        setGateStatus(null);
+        return;
+      }
+
+      if (!activeFlowKind || !activeFlow?.title) {
+        setGateStatus(null);
         return;
       }
 
       try {
-        const res = await fetch(`http://localhost:5000/api/booking/checkpointBookingGuard`, {
+        const endpoint = activeFlowKind === "interview"
+          ? "interviewBookingGuard"
+          : "checkpointBookingGuard";
+        const res = await fetch(`http://localhost:5000/api/booking/${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user.uid,
-            checkpointId: checkpointFlow?.checkpointId || null,
+            checkpointId: activeFlowKind === "checkpoint" ? activeFlow?.checkpointId || null : null,
+            interviewId: activeFlowKind === "interview" ? activeFlow?.interviewId || null : null,
           }),
         });
         const data = await res.json();
         if (data.success) {
-          setCheckpointStatus(data.data);
+          setGateStatus(data.data);
         }
       } catch (error) {
-        console.error("Failed to load checkpoint booking status:", error);
+        console.error("Failed to load roadmap gate booking status:", error);
       }
     }
 
-    loadCheckpointStatus();
-  }, [checkpointFlow?.checkpointId, user?.uid]);
+    loadGateStatus();
+  }, [activeFlow?.checkpointId, activeFlow?.interviewId, activeFlow?.title, activeFlowKind, user?.uid]);
 
   // ── group slots by calendar day (memoised — not recalculated on every render)
   const grouped = useMemo(() => {
@@ -221,7 +234,8 @@ export default function AvailabilityDisplay({
           studentId,
           planData,
           slot,
-          checkpointId: checkpointFlow?.checkpointId || null,
+          checkpointId: activeFlowKind === "checkpoint" ? activeFlow?.checkpointId || null : null,
+          interviewId: activeFlowKind === "interview" ? activeFlow?.interviewId || null : null,
         }),
       });
 
@@ -231,11 +245,11 @@ export default function AvailabilityDisplay({
       // stop loader BEFORE showing any Swal
       setLoading(false);
 
-      if (!bookdata.success && bookdata.code === CODE.CHECKPOINT_BLOCKED) {
+      if (!bookdata.success && (bookdata.code === CODE.CHECKPOINT_BLOCKED || bookdata.code === CODE.INTERVIEW_BLOCKED)) {
         await algoswal({
           icon: "warning",
-          title: "Checkpoint booking unavailable",
-          text: bookdata.message || "You cannot book another class for this checkpoint right now.",
+          title: activeFlowKind === "interview" ? "Interview booking unavailable" : "Checkpoint booking unavailable",
+          text: bookdata.message || "You cannot book another class for this roadmap gate right now.",
         });
         return;
       }
@@ -294,7 +308,7 @@ export default function AvailabilityDisplay({
       if (bookdata.success && bookdata.code === CODE.SESSION_BOOKED) {
         const confirmed = await algoswal({
           icon: "success",
-          title: checkpointFlow ? "Checkpoint Session Confirmed! 🎉" : "Session Confirmed! 🎉",
+          title: activeFlow ? `${activeFlowKind === "interview" ? "Interview" : "Checkpoint"} Session Confirmed! 🎉` : "Session Confirmed! 🎉",
           html: `
             <p style="font-size:14px;color:gray;">
               Your session is booked for
@@ -308,8 +322,8 @@ export default function AvailabilityDisplay({
             </p>
             <p style="font-size:13px;margin-top:6px;">
               ${
-                checkpointFlow
-                  ? `This session is now linked to <strong>${checkpointFlow.title}</strong>.`
+                activeFlow
+                  ? `This session is now linked to <strong>${activeFlow.title}</strong>.`
                   : "Check your email for session details and joining link!"
               }
             </p>
@@ -320,14 +334,20 @@ export default function AvailabilityDisplay({
         sendBookingMail({ studentId, planData, slot });
 
         if (confirmed.isConfirmed || confirmed.isDismissed) {
-          if (checkpointFlow?.returnTo) {
-            navigate(checkpointFlow.returnTo, {
+          if (activeFlow?.returnTo) {
+            const successPayload = {
+              kind: activeFlowKind || "checkpoint",
+              checkpointId: activeFlowKind === "checkpoint" ? activeFlow.checkpointId : null,
+              interviewId: activeFlowKind === "interview" ? activeFlow.interviewId : null,
+              title: activeFlow.title,
+              sessionId: bookdata.session_id || bookdata.session?.session_id || null,
+            };
+            navigate(activeFlow.returnTo, {
               state: {
-                checkpointBookingSuccess: {
-                  checkpointId: checkpointFlow.checkpointId,
-                  checkpointTitle: checkpointFlow.title,
-                  sessionId: bookdata.session_id || bookdata.session?.session_id || null,
-                },
+                gateBookingSuccess: successPayload,
+                ...(activeFlowKind === "interview"
+                  ? { interviewBookingSuccess: successPayload }
+                  : { checkpointBookingSuccess: successPayload }),
               },
             });
             return;
@@ -372,15 +392,15 @@ export default function AvailabilityDisplay({
         Available Time Slots
       </h3>
 
-      {checkpointStatus && !checkpointStatus.canBook && (
+      {gateStatus && !gateStatus.canBook && (
         <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
           <p className="text-sm font-semibold text-yellow-800">
-            {checkpointStatus.message || "Checkpoint booking is temporarily disabled."}
+            {gateStatus.message || "Roadmap gate booking is temporarily disabled."}
           </p>
-          {checkpointStatus.cooldownEndsAt && (
+          {gateStatus.cooldownEndsAt && (
             <p className="mt-1 text-xs text-yellow-700">
               You can try again after{" "}
-              {new Date(checkpointStatus.cooldownEndsAt).toLocaleString("en-IN", {
+              {new Date(gateStatus.cooldownEndsAt).toLocaleString("en-IN", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -434,7 +454,7 @@ export default function AvailabilityDisplay({
 
                     const past      = isPast(slot.startat);
                     const checkpointBlocked = Boolean(
-                      checkpointFlow && checkpointStatus && !checkpointStatus.canBook
+                      activeFlow && gateStatus && !gateStatus.canBook
                     );
                     const notStudent = Boolean(user && !isStudent);
                     const disabled  = booked || past || checkpointBlocked || notStudent;

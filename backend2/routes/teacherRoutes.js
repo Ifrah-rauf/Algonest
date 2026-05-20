@@ -1,5 +1,4 @@
 // routes/teachersRoutes.js
-
 import express from "express";
 import {
   getAllTeachers,
@@ -7,12 +6,12 @@ import {
   getTeacher,
   getMentors,
   isOwner,
-  saveAvailability
+  saveAvailability,
+  recommendMentors
 } from "../controllers/teacherController.js";
 import { getTeacherStudents } from "../controllers/teacherDashboardController.js";
-
 const router = express.Router();
-
+router.post("/getMentorsByDomain", recommendMentors);
 router.get("/getAllTeachers", getAllTeachers);
 router.get("/getFilterMeta", getFilterMeta);
 router.get("/getTeacher/:id", getTeacher);

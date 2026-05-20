@@ -14,17 +14,17 @@ export async function fetchAllTeachers(filters) {
     interview: [10],
   };
 
-  let teacherIdsFromPlan = null;
+  let teacherIdsFromCourse = null;
 
   if (plan && PLAN_GROUPS[plan]) {
     const { data: mappings, error } = await supabase
-      .from("teacher_plan")
+      .from("course_teacher_mapping")
       .select("t_id")
-      .in("plan_id", PLAN_GROUPS[plan]);
+      .in("course_id", PLAN_GROUPS[plan]);
 
     if (error) throw error;
-    teacherIdsFromPlan = mappings.map(m => m.t_id);
-    if (teacherIdsFromPlan.length === 0) return [];
+    teacherIdsFromCourse = mappings.map(m => m.t_id);
+    if (teacherIdsFromCourse.length === 0) return [];
   }
 
   // Base query
@@ -48,8 +48,8 @@ export async function fetchAllTeachers(filters) {
     `)
     .order("t_id", { ascending: true });
 
-  if (teacherIdsFromPlan) {
-    query = query.in("t_id", teacherIdsFromPlan);
+  if (teacherIdsFromCourse) {
+    query = query.in("t_id", teacherIdsFromCourse);
   }
 
   if (search) {
@@ -181,11 +181,11 @@ export async function fetchTeacherById(id) {
 /* ============================================================
    Fetch mentors by plan IDs
 ============================================================ */
-export async function fetchMentors(planIds) {
+export async function fetchMentors(courseIds) {
   const { data: mapping, error: mapErr } = await supabase
-    .from("teacher_plan")
+    .from("course_teacher_mapping")
     .select("t_id")
-    .in("plan_id", planIds);
+    .in("course_id", courseIds);
   if (mapErr) throw mapErr;
 
   const teacherIds = mapping.map(m => m.t_id);
@@ -193,7 +193,19 @@ export async function fetchMentors(planIds) {
 
   const { data: mentors, error: mentorErr } = await supabase
     .from("teacher")
-    .select("*")
+    .select(`
+      t_id,
+      name,
+      bio,
+      education,
+      pfp,
+      rating,
+      experience,
+      verified,
+      teaching_style,
+      meeting_link,
+      specialisation:specialisation ( sp1, sp2, sp3, sp4 )
+    `)
     .in("t_id", teacherIds);
   if (mentorErr) throw mentorErr;
 
@@ -293,4 +305,39 @@ console.log("Upsert payload:", upsertPayload);
   if (upsertError) throw upsertError;
 
   return { success: true, message: "Availability saved successfully" };
+}
+
+export async function getMentorsByDomain(domain) {
+  // 1. Resolve course_id from domain
+  const { data: course, error: courseError } = await supabase
+    .from("courses")
+    .select("course_id")
+    .eq("domain", domain)
+    .limit(1)
+    .maybeSingle();
+
+  if (courseError) throw new Error(courseError.message);
+  if (!course) return { mentors: [] };
+
+  const course_id = course.course_id;
+
+  // 2. Get teachers mapped to that course
+  const { data: mappings, error: teacherError } = await supabase
+    .from("course_teacher_mapping")
+    .select("t_id")
+    .eq("course_id", course_id);
+
+  if (teacherError) throw new Error(teacherError.message);
+  if (!mappings || mappings.length === 0) return { mentors: [] };
+
+  // 3. Fetch teacher details separately
+  const ids = mappings.map(m => m.t_id);
+  const { data: teacherDetails, error: detailError } = await supabase
+    .from("teacher")
+    .select("name, bio, expertise")
+    .in("t_id", ids);
+
+  if (detailError) throw new Error(detailError.message);
+
+  return { mentors: teacherDetails || [] };
 }

@@ -40,9 +40,17 @@ function getLockedNotice(user) {
     : "Locked: sign up to create project, see plans";
 }
 
-function getLessonUnlockState(lesson, progressMap, checkpointMap, hasActiveBooking) {
-  if (!hasActiveBooking) {
-    return lesson.order_index === 1 ? "unlocked" : "locked";
+function getLessonUnlockState(
+  lesson,
+  progressMap,
+  checkpointMap,
+  checkpointProgressMap,
+  hasActiveBooking,
+  isAuthenticated
+) {
+  // Allow full roadmap access for unauthenticated users and for logged-in users without an active booking
+  if (!isAuthenticated || (isAuthenticated && !hasActiveBooking)) {
+    return "unlocked";
   }
   if (lesson.order_index === 1) return "unlocked";
   if (lesson.prerequisite_id) {
@@ -50,16 +58,17 @@ function getLessonUnlockState(lesson, progressMap, checkpointMap, hasActiveBooki
   }
   if (lesson.checkpoint_id) {
     const checkpoint = checkpointMap[lesson.checkpoint_id];
-    const checkpointSession = checkpoint?.session;
+    const checkpointProgress = checkpointProgressMap[lesson.checkpoint_id];
+    const checkpointSession = checkpointProgress?.session;
     const sessionEnded = checkpointSession?.end_time
       ? new Date(checkpointSession.end_time) <= new Date()
       : false;
     const teacherMarked = checkpointSession?.marked_by_teacher === true;
-    const checkpointPassed = checkpoint?.status === "completed";
+    const checkpointPassed = checkpointProgress?.completed === true || teacherMarked;
     const requiresTeacher = checkpoint?.requires_teacher === true;
 
     if (requiresTeacher) {
-      return Boolean(checkpoint?.session_id) && sessionEnded && teacherMarked
+      return Boolean(checkpointProgress?.session_id) && sessionEnded && teacherMarked
         ? "unlocked"
         : "locked";
     }
@@ -69,7 +78,7 @@ function getLessonUnlockState(lesson, progressMap, checkpointMap, hasActiveBooki
   return "locked";
 }
 
-function findReachedCheckpoint(lessons, checkpoints, progressMap) {
+function findReachedCheckpoint(lessons, checkpoints, progressMap, checkpointProgressMap) {
   for (let idx = 0; idx < lessons.length - 1; idx += 1) {
     const lesson = lessons[idx];
     const nextLesson = lessons[idx + 1];
@@ -78,13 +87,33 @@ function findReachedCheckpoint(lessons, checkpoints, progressMap) {
     const checkpoint = checkpoints.find(
       (item) => item.checkpoint_id === nextLesson.checkpoint_id
     );
+    const checkpointProgress = checkpointProgressMap[nextLesson.checkpoint_id];
 
-    if (checkpoint && !checkpoint.session_id) {
+    if (checkpoint && !checkpointProgress?.session_id && !checkpointProgress?.completed) {
       return { checkpoint, lesson };
     }
   }
 
   return null;
+}
+
+function normalizeCheckpointProgress(rows = []) {
+  const map = {};
+
+  rows.forEach((row) => {
+    if (!row?.checkpoint_id || map[row.checkpoint_id]) return;
+    map[row.checkpoint_id] = row;
+  });
+
+  return map;
+}
+
+function getCourseIdFromLocation(location) {
+  const params = new URLSearchParams(location.search || "");
+  const queryCourseId = params.get("courseId");
+  const stateCourseId = location.state?.courseId;
+  const parsed = Number(queryCourseId || stateCourseId || 1);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
 function PartyBurst() {
@@ -137,7 +166,7 @@ function CheckpointCelebrationModal({ checkpoint, onClose, onSelectTeacher }) {
         position: "relative",
         width: "min(560px, 100%)",
         background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
-        borderRadius: 24,
+        borderRadius: 12,
         border: "1px solid #fde68a",
         boxShadow: "0 18px 50px rgba(18, 11, 41, 0.2)",
         padding: "28px 28px 24px",
@@ -155,7 +184,7 @@ function CheckpointCelebrationModal({ checkpoint, onClose, onSelectTeacher }) {
             <div style={{
               width: 58,
               height: 58,
-              borderRadius: 18,
+              borderRadius: 12,
               background: "linear-gradient(135deg, #6b46c1, #f6c90e)",
               display: "flex",
               alignItems: "center",
@@ -182,7 +211,7 @@ function CheckpointCelebrationModal({ checkpoint, onClose, onSelectTeacher }) {
           <div style={{
             background: "#fff8e1",
             border: "1px solid #fde68a",
-            borderRadius: 16,
+            borderRadius: 10,
             padding: "14px 16px",
           }}>
             <div style={{ fontSize: 10, fontFamily: "monospace", color: "#92400e", textTransform: "uppercase", letterSpacing: 1.5 }}>
@@ -195,7 +224,11 @@ function CheckpointCelebrationModal({ checkpoint, onClose, onSelectTeacher }) {
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
-              onClick={() => onSelectTeacher(checkpoint)}
+              onClick={() => onSelectTeacher({
+                kind: "checkpoint",
+                id: checkpoint.checkpoint_id,
+                title: checkpoint.title,
+              })}
               style={{
                 border: "none",
                 borderRadius: 12,
@@ -229,17 +262,130 @@ function CheckpointCelebrationModal({ checkpoint, onClose, onSelectTeacher }) {
   );
 }
 
+function RoadmapGateCard({
+  kind,
+  indexLabel,
+  title,
+  description,
+  status,
+  sessionId = null,
+  onBook = null,
+  bookLabel = "Select Teacher",
+  lockedHint = "Locked until you complete the previous step.",
+}) {
+  const statusMeta = {
+    completed: { label: "Completed", background: "#d1fae5", color: "#059669", border: "#a7f3d0" },
+    pending: { label: "Session Pending", background: "#fff8e1", color: "#b45309", border: "#fde68a" },
+    ready: { label: "Ready to book", background: "#f0ecfc", color: "#6b46c1", border: "#d8d0f0" },
+    locked: { label: "Locked", background: "#f3f4f6", color: "#6b7280", border: "#e5e7eb" },
+  };
+
+  const meta = statusMeta[status] || statusMeta.locked;
+
+  return (
+    <div style={{
+      background: "#f2e5fbff",
+      // border: `1.5px solid ${meta.border}`,
+      border: "2px solid #dca2ffff",
+      borderRadius: 10,
+      padding: 18,
+      boxShadow: status === "ready" ? "0 10px 28px rgba(107,70,193,0.08)" : "0 1px 6px rgba(0,0,0,0.04)",
+      transition: "all 0.22s ease",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase" }}>
+            {indexLabel}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#1a1035", marginTop: 4 }}>
+            {title}
+          </div>
+          <div style={{ fontSize: 12, color: "#5c5478", lineHeight: 1.65, marginTop: 6 }}>
+            {description}
+          </div>
+        </div>
+        <span style={{
+          fontSize: 10,
+          fontFamily: "monospace",
+          background: meta.background,
+          color: meta.color,
+          border: `1px solid ${meta.border}`,
+          padding: "4px 8px",
+          borderRadius: 999,
+          whiteSpace: "nowrap",
+          fontWeight: 700,
+          flexShrink: 0,
+        }}>
+          {meta.label}
+        </span>
+      </div>
+
+      <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+        {sessionId && (
+          <div style={{
+            fontSize: 10,
+            fontFamily: "monospace",
+            color: "#7b70a0",
+            background: "#faf9ff",
+            border: "1px solid #ece7fb",
+            borderRadius: 999,
+            padding: "6px 10px",
+          }}>
+            session_id: {sessionId}
+          </div>
+        )}
+        {status === "locked" && (
+          <div style={{ fontSize: 11, color: "#7b70a0" }}>{lockedHint}</div>
+        )}
+        {status === "pending" && (
+          <div style={{ fontSize: 11, color: "#7b70a0" }}>
+            We’ll unlock the next step once this session is completed and marked by the mentor.
+          </div>
+        )}
+        {status === "completed" && (
+          <div style={{ fontSize: 11, color: "#047857" }}>
+            Great work. This milestone is complete.
+          </div>
+        )}
+        {status === "ready" && onBook && (
+          <button
+            onClick={onBook}
+          style={{
+              border: "none",
+              background: "linear-gradient(135deg, #6b46c1, #8b5cf6)",
+              color: "#fff",
+              borderRadius: 12,
+              padding: "10px 14px",
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: "pointer",
+              marginLeft: "auto",
+            }}
+          >
+            {bookLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AlgoNestRoadmap() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const courseId = getCourseIdFromLocation(location);
 
   const [lessons,        setLessons]        = useState([]);
   const [lessonTopics,   setLessonTopics]   = useState({});
   const [checkpoints,    setCheckpoints]    = useState([]);
+  const [interviews,     setInterviews]     = useState([]);
   const [progressMap,    setProgressMap]    = useState({});
   const [checkpointMap,  setCheckpointMap]  = useState({});
+  const [checkpointProgressMap, setCheckpointProgressMap] = useState({});
+  const [interviewProgressMap, setInterviewProgressMap] = useState({});
   const [openToolbox,    setOpenToolbox]    = useState(null);
+  const [expandedTopics, setExpandedTopics] = useState({});
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
   const [activeLessonId, setActiveLessonId] = useState(null);
@@ -248,12 +394,15 @@ export default function AlgoNestRoadmap() {
   const [checkpointCelebration, setCheckpointCelebration] = useState(null);
   const [checkpointSuccess, setCheckpointSuccess] = useState(null);
   const [hasActiveBooking, setHasActiveBooking] = useState(false);
+  const [hasAnyBooking, setHasAnyBooking] = useState(false);
+  const [aiInputCount, setAiInputCount] = useState(0);
+  const [aiLockedByUsage, setAiLockedByUsage] = useState(false);
 
   async function refreshLessonProgress() {
     if (!user?.uid) return;
 
     try {
-      const progressRes = await fetch(`http://localhost:5000/api/lessons/progress/${user.uid}`);
+      const progressRes = await fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`);
       const progressData = await progressRes.json();
 
       setProgressMap(
@@ -269,29 +418,51 @@ export default function AlgoNestRoadmap() {
   async function loadRoadmapData() {
     try {
       const requests = [
-        fetch("http://localhost:5000/api/lessons/lessons"),
-        fetch("http://localhost:5000/api/lessons/lesson-topics"),
-        fetch("http://localhost:5000/api/lessons/lesson-topic-materials"),
-        fetch("http://localhost:5000/api/lessons/checkpoints"),
+        fetch(`http://localhost:5000/api/lessons/lessons?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/lesson-topics?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/lesson-topic-materials?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/checkpoints?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/interviews?courseId=${courseId}`),
       ];
 
       if (user?.uid) {
         requests.push(fetch(`http://localhost:5000/api/dashboard/active-course/${user.uid}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/progress/${user.uid}`));
+        // Also fetch dashboard summary which includes hasAnyBooking and activeCourse
+        requests.push(fetch(`http://localhost:5000/api/dashboard/getDashboard/${user.uid}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`));
       }
 
       const responses = await Promise.all(requests);
-      const [lessonsRes, topicsRes, materialsRes, checkpointsRes, activeCourseRes, progressRes] = responses;
+      const [
+        lessonsRes,
+        topicsRes,
+        materialsRes,
+        checkpointsRes,
+        interviewsRes,
+        activeCourseRes,
+        dashboardRes,
+        progressRes,
+        checkpointProgressRes,
+        interviewProgressRes,
+      ] = responses;
       const lessonsData = await lessonsRes.json();
       const topicsData = await topicsRes.json();
       const materialsData = await materialsRes.json();
       const checkpointsData = await checkpointsRes.json();
+      const interviewsData = await interviewsRes.json();
+      // responses array may include additional entries when user is logged in
+      let dashboardData = null;
+      let activeCourseData = null;
+
       const visibleLessons = (lessonsData.data || []).filter(
         (lesson) => Number(lesson.order_index) >= 1
       );
 
       setLessons(visibleLessons);
       setCheckpoints(checkpointsData.data || []);
+      setInterviews(interviewsData.data || []);
 
       const materialsByTopicId = {};
       (materialsData.data || []).forEach((material) => {
@@ -313,11 +484,37 @@ export default function AlgoNestRoadmap() {
       });
       setLessonTopics(grouped);
 
-      if (activeCourseRes) {
-        const activeCourseData = await activeCourseRes.json();
-        setHasActiveBooking(Boolean(activeCourseData?.course));
+      // derive booking state from dashboard summary if available
+      if (user?.uid) {
+        // responses order: index 5 => activeCourseRes, index 6 => dashboardRes, index 7 => progressRes, 8 => checkpointProgressRes, 9 => interviewProgressRes
+        const activeCourseResIdx = 5;
+        const dashboardResIdx = 6;
+
+        try {
+          const activeCourseJson = await activeCourseRes.json();
+          activeCourseData = activeCourseJson.course || null;
+        } catch (e) {
+          activeCourseData = null;
+        }
+
+        try {
+          const dashboardJson = await dashboardRes.json();
+          dashboardData = dashboardJson.data || null;
+        } catch (e) {
+          dashboardData = null;
+        }
+
+        const dashboardActiveCourse = dashboardData?.activeCourse || null;
+        const dashboardHasAnyBooking = Boolean(dashboardData?.hasAnyBooking);
+
+        // A booking is valid for this roadmap if activeCourse exists and its courseId matches
+        const validForThisCourse = (dashboardActiveCourse && Number(dashboardActiveCourse.courseId) === Number(courseId));
+
+        setHasActiveBooking(Boolean(validForThisCourse));
+        setHasAnyBooking(dashboardHasAnyBooking);
       } else {
         setHasActiveBooking(false);
+        setHasAnyBooking(false);
       }
 
       if (progressRes) {
@@ -330,6 +527,24 @@ export default function AlgoNestRoadmap() {
       } else {
         setProgressMap({});
       }
+
+      if (checkpointProgressRes) {
+        const checkpointProgressData = await checkpointProgressRes.json();
+        setCheckpointProgressMap(normalizeCheckpointProgress(checkpointProgressData.data || []));
+      } else {
+        setCheckpointProgressMap({});
+      }
+
+      if (interviewProgressRes) {
+        const interviewProgressData = await interviewProgressRes.json();
+        setInterviewProgressMap(
+          Object.fromEntries(
+            (interviewProgressData.data || []).map((row) => [row.interview_id, row])
+          )
+        );
+      } else {
+        setInterviewProgressMap({});
+      }
     } catch (err) {
       console.error("Failed to load roadmap data:", err);
     }
@@ -337,7 +552,33 @@ export default function AlgoNestRoadmap() {
 
   useEffect(() => {
     loadRoadmapData();
+  }, [user?.uid, courseId]);
+
+  // track AI input count for logged-in users with no previous bookings
+  useEffect(() => {
+    if (!user?.uid) {
+      setAiInputCount(0);
+      setAiLockedByUsage(false);
+      return;
+    }
+
+    const key = `ai_inputs:${user.uid}`;
+    const stored = parseInt(localStorage.getItem(key) || "0", 10) || 0;
+    setAiInputCount(stored);
+    setAiLockedByUsage(stored >= 15);
   }, [user?.uid]);
+
+  function handleUserAIMessage() {
+    if (!user?.uid) return;
+    // only count for users who do not have an active booking (preview mode)
+    if (hasActiveBooking) return;
+
+    const key = `ai_inputs:${user.uid}`;
+    const next = aiInputCount + 1;
+    localStorage.setItem(key, String(next));
+    setAiInputCount(next);
+    if (next >= 15) setAiLockedByUsage(true);
+  }
 
   useEffect(() => {
     if (checkpoints.length) {
@@ -350,24 +591,50 @@ export default function AlgoNestRoadmap() {
   useEffect(() => {
     if (!user?.uid) {
       setHasActiveBooking(false);
+      setCheckpointProgressMap({});
     }
   }, [user?.uid]);
 
   useEffect(() => {
-    const success = location.state?.checkpointBookingSuccess;
+    const success = location.state?.gateBookingSuccess
+      || location.state?.checkpointBookingSuccess
+      || location.state?.interviewBookingSuccess;
     if (!success) return;
 
     setCheckpointSuccess(success);
-    setCheckpoints((prev) =>
-      prev.map((checkpoint) =>
-        checkpoint.checkpoint_id === success.checkpointId
-          ? { ...checkpoint, session_id: success.sessionId }
-          : checkpoint
-      )
-    );
+    if (success.kind === "interview") {
+      setInterviewProgressMap((prev) => ({
+        ...prev,
+        [success.interviewId]: {
+          interview_sessions_id: `local-${success.interviewId}`,
+          interview_id: success.interviewId,
+          session_id: success.sessionId,
+          notes: null,
+          completed: false,
+          completed_at: null,
+          status: "BOOKED",
+          session: null,
+        },
+      }));
+    } else {
+      setCheckpointProgressMap((prev) => ({
+        ...prev,
+        [success.checkpointId]: {
+          id: `local-${success.checkpointId}`,
+          checkpoint_id: success.checkpointId,
+          s_id: null,
+          status: "BOOKED",
+          completed: false,
+          completed_at: null,
+          session_id: success.sessionId,
+          created_at: new Date().toISOString(),
+          session: null,
+        },
+      }));
+    }
     setCheckpointCelebration(null);
-    navigate(location.pathname, { replace: true, state: null });
-  }, [location.pathname, location.state, navigate]);
+    navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
 
   useEffect(() => {
     const dashboardPrompt = location.state?.dashboardAiPrompt;
@@ -378,16 +645,16 @@ export default function AlgoNestRoadmap() {
     const nextState = { ...(location.state || {}) };
     delete nextState.dashboardAiPrompt;
 
-    navigate(location.pathname, {
+    navigate({ pathname: location.pathname, search: location.search }, {
       replace: true,
       state: Object.keys(nextState).length ? nextState : null,
     });
-  }, [location.pathname, location.state, navigate]);
+  }, [location.pathname, location.search, location.state, navigate]);
 
   useEffect(() => {
     if (!user?.uid || !lessons.length || !checkpoints.length) return;
 
-    const reached = findReachedCheckpoint(lessons, checkpoints, progressMap);
+    const reached = findReachedCheckpoint(lessons, checkpoints, progressMap, checkpointProgressMap);
     if (!reached) return;
 
     const celebrationKey = `checkpoint-celebrated:${user.uid}:${reached.checkpoint.checkpoint_id}`;
@@ -395,7 +662,7 @@ export default function AlgoNestRoadmap() {
 
     localStorage.setItem(celebrationKey, "1");
     setCheckpointCelebration(reached.checkpoint);
-  }, [checkpoints, lessons, progressMap, user?.uid]);
+  }, [checkpoints, lessons, progressMap, checkpointProgressMap, user?.uid]);
 
   function markLessonComplete(lesson_id, score = null, serverProgress = null) {
     setProgressMap(prev => ({
@@ -425,6 +692,18 @@ export default function AlgoNestRoadmap() {
 
   function openLessonQuiz(e, lessonId) {
     e.stopPropagation();
+    if (!user?.uid) {
+      // Not logged in — send to signup to satisfy Rule 1 (quizzes locked)
+      navigate("/signup");
+      return;
+    }
+    // Only allow quiz if user has a valid booking for this course
+    if (!hasActiveBooking) {
+      // logged-in but no valid booking — send to pricing
+      navigate("/#pricing");
+      return;
+    }
+
     setQuizLessonId(lessonId);
   }
 
@@ -432,16 +711,19 @@ export default function AlgoNestRoadmap() {
     setQuizLessonId(null);
   }
 
-  function goToTeacherSelection(checkpoint) {
-    if (!checkpoint?.checkpoint_id) return;
+  function goToTeacherSelection(gate) {
+    if (!gate) return;
 
     setCheckpointCelebration(null);
     navigate("/teachers", {
       state: {
-        checkpointFlow: {
-          checkpointId: checkpoint.checkpoint_id,
-          title: checkpoint.title,
-          returnTo: "/roadmap_express",
+        gateFlow: {
+          kind: gate.kind,
+          checkpointId: gate.kind === "checkpoint" ? gate.id : null,
+          interviewId: gate.kind === "interview" ? gate.id : null,
+          title: gate.title,
+          courseId,
+          returnTo: `/roadmap_express?courseId=${courseId}`,
         },
       },
     });
@@ -449,11 +731,103 @@ export default function AlgoNestRoadmap() {
 
   const completedCount = Object.values(progressMap).filter(p => p.completed).length;
   const totalLessons   = lessons.length;
+  const lessonCheckpointIds = new Set(lessons.map((lesson) => lesson.checkpoint_id).filter(Boolean));
+  const terminalCheckpoint = [...checkpoints]
+    .filter((checkpoint) => !lessonCheckpointIds.has(checkpoint.checkpoint_id))
+    .sort((a, b) => Number(a.checkpoint_id) - Number(b.checkpoint_id))
+    .at(-1) || null;
+  const terminalCheckpointProgress = terminalCheckpoint ? checkpointProgressMap[terminalCheckpoint.checkpoint_id] : null;
+  const allLessonsCompleted = totalLessons > 0 && lessons.every((lesson) => progressMap[lesson.lesson_id]?.completed === true);
+  const terminalCheckpointCompleted = Boolean(
+    terminalCheckpointProgress?.completed === true ||
+    terminalCheckpointProgress?.session?.marked_by_teacher === true
+  );
+  const terminalCheckpointPending = Boolean(
+    terminalCheckpointProgress?.session_id && !terminalCheckpointCompleted
+  );
+  const interviewOne = interviews[0] || null;
+  const interviewTwo = interviews[1] || null;
+  const interviewOneProgress = interviewOne ? interviewProgressMap[interviewOne.interview_id] : null;
+  const interviewTwoProgress = interviewTwo ? interviewProgressMap[interviewTwo.interview_id] : null;
+  const interviewOneUnlocked = terminalCheckpointCompleted;
+  const interviewTwoUnlocked = Boolean(interviewOneProgress?.completed === true);
+  const interviewOneCompleted = Boolean(interviewOneProgress?.completed === true);
+  const interviewTwoCompleted = Boolean(interviewTwoProgress?.completed === true);
+  const finalCheckpointCanBook = Boolean(
+    terminalCheckpoint && allLessonsCompleted && hasActiveBooking && !terminalCheckpointCompleted && !terminalCheckpointPending
+  );
+  const finalCheckpointStatus = terminalCheckpointCompleted
+    ? "completed"
+    : terminalCheckpointPending
+    ? "pending"
+    : finalCheckpointCanBook
+    ? "ready"
+    : "locked";
+  const interviewOneStatus = interviewOneCompleted
+    ? "completed"
+    : interviewOneProgress?.session_id
+    ? "pending"
+    : interviewOneUnlocked
+    ? "ready"
+    : "locked";
+  const interviewTwoStatus = interviewTwoCompleted
+    ? "completed"
+    : interviewTwoProgress?.session_id
+    ? "pending"
+    : interviewTwoUnlocked
+    ? "ready"
+    : "locked";
+
+  // Determine AI/chat availability based on booking state (Rule 2)
+  const isAuthenticated = Boolean(user?.uid);
+  let canUseAI = false;
+  let chatLockReason = null; // e.g., "other_roadmap"
+
+  if (isAuthenticated) {
+    if (hasActiveBooking) {
+      // Active booking for this roadmap: full AI access
+      canUseAI = true;
+    } else if (hasAnyBooking && !hasActiveBooking) {
+      // User has a booking, but it's for another course -> disallow chat
+      canUseAI = false;
+      chatLockReason = "other_roadmap";
+    } else {
+      // No bookings at all — allow AI preview up to 15 messages
+      canUseAI = !aiLockedByUsage;
+    }
+  } else {
+    // Anonymous users: AI input disallowed (preview-only conversation shown)
+    canUseAI = false;
+  }
+
+  const chatIsLocked = !canUseAI;
+  let chatLockedTitle = "";
+  let chatLockedDescription = "";
+  let chatLockedCta = "/#pricing";
+
+  if (aiLockedByUsage) {
+    chatLockedTitle = "Create your study plan";
+    chatLockedDescription = "You have used the AI preview 15 times. Create a study plan to continue using the companion.";
+    chatLockedCta = "/#pricing";
+  } else if (chatLockReason === "other_roadmap") {
+    chatLockedTitle = "you have other roadmap in continuation";
+    chatLockedDescription = "This course is not your active roadmap. Switch to your active roadmap to continue using the AI companion.";
+    chatLockedCta = "/dashboard";
+  } else if (isAuthenticated) {
+    chatLockedTitle = "AI Build Companion unlocks with a plan";
+    chatLockedDescription = "You can preview milestone 1, but AI guidance, later milestones, and project creation unlock once your plan is active.";
+    chatLockedCta = "/#pricing";
+  } else {
+    chatLockedTitle = "Sign up to unlock your AI Build Companion";
+    chatLockedDescription = "You can preview milestone 1 right away. Sign up and start a plan to unlock AI help, project creation, and the full roadmap.";
+    chatLockedCta = "/signup";
+  }
 
   return (
     <div style={{
       fontFamily: "'Trebuchet MS', sans-serif",
-      background: "#f5f4f0", minHeight: "100vh",
+      background: "linear-gradient(180deg, #f8f6f2 0%, #f4f0ea 100%)",
+      minHeight: "100vh",
       display: "flex", flexDirection: "column",
       overflow: "hidden", height: "100vh",
     }}>
@@ -464,16 +838,17 @@ export default function AlgoNestRoadmap() {
       />
 
       <header style={{
-        minHeight: 52,
-        background: "#fff",
+        minHeight: 58,
+        background: "rgba(255,255,255,0.94)",
         borderBottom: "1px solid #e8e4f0",
         display: "flex",
         alignItems: "center",
-        padding: "8px 20px",
+        padding: "10px 22px",
         gap: 14,
         flexShrink: 0,
         zIndex: 40,
-        boxShadow: "0 1px 8px rgba(107,70,193,0.06)",
+        boxShadow: "0 1px 14px rgba(107,70,193,0.06)",
+        backdropFilter: "blur(12px)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9991b8", fontFamily: "monospace" }}>
           <span style={{ color: "#444" }}>Backend Dev</span>
@@ -484,7 +859,7 @@ export default function AlgoNestRoadmap() {
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
-            background: "#f0ecfc", borderRadius: 20,
+            background: "#f0ecfc", borderRadius: 12,
             padding: "5px 14px", fontSize: 11, fontFamily: "monospace",
           }}>
             <div style={{ width: 60, height: 4, background: "#e0d8f8", borderRadius: 3, overflow: "hidden" }}>
@@ -500,7 +875,7 @@ export default function AlgoNestRoadmap() {
 
           <div style={{
             background: "#fff8e1", border: "1px solid #f6c90e",
-            borderRadius: 20, padding: "5px 12px",
+            borderRadius: 12, padding: "5px 12px",
             fontSize: 11, fontFamily: "monospace", color: "#b45309", fontWeight: 600,
           }}>
             🔥 12-day streak
@@ -509,7 +884,17 @@ export default function AlgoNestRoadmap() {
       </header>
 
       {/* ── BODY ── */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
+      <div style={{
+        flex: 1,
+        display: "flex",
+        gap: 18,
+        overflow: "hidden",
+        position: "relative",
+        padding: "18px 22px 22px",
+        maxWidth: 1520,
+        width: "100%",
+        margin: "0 auto",
+      }}>
 
         {/* ── SIDEBAR ── */}
         <div style={{
@@ -566,8 +951,10 @@ export default function AlgoNestRoadmap() {
 
         {/* ── LEFT: ROADMAP 60% ── */}
         <div style={{
-          width: "60%", overflowY: "auto",
-          padding: "24px 28px 40px",
+          width: "60%",
+          minWidth: 0,
+          overflowY: "auto",
+          padding: "0",
           display: "flex", flexDirection: "column", gap: 12,
         }}>
           {checkpointSuccess && (
@@ -579,12 +966,12 @@ export default function AlgoNestRoadmap() {
               padding: "14px 16px",
               background: "#ecfdf5",
               border: "1px solid #a7f3d0",
-              borderRadius: 14,
+              borderRadius: 10,
               color: "#065f46",
             }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 800 }}>
-                  Session linked to {checkpointSuccess.checkpointTitle}
+                  Session linked to {checkpointSuccess.title}
                 </div>
                 <div style={{ fontSize: 11, fontFamily: "monospace", marginTop: 3 }}>
                   session_id: {checkpointSuccess.sessionId || "pending"}
@@ -606,15 +993,55 @@ export default function AlgoNestRoadmap() {
           )}
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>
-              Node.js + Express · Backend Developer Path
+            <div style={{
+              background: "#fff",
+              border: "1px solid #e8e4f0",
+              borderRadius: 12,
+              padding: 18,
+              boxShadow: "0 12px 28px rgba(26,16,53,0.05)",
+              marginBottom: 14,
+            }}>
+              <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>
+                Node.js + Express · Backend Developer Path
+              </div>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1a1035", margin: 0, lineHeight: 1.2 }}>
+                Your Learning Roadmap
+              </h1>
+              <p style={{ fontSize: 12, color: "#7b70a0", margin: "6px 0 0", fontFamily: "monospace" }}>
+                Project: <strong style={{ color: "#6b46c1" }}>Course #{courseId}</strong> · Complete lessons in order. Click a lesson to see topics.
+              </p>
+
+              <div style={{
+                marginTop: 16,
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: 10,
+              }}>
+                {[
+                  { label: "Lessons", value: `${completedCount}/${totalLessons}`, color: "#6b46c1" },
+                  { label: "Checkpoints", value: `${checkpoints.length}`, color: "#b45309" },
+                  { label: "Interviews", value: `${interviews.length}`, color: "#059669" },
+                  { label: "AI Access", value: hasActiveBooking ? "Unlocked" : "Preview", color: hasActiveBooking ? "#059669" : "#6b46c1" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    style={{
+                      background: "#faf9ff",
+                      border: "1px solid #ece7fb",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <div style={{ fontSize: 18, fontWeight: 800, color: item.color, lineHeight: 1.1 }}>
+                      {item.value}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#8b7bb8", fontFamily: "monospace", marginTop: 4, textTransform: "uppercase", letterSpacing: 1 }}>
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1a1035", margin: 0, lineHeight: 1.2 }}>
-              Your Learning Roadmap
-            </h1>
-            <p style={{ fontSize: 12, color: "#7b70a0", margin: "6px 0 0", fontFamily: "monospace" }}>
-              Project: <strong style={{ color: "#6b46c1" }}>Job Tracker API</strong> · Complete lessons in order. Click a lesson to see topics.
-            </p>
           </div>
 
           {lessons.length === 0 && (
@@ -624,7 +1051,14 @@ export default function AlgoNestRoadmap() {
           )}
 
           {lessons.map((lesson, idx) => {
-            const unlock   = getLessonUnlockState(lesson, progressMap, checkpointMap, hasActiveBooking);
+            const unlock   = getLessonUnlockState(
+              lesson,
+              progressMap,
+              checkpointMap,
+              checkpointProgressMap,
+              hasActiveBooking,
+              Boolean(user?.uid)
+            );
             const progress = progressMap[lesson.lesson_id] || null;
             const isLocked = unlock === "locked";
             const isDone   = progress?.completed === true;
@@ -637,37 +1071,39 @@ export default function AlgoNestRoadmap() {
             const cpAfterNext = nextLesson?.checkpoint_id
               ? checkpoints.find(c => c.checkpoint_id === nextLesson.checkpoint_id)
               : null;
-            const checkpointSession = cpAfterNext?.session || null;
+            const checkpointProgress = cpAfterNext ? checkpointProgressMap[cpAfterNext.checkpoint_id] : null;
+            const checkpointSession = checkpointProgress?.session || null;
             const checkpointSessionEnded = checkpointSession?.end_time
               ? new Date(checkpointSession.end_time) <= new Date()
               : false;
             const checkpointTeacherMarked = checkpointSession?.marked_by_teacher === true;
-            const checkpointReady = Boolean(cpAfterNext && isDone && !cpAfterNext.session_id);
-            const checkpointBooked = Boolean(cpAfterNext?.session_id);
+            const checkpointCompleted = checkpointProgress?.completed === true || checkpointTeacherMarked;
+            const checkpointBooked = Boolean(checkpointProgress?.session_id);
+            const checkpointReady = Boolean(cpAfterNext && isDone && !checkpointProgress);
 
             return (
               <div key={lesson.lesson_id}>
 
                 {/* ── Outer card — NOT clickable ── */}
                 <div style={{
-                  background: isLocked ? "#f8f7fb" : "#fff",
+                  background: isLocked ? "#faf8fd" : "#fff",
                   border: isDone
                     ? "1.5px solid #d1fae5"
                     : isActive
                     ? "1.5px solid #6b46c1"
                     : "1.5px solid #e8e4f0",
-                  borderRadius: 14, overflow: "hidden",
+                  borderRadius: 10, overflow: "hidden",
                   opacity: isLocked ? 0.55 : 1,
                   boxShadow: isActive
-                    ? "0 0 0 3px rgba(107,70,193,0.08), 0 3px 12px rgba(107,70,193,0.1)"
-                    : "0 1px 6px rgba(0,0,0,0.04)",
+                    ? "0 0 0 3px rgba(107,70,193,0.06), 0 10px 24px rgba(107,70,193,0.08)"
+                    : "0 1px 10px rgba(26,16,53,0.04)",
                   transition: "all 0.2s",
                 }}>
 
                   {/* Row: lesson info + Ask AI — full horizontal flex */}
                   <div style={{
                     display: "flex", alignItems: "center",
-                    padding: "14px 18px", gap: 14,
+                    padding: "14px 16px", gap: 12,
                   }}>
 
                     {/* Left: badge + text — clickable zone for toolbox */}
@@ -681,7 +1117,7 @@ export default function AlgoNestRoadmap() {
                     >
                       {/* Order badge */}
                       <div style={{
-                        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                        width: 40, height: 40, borderRadius: 10, flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         background: isDone
                           ? "#d1fae5"
@@ -697,30 +1133,30 @@ export default function AlgoNestRoadmap() {
 
                       {/* Title + meta */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: isLocked ? "#aaa" : "#1a1035" }}>
                             {lesson.title}
                           </span>
                           {isDone && (
-                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#d1fae5", color: "#059669", padding: "2px 8px", borderRadius: 20, fontWeight: 600, flexShrink: 0 }}>
+                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#d1fae5", color: "#059669", padding: "2px 8px", borderRadius: 8, fontWeight: 600, flexShrink: 0 }}>
                               Completed
                             </span>
                           )}
                           {isDone && progress?.quiz_marks != null && (
-                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#fff8e1", color: "#b45309", padding: "2px 8px", borderRadius: 20, fontWeight: 700, flexShrink: 0 }}>
+                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#fff8e1", color: "#b45309", padding: "2px 8px", borderRadius: 8, fontWeight: 700, flexShrink: 0 }}>
                               Marks: {progress.quiz_marks}
                             </span>
                           )}
                           {isActive && (
-                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#f0ecfc", color: "#6b46c1", padding: "2px 8px", borderRadius: 20, fontWeight: 600, flexShrink: 0 }}>
+                            <span style={{ fontSize: 10, fontFamily: "monospace", background: "#f0ecfc", color: "#6b46c1", padding: "2px 8px", borderRadius: 8, fontWeight: 600, flexShrink: 0 }}>
                               In Progress
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8" }}>
+                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", lineHeight: 1.5 }}>
                           Lesson {lesson.order_index} · {topics.length} topics
                           {isDone && progress?.quiz_marks != null && ` · score ${progress.quiz_marks}/6`}
-                          {!hasActiveBooking && lesson.order_index > 1 && ` · ${getLockedNotice(user)}`}
+                          {/* no locked notice for users without an active booking; roadmap is accessible per Rule 2 */}
                           {lesson.prerequisite_id && !isDone && ` · Unlocks after Lesson ${lesson.prerequisite_id}`}
                           {lesson.checkpoint_id && !isDone && ` · Requires Checkpoint ${lesson.checkpoint_id}`}
                         </div>
@@ -749,20 +1185,60 @@ export default function AlgoNestRoadmap() {
                       )}
 
                       {!isLocked && (
-                        <button
-                          onClick={e => openLessonQuiz(e, lesson.lesson_id)}
-                          style={{
-                            fontSize: 10, fontFamily: "monospace", fontWeight: 700,
-                            background: "#fff8e1",
-                            color: "#b45309",
-                            border: "1px solid #fde68a",
-                            borderRadius: 6,
-                            padding: "5px 12px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Take Quiz
-                        </button>
+                        user?.uid ? (
+                          hasActiveBooking ? (
+                            <button
+                              onClick={e => openLessonQuiz(e, lesson.lesson_id)}
+                              style={{
+                                fontSize: 10, fontFamily: "monospace", fontWeight: 700,
+                                background: "#fff8e1",
+                                color: "#b45309",
+                                border: "1px solid #fde68a",
+                                borderRadius: 6,
+                                padding: "5px 12px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Take Quiz
+                            </button>
+                          ) : (
+                            <a
+                              href="/#pricing"
+                              style={{
+                                fontSize: 10,
+                                fontFamily: "monospace",
+                                fontWeight: 700,
+                                background: "#f3f4f6",
+                                color: "#6b46c1",
+                                border: "1px solid #e8e4f0",
+                                borderRadius: 6,
+                                padding: "5px 12px",
+                                textDecoration: "none",
+                                display: "inline-block",
+                              }}
+                            >
+                              See plans to take quiz
+                            </a>
+                          )
+                        ) : (
+                          <a
+                            href="/signup"
+                            style={{
+                              fontSize: 10,
+                              fontFamily: "monospace",
+                              fontWeight: 700,
+                              background: "#f3f4f6",
+                              color: "#6b46c1",
+                              border: "1px solid #e8e4f0",
+                              borderRadius: 6,
+                              padding: "5px 12px",
+                              textDecoration: "none",
+                              display: "inline-block",
+                            }}
+                          >
+                            Sign up to take assesment
+                          </a>
+                        )
                       )}
 
                       {/* Chevron — also outside click zone, just visual */}
@@ -785,7 +1261,7 @@ export default function AlgoNestRoadmap() {
                   {/* Toolbox */}
                   {isOpen && (
                     <div style={{ borderTop: "1px solid #f0ecfc", background: "#faf9ff" }}>
-                      <div style={{ padding: "14px 18px 6px" }}>
+                      <div style={{ padding: "14px 16px 8px" }}>
                         <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
                           Topics in this lesson
                         </div>
@@ -794,104 +1270,118 @@ export default function AlgoNestRoadmap() {
                           <div style={{ fontSize: 11, color: "#9991b8", fontFamily: "monospace" }}>No topics yet.</div>
                         )}
 
-                        {!hasActiveBooking && lesson.order_index > 1 && (
-                          <div style={{
-                            marginBottom: 10,
-                            background: "#fff8e1",
-                            border: "1px solid #fde68a",
-                            borderRadius: 10,
-                            padding: "10px 12px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 12,
-                          }}>
-                            <div>
-                              <div style={{ fontSize: 10, fontFamily: "monospace", color: "#92400e", textTransform: "uppercase", letterSpacing: 1.2 }}>
-                                Locked
-                              </div>
-                              <div style={{ fontSize: 11, color: "#78350f", marginTop: 3 }}>
-                                {getLockedNotice(user)}
-                              </div>
-                            </div>
-                            <a
-                              href={user?.uid ? "/#pricing" : "/signup"}
-                              style={{
-                                whiteSpace: "nowrap",
-                                background: "#6b46c1",
-                                color: "#fff",
-                                textDecoration: "none",
-                                borderRadius: 8,
-                                padding: "8px 12px",
-                                fontSize: 11,
-                                fontWeight: 700,
-                              }}
-                            >
-                              {user?.uid ? "See Plans" : "Sign Up"}
-                            </a>
-                          </div>
-                        )}
+                        {/* Roadmap preview: no locked banner for users without an active booking (Rule 2) */}
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {topics.map(topic => {
                             const resources = normalizeTopicResources(topic);
+                            const hasPractice = Boolean(topic.applied_task);
+                            const hasResources = resources.length > 0;
+                            const isExpanded = Boolean(expandedTopics[topic.topic_id]);
 
                             return (
                               <div key={topic.topic_id} style={{
                                 background: "#fff", border: "1px solid #e8e4f0",
-                                borderRadius: 10, padding: "12px 14px",
+                                borderRadius: 8, overflow: "hidden",
                               }}>
-                                <div style={{ fontWeight: 700, fontSize: 12, color: "#1a1035", marginBottom: 5 }}>
-                                  {topic.title}
-                                </div>
-                                <div style={{ fontSize: 11, color: "#5c5478", lineHeight: 1.6, marginBottom: 7 }}>
-                                  {topic.description}
-                                </div>
-                                {(topic.applied_task || resources.length > 0) && (
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns:
-                                        topic.applied_task && resources.length > 0 ? "1fr 1fr" : "1fr",
-                                      gap: 10,
-                                      alignItems: "stretch",
-                                    }}
-                                  >
-                                    {topic.applied_task && (
-                                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
-                                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "#92400e", letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>
-                                          ⚡ Build Task
-                                        </span>
-                                        <div style={{ fontSize: 11, color: "#78350f", marginTop: 3, lineHeight: 1.5 }}>
-                                          {topic.applied_task}
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedTopics((prev) => ({
+                                    ...prev,
+                                    [topic.topic_id]: !prev[topic.topic_id],
+                                  }))}
+                                  style={{
+                                    width: "100%",
+                                    border: "none",
+                                    background: "transparent",
+                                    padding: "11px 12px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                                    <div style={{ minWidth: 0, textAlign: "left" }}>
+                                      <div style={{ fontWeight: 700, fontSize: 12, color: "#1a1035", lineHeight: 1.4 }}>
+                                        {topic.title}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "#8b7bb8", fontFamily: "monospace", marginTop: 3 }}>
+                                        Click to {isExpanded ? "collapse" : "expand"}
+                                      </div>
+                                    </div>
+                                    <div style={{
+                                      width: 20,
+                                      height: 20,
+                                      borderRadius: 6,
+                                      border: "1px solid #ece7fb",
+                                      background: "#faf9ff",
+                                      color: "#6b46c1",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                    }}>
+                                      {isExpanded ? "▾" : "▸"}
+                                    </div>
+                                  </div>
+                                </button>
+
+                                {isExpanded && (
+                                  <div style={{ borderTop: "1px solid #f0ecfc", background: "#faf9ff", padding: "10px 12px 12px" }}>
+                                    <div
+                                      style={{
+                                        display: "grid",
+                                        gridTemplateColumns: hasPractice && hasResources ? "1.4fr 1fr 1fr" : hasPractice || hasResources ? "1.4fr 1fr" : "1fr",
+                                        gap: 10,
+                                        alignItems: "stretch",
+                                      }}
+                                    >
+                                      <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontSize: 9, fontFamily: "monospace", color: "#8b7bb8", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                                          List
+                                        </div>
+                                        <div style={{ fontSize: 11, color: "#5c5478", lineHeight: 1.55 }}>
+                                          {topic.description}
                                         </div>
                                       </div>
-                                    )}
-                                    {resources.length > 0 && (
-                                      <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "8px 12px" }}>
-                                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "#0369a1", letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>
-                                          Resources
-                                        </span>
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 7 }}>
-                                          {resources.map((resource) => (
-                                            <a
-                                              key={resource.url}
-                                              href={resource.url}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              style={{
-                                                fontSize: 11,
-                                                color: "#0c4a6e",
-                                                textDecoration: "underline",
-                                                wordBreak: "break-word",
-                                              }}
-                                            >
-                                              {resource.label}
-                                            </a>
-                                          ))}
+
+                                      {hasPractice && (
+                                        <div style={{ minWidth: 0, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 10px" }}>
+                                          <div style={{ fontSize: 9, fontFamily: "monospace", color: "#92400e", letterSpacing: 1, textTransform: "uppercase", fontWeight: 700, marginBottom: 5 }}>
+                                            Sublist
+                                          </div>
+                                          <div style={{ fontSize: 11, color: "#78350f", lineHeight: 1.5 }}>
+                                            {topic.applied_task}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
+
+                                      {hasResources && (
+                                        <div style={{ minWidth: 0, background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "8px 10px" }}>
+                                          <div style={{ fontSize: 9, fontFamily: "monospace", color: "#0369a1", letterSpacing: 1, textTransform: "uppercase", fontWeight: 700, marginBottom: 5 }}>
+                                            Resources
+                                          </div>
+                                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                            {resources.map((resource) => (
+                                              <a
+                                                key={resource.url}
+                                                href={resource.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                style={{
+                                                  fontSize: 11,
+                                                  color: "#0c4a6e",
+                                                  textDecoration: "underline",
+                                                  wordBreak: "break-word",
+                                                }}
+                                              >
+                                                {resource.label}
+                                              </a>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -920,17 +1410,58 @@ export default function AlgoNestRoadmap() {
                           >
                             {hasActiveBooking ? "Ask companion about this →" : "AI Locked"}
                           </button>
-                          <button
-                            onClick={e => openLessonQuiz(e, lesson.lesson_id)}
-                            style={{
-                              fontSize: 11, fontFamily: "monospace", fontWeight: 700,
-                              background: "#fff8e1", color: "#b45309",
-                              border: "1.5px solid #fde68a", borderRadius: 8,
-                              padding: "9px 18px", cursor: "pointer",
-                            }}
-                          >
-                            Start quiz →
-                          </button>
+
+                          {user?.uid ? (
+                            hasActiveBooking ? (
+                              <button
+                                onClick={e => openLessonQuiz(e, lesson.lesson_id)}
+                                style={{
+                                  fontSize: 11, fontFamily: "monospace", fontWeight: 700,
+                                  background: "#fff8e1", color: "#b45309",
+                                  border: "1.5px solid #fde68a", borderRadius: 8,
+                                  padding: "9px 18px", cursor: "pointer",
+                                }}
+                              >
+                                Start quiz →
+                              </button>
+                            ) : (
+                              <a
+                                href="/#pricing"
+                                style={{
+                                  fontSize: 11,
+                                  fontFamily: "monospace",
+                                  fontWeight: 700,
+                                  background: "#f3f4f6",
+                                  color: "#6b46c1",
+                                  border: "1.5px solid #e8e4f0",
+                                  borderRadius: 8,
+                                  padding: "9px 18px",
+                                  textDecoration: "none",
+                                  display: "inline-block",
+                                }}
+                              >
+                                See plans to take quiz
+                              </a>
+                            )
+                          ) : (
+                            <a
+                              href="/signup"
+                              style={{
+                                fontSize: 11,
+                                fontFamily: "monospace",
+                                fontWeight: 700,
+                                background: "#f3f4f6",
+                                color: "#6b46c1",
+                                border: "1.5px solid #e8e4f0",
+                                borderRadius: 8,
+                                padding: "9px 18px",
+                                textDecoration: "none",
+                                display: "inline-block",
+                              }}
+                            >
+                              Sign up to take assesment
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
@@ -941,7 +1472,7 @@ export default function AlgoNestRoadmap() {
                 {cpAfterNext && (
                   <div style={{
                     display: "flex", alignItems: "stretch",
-                    margin: "8px 0", borderRadius: 12, overflow: "hidden",
+                    margin: "8px 0", borderRadius: 10, overflow: "hidden",
                     border: "1.5px solid #fde68a", background: "#fffbeb",
                   }}>
                     <div style={{ width: 4, background: "#f6c90e", flexShrink: 0 }} />
@@ -951,22 +1482,26 @@ export default function AlgoNestRoadmap() {
                         <div style={{ fontSize: 12, fontWeight: 700, color: "#78350f" }}>{cpAfterNext.title}</div>
                         <div style={{ fontSize: 10, fontFamily: "monospace", color: "#92400e", marginTop: 2 }}>{cpAfterNext.description}</div>
                         <div style={{ fontSize: 10, fontFamily: "monospace", color: "#b45309", marginTop: 3 }}>
-                          status: <strong>{cpAfterNext.status}</strong>
+                          status: <strong>{checkpointCompleted ? "completed" : checkpointBooked ? "booked" : checkpointReady ? "ready to book" : "locked"}</strong>
                           {cpAfterNext.requires_teacher ? " · teacher required" : ""}
-                          {checkpointBooked ? ` · session_id: ${cpAfterNext.session_id}` : ""}
+                          {checkpointBooked ? ` · session_id: ${checkpointProgress?.session_id || "pending"}` : ""}
                           {checkpointBooked && !checkpointSessionEnded ? " · waiting for session to end" : ""}
                           {checkpointBooked && checkpointSessionEnded && !checkpointTeacherMarked ? " · waiting for teacher sign-off" : ""}
                         </div>
                       </div>
                       {checkpointReady ? (
                         <button
-                          onClick={() => goToTeacherSelection(cpAfterNext)}
+                          onClick={() => goToTeacherSelection({
+                            kind: "checkpoint",
+                            id: cpAfterNext.checkpoint_id,
+                            title: cpAfterNext.title || "Mentor Checkpoint",
+                          })}
                           style={{
                             border: "none",
                             background: "linear-gradient(135deg, #6b46c1, #8b5cf6)",
                             color: "#fff",
                             padding: "10px 14px",
-                            borderRadius: 12,
+                            borderRadius: 8,
                             fontSize: 11,
                             fontFamily: "monospace",
                             fontWeight: 700,
@@ -980,11 +1515,11 @@ export default function AlgoNestRoadmap() {
                       ) : (
                         <div style={{
                           fontSize: 10, fontFamily: "monospace",
-                          background: cpAfterNext.status === "completed" ? "#d1fae5" : checkpointBooked ? "#ede9fe" : "#fef9c3",
-                          color:      cpAfterNext.status === "completed" ? "#059669" : checkpointBooked ? "#6b46c1" : "#92400e",
-                          padding: "4px 10px", borderRadius: 20, fontWeight: 700, flexShrink: 0,
+                          background: checkpointCompleted ? "#d1fae5" : checkpointBooked ? "#ede9fe" : "#fef9c3",
+                          color:      checkpointCompleted ? "#059669" : checkpointBooked ? "#6b46c1" : "#92400e",
+                          padding: "4px 10px", borderRadius: 8, fontWeight: 700, flexShrink: 0,
                         }}>
-                          {cpAfterNext.status === "completed"
+                          {checkpointCompleted
                             ? "✓ Passed"
                             : checkpointBooked && !checkpointSessionEnded
                             ? "Session Pending"
@@ -1001,6 +1536,92 @@ export default function AlgoNestRoadmap() {
               </div>
             );
           })}
+
+          {(terminalCheckpoint || interviewOne || interviewTwo) && (
+            <div style={{
+              marginTop: 8,
+              paddingTop: 14,
+              borderTop: "1px dashed #ddd6fe",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}>
+              {terminalCheckpoint && (
+                <div>
+                  <div style={{
+                    fontSize: 10,
+                    fontFamily: "monospace",
+                    color: "#9991b8",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}>
+                    Final Checkpoint
+                  </div>
+                  <RoadmapGateCard
+                    kind="checkpoint"
+                    indexLabel="Checkpoint · 5/5"
+                    title={terminalCheckpoint.title || "Final Mentor Checkpoint"}
+                    description={terminalCheckpoint.description || "This is the last mentor checkpoint before your interview milestones begin."}
+                    status={finalCheckpointStatus}
+                    sessionId={terminalCheckpointProgress?.session_id || null}
+                    lockedHint={allLessonsCompleted
+                      ? "Book this final checkpoint with a mentor to unlock interviews."
+                      : "Complete every lesson to unlock the final checkpoint."}
+                    onBook={finalCheckpointStatus === "ready" ? () => goToTeacherSelection({ kind: "checkpoint", id: terminalCheckpoint.checkpoint_id, title: terminalCheckpoint.title || "Final Mentor Checkpoint" }) : null}
+                    bookLabel="Select Teacher"
+                  />
+                </div>
+              )}
+
+              {(interviewOne || interviewTwo) && (
+                <div>
+                  <div style={{
+                    fontSize: 10,
+                    fontFamily: "monospace",
+                    color: "#9991b8",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}>
+                    Interview Milestones
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {interviewOne && (
+                      <RoadmapGateCard
+                        kind="interview"
+                        indexLabel="Interview · 1/2"
+                        title={interviewOne.title || "Mock Interview I"}
+                        description={interviewOne.desc || "Practice core questions, answer structure, and how to show what you’ve learned."}
+                        status={interviewOneStatus}
+                        sessionId={interviewOneProgress?.session_id || null}
+                        lockedHint={interviewOneUnlocked
+                          ? "Book this mock interview to move into the final interview round."
+                          : "Complete the final checkpoint to unlock this interview."}
+                        onBook={interviewOneStatus === "ready" ? () => goToTeacherSelection({ kind: "interview", id: interviewOne.interview_id, title: interviewOne.title || "Mock Interview I" }) : null}
+                        bookLabel="Select Teacher"
+                      />
+                    )}
+                    {interviewTwo && (
+                      <RoadmapGateCard
+                        kind="interview"
+                        indexLabel="Interview · 2/2"
+                        title={interviewTwo.title || "Mock Interview II"}
+                        description={interviewTwo.desc || "Bring everything together and show the full depth of your mentor-led learning."}
+                        status={interviewTwoStatus}
+                        sessionId={interviewTwoProgress?.session_id || null}
+                        lockedHint={interviewTwoUnlocked
+                          ? "Book this final interview to finish the roadmap journey."
+                          : "Complete the first interview to unlock this final round."}
+                        onBook={interviewTwoStatus === "ready" ? () => goToTeacherSelection({ kind: "interview", id: interviewTwo.interview_id, title: interviewTwo.title || "Mock Interview II" }) : null}
+                        bookLabel="Select Teacher"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── RIGHT: AI COMPANION 40% ── */}
@@ -1011,15 +1632,12 @@ export default function AlgoNestRoadmap() {
           pendingMessage={pendingMessage}
           onPendingConsumed={() => setPendingMessage("")}
           lessonId={activeLessonId}
-          isLocked={!hasActiveBooking}
-          lockedTitle={user?.uid ? "AI Build Companion unlocks with a plan" : "Sign up to unlock your AI Build Companion"}
-          lockedDescription={
-            user?.uid
-              ? "You can preview milestone 1, but AI guidance, later milestones, and project creation unlock once your plan is active."
-              : "You can preview milestone 1 right away. Sign up and start a plan to unlock AI help, project creation, and the full roadmap."
-          }
-          lockedCtaHref={user?.uid ? "/#pricing" : "/signup"}
+          isLocked={chatIsLocked}
+          lockedTitle={chatLockedTitle}
+          lockedDescription={chatLockedDescription}
+          lockedCtaHref={chatLockedCta}
           lockedFooter={getLockedNotice(user)}
+          onUserMessageSent={handleUserAIMessage}
         />
 
         <LessonQuiz

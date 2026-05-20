@@ -24,6 +24,7 @@ export default function Teachers() {
   const[search, setSearch] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const gateFlow = location.state?.gateFlow || location.state?.checkpointFlow || location.state?.interviewFlow || null;
 
   /* ---------------- FETCH TEACHERS ---------------- */
   useEffect(() => {
@@ -119,16 +120,16 @@ export default function Teachers() {
       {/* HERO SECTION */}
       <FadeInSection>
         <section className="text-center py-12 px-4 bg-white shadow-sm">
-          {location.state?.checkpointFlow && (
+          {gateFlow && (
             <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-left shadow-sm">
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-700">
-                Checkpoint Mentor Selection
+                {gateFlow.kind === "interview" ? "Interview Mentor Selection" : "Checkpoint Mentor Selection"}
               </div>
               <div className="mt-1 text-lg font-semibold text-gray-900">
-                Pick a teacher for {location.state.checkpointFlow.title}
+                Pick a teacher for {gateFlow.title}
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                Once you book a mentor session, we&apos;ll link that session directly to this checkpoint and take you back to your roadmap.
+                Once you book a mentor session, we&apos;ll link that session directly to this roadmap gate and take you back to your roadmap.
               </p>
             </div>
           )}
@@ -136,12 +137,12 @@ export default function Teachers() {
             Meet Our Mentors
           </h1>
           <p className="text-lg text-gray-600 mt-2">
-            Guiding You from Basics to Breakthroughs 🚀
+            From pressure test to placement-ready 🚀
           </p>
           <p className="max-w-2xl mx-auto mt-4 text-gray-500">
             At <strong>Algonest</strong>, our mentors are engineers, creators,
-            and innovators who help you master DSA, build impactful projects,
-            and bridge your learning to real-world success.
+            and innovators who help you prepare for interviews, build defensible projects,
+            and bridge your proof to real-world success.
           </p>
         </section>
       </FadeInSection>

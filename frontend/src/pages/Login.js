@@ -95,12 +95,12 @@ export default function Login() {
     <AuthExperienceShell
       eyebrow="Welcome Back"
       title="Resume your flight path."
-      subtitle="Pick up your roadmap, join sessions, and let your Build Companion help you move through each lesson with clarity."
+      subtitle="Pick up your route, join sessions, and let your Build Companion help you defend each decision with clarity."
     >
       <div>
         <h2 className="text-2xl font-black text-[#1e1145]">Log in</h2>
         <p className="mt-2 text-sm text-[#7b70a0]">
-          Continue your AlgoNest journey.
+          Continue your AlgoNest preparation.
         </p>
 
         <div className="mt-6 space-y-3">

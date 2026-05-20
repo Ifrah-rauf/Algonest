@@ -11,7 +11,7 @@ export default function TeacherCard({ teacher }) {
     navigate(`/TeachersProfile/${teacher.t_id}`, {
       state: {
         teacher,
-        checkpointFlow: location.state?.checkpointFlow || null,
+        gateFlow: location.state?.gateFlow || location.state?.checkpointFlow || location.state?.interviewFlow || null,
       },
     });
   };

@@ -6,10 +6,12 @@ import {
   getPlanService,
   getTimeSlotsService,
   getStudentCheckpointBookingGuard,
+  getStudentInterviewBookingGuard,
   CODE,
 } from "../services/bookingService.js";
+import { createCourseBookingService } from "../services/courseBookingService.js";
 import { createZoomMeeting } from "../services/zoomService.js";
-import { attachSessionToCheckpoint } from "../services/lessonService.js";
+import { attachSessionToCheckpoint, attachSessionToInterview } from "../services/lessonService.js";
 
 /* ============================================================
    HELPER — unified error response
@@ -35,6 +37,49 @@ export async function createBooking(req, res) {
     return res.json({ success: true, message: "Booking created & email sent!", result });
   } catch (err) {
     return serverError(res, "createBooking", err);
+  }
+}
+
+/* ============================================================
+   1B) CREATE COURSE BOOKING
+   POST /api/booking/course-booking
+============================================================ */
+export async function createCourseBooking(req, res) {
+  try {
+    const {
+      uid,
+      courseId = 1,
+      paymentId = null,
+      planId = null,
+      remainingSessions = 12,
+      expiryDays = 120,
+      projectId = null,
+    } = req.body || {};
+
+    if (!uid) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing uid",
+      });
+    }
+
+    const result = await createCourseBookingService({
+      uid,
+      courseId,
+      paymentId,
+      planId,
+      remainingSessions,
+      expiryDays,
+      projectId,
+    });
+
+    return res.json({
+      success: true,
+      message: "Booking inserted successfully",
+      result,
+    });
+  } catch (err) {
+    return serverError(res, "createCourseBooking", err);
   }
 }
 
@@ -109,6 +154,32 @@ export async function getCheckpointBookingGuard(req, res) {
   }
 }
 
+export async function getInterviewBookingGuard(req, res) {
+  try {
+    const { userId, interviewId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        message: "Missing userId",
+      });
+    }
+
+    const data = await getStudentInterviewBookingGuard({
+      userId,
+      interviewId: interviewId || null,
+    });
+
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    return serverError(res, "getInterviewBookingGuard", err);
+  }
+}
+
 /* ============================================================
    4) GET TIME SLOTS
    POST /api/booking/getTimeSlots
@@ -141,7 +212,7 @@ export async function getTimeSlots(req, res) {
      Step 3 — createSessionRecord : persist session row with Zoom details
 ============================================================ */
 export async function bookPlan(req, res) {
-  const { studentId, slot, checkpointId } = req.body;
+  const { studentId, slot, checkpointId, interviewId } = req.body;
 
   if (!studentId || !slot) {
     return res.status(400).json({
@@ -154,7 +225,12 @@ export async function bookPlan(req, res) {
   // ── STEP 1: validate + write booking data ──────────────
   let coreResult;
   try {
-    coreResult = await bookPlanCore({ studentId, slot, checkpointId: checkpointId || null });
+    coreResult = await bookPlanCore({
+      studentId,
+      slot,
+      checkpointId: checkpointId || null,
+      interviewId: interviewId || null,
+    });
   } catch (err) {
     return serverError(res, "bookPlan/bookPlanCore", err);
   }
@@ -199,6 +275,7 @@ export async function bookPlan(req, res) {
       bookingId: coreResult.booking_id,
       slot,
       meeting,
+      sessionType: interviewId ? "interview" : checkpointId ? "checkpoint" : "session",
       sb_id: coreResult.sb_id,
     });
   } catch (err) {
@@ -216,6 +293,7 @@ export async function bookPlan(req, res) {
     try {
       const checkpoint = await attachSessionToCheckpoint({
         checkpointId,
+        studentId,
         sessionId: finalResult.session.session_id,
       });
       finalResult.checkpoint = checkpoint;
@@ -225,6 +303,26 @@ export async function bookPlan(req, res) {
         success: false,
         code: "CHECKPOINT_LINK_FAILED",
         message: "Session was created, but checkpoint linking failed. Please contact support.",
+        session_id: finalResult.session.session_id,
+      });
+    }
+  }
+
+  if (interviewId && finalResult?.session?.session_id) {
+    try {
+      const interview = await attachSessionToInterview({
+        interviewId,
+        studentId,
+        sessionId: finalResult.session.session_id,
+        notes: finalResult.session?.title || "Interview session",
+      });
+      finalResult.interview = interview;
+    } catch (err) {
+      console.error("[bookPlan/interview] Failed to attach session to interview:", err.message);
+      return res.status(500).json({
+        success: false,
+        code: "INTERVIEW_LINK_FAILED",
+        message: "Session was created, but interview linking failed. Please contact support.",
         session_id: finalResult.session.session_id,
       });
     }

@@ -20,8 +20,8 @@ import React from "react";
  */
 
 const DynamicPricingSection = ({
-  title = "Clear and Fair Pricing for Everyone.",
-  subtitle = "Choose the plan that fits your learning journey and build real projects with expert mentors.",
+  title = "Clear and Serious Pricing for Students Who Mean It.",
+  subtitle = "Choose the plan that fits your interview timeline and get the full assessment and mentorship system.",
   plans = [],
   onBook
 }) => {

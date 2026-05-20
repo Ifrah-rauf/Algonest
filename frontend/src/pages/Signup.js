@@ -110,7 +110,7 @@ export default function Signup() {
     <AuthExperienceShell
       eyebrow="Start Your Journey"
       title="Send your career skyward."
-      subtitle="Choose your role, create your profile, and enter a roadmap system designed to help you build with momentum and mentorship."
+      subtitle="Choose your role, create your profile, and enter an assessment system designed to help you prove with momentum and mentorship."
     >
       <div>
         <h2 className="text-2xl font-black text-[#1e1145]">Create account</h2>

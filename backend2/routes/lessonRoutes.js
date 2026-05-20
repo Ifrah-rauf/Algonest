@@ -4,8 +4,11 @@ import {
   getAllLessonTopics,
   getAllLessonTopicMaterials,
   getAllCheckpoints,
+  getAllInterviews,
   getLesson,
   getLessonProgress,
+  getCheckpointProgress,
+  getInterviewProgress,
   getCheckpointStatus
 } from "../controllers/lessonController.js";
 
@@ -15,6 +18,9 @@ router.get("/lessons", getAllLessons);
 router.get("/lesson-topics", getAllLessonTopics);
 router.get("/lesson-topic-materials", getAllLessonTopicMaterials);
 router.get("/checkpoints", getAllCheckpoints);
+router.get("/interviews", getAllInterviews);
+router.get("/checkpoint-progress/:uid", getCheckpointProgress);
+router.get("/interview-progress/:uid", getInterviewProgress);
 router.get("/checkpoints/:checkpointId/status", getCheckpointStatus);
 router.get("/progress/:uid", getLessonProgress);
 router.get("/:lessonId", getLesson);

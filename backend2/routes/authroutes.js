@@ -5,7 +5,8 @@ import {
   firebaseLogin,
   logout,
   saveUser,
-  getUser
+  getUser,
+  updateStudentProfile
 } from "../controllers/authcontroller.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -23,5 +24,6 @@ router.post("/firebase-login", validate(firebaseLoginSchema), firebaseLogin);
 router.post("/logout", logout);
 router.post("/save-user", validate(saveUserSchema), saveUser);
 router.get("/user/:uid", getUser);
+router.post("/update-student-profile", updateStudentProfile);
 
 export default router;

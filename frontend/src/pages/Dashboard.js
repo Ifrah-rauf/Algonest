@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 // import StudentDashboard from "../components/s_dashboard.jsx"
-import StudentDashboard from "../components/s_dashboard2.jsx"
+import StudentDashboard from "../components/s_dashboard3.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
 export default function Dashboard() {
   const { user } = useAuth();
@@ -56,7 +56,7 @@ if (!user) return <Navigate to="/login" />;
     <div className="min-h-screen bg-gray-50">
       <Navbar/>
       
-      <main className="px-6 py-8 max-w-7xl mx-auto">
+      <main className="mx-auto w-full max-w-none px-3 py-3 md:px-4 md:py-4">
 
         {role === "STUDENT" && (
           <StudentDashboard 

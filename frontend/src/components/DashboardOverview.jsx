@@ -1,11 +1,11 @@
 import { Users, BookOpen, DollarSign, TrendingUp } from 'lucide-react';
 import { StatCard } from './StatCard';
-import { RecentActivity } from './RecentActivity';
 import { ActiveRoadmaps } from './ActiveRoadmaps';
 import { useAuth } from '../context/AuthContext';
 import {useState , useEffect} from "react"; 
 export function DashboardOverview() {
   const {user} = useAuth();
+  const [summary, setSummary] = useState(null);
     const [sessionInfo, setSessionInfo] = useState({
     status: "LOADING",
     session: null,
@@ -16,8 +16,30 @@ export function DashboardOverview() {
         window.location.href = "/login";   // optional redirect
         return;
     }
+    loadSummary();
     checkSession();
-  }, []);
+  }, [user?.uid]);
+
+async function loadSummary() {
+  try {
+    const uid = user?.uid;
+    if (!uid) return;
+
+    const res = await fetch("http://localhost:5000/api/teachers/overview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid })
+    });
+    const body = await res.json();
+
+    if (body.success) {
+      setSummary(body.data);
+    }
+  } catch (error) {
+    console.error("Overview load failed:", error);
+  }
+}
+
 async function checkSession() {
   try {
     const uid = user?.uid;
@@ -49,7 +71,7 @@ async function checkSession() {
       status: state,
       session,
       label:
-        state === "VALID"
+        state === "ACTIVE"
           ? "Live Now"
           : state === "UPCOMING"
           ? "Upcoming Session"
@@ -69,7 +91,7 @@ async function checkSession() {
     <div className="p-8">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900">Welcome back, Professor {user.username}!</h2>
-        <p className="text-gray-600 mt-2">Here's what's happening with your courses today.</p>
+        <p className="text-gray-600 mt-2">Here's what's happening with your assessment rooms today.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-8">
@@ -77,13 +99,13 @@ async function checkSession() {
          <div className="flex items-start justify-between mb-4">
             {/* Status Icon Block */}
             <div className={`p-3 rounded-lg 
-              ${sessionInfo.status === "VALID" ? "bg-green-100" :
+              ${sessionInfo.status === "ACTIVE" ? "bg-green-100" :
                 sessionInfo.status === "UPCOMING" ? "bg-blue-100" :
                 sessionInfo.status === "EXPIRED" ? "bg-gray-100" :
                 "bg-gray-100"}`}>
               
               <div className={`w-3 h-3 rounded-full 
-                ${sessionInfo.status === "VALID" ? "bg-green-500 animate-pulse" :
+                ${sessionInfo.status === "ACTIVE" ? "bg-green-500 animate-pulse" :
                   sessionInfo.status === "UPCOMING" ? "bg-blue-500" :
                   sessionInfo.status === "EXPIRED" ? "bg-gray-400" :
                   "bg-gray-300"}`}>
@@ -92,7 +114,7 @@ async function checkSession() {
 
             {/* Badge */}
             <span className={`text-xs font-medium px-2 py-1 rounded-full
-              ${sessionInfo.status === "VALID" ? "bg-green-100 text-green-700" :
+              ${sessionInfo.status === "ACTIVE" ? "bg-green-100 text-green-700" :
                 sessionInfo.status === "UPCOMING" ? "bg-blue-100 text-blue-700" :
                 sessionInfo.status === "EXPIRED" ? "bg-gray-200 text-gray-600" :
                 "bg-gray-200 text-gray-600"}`}>
@@ -117,17 +139,18 @@ async function checkSession() {
           {/* Action Button */}
           <button
             onClick={() => {
-              if (sessionInfo.status === "VALID" && sessionInfo.session?.join_url) {
-                window.location.href = sessionInfo.session.join_url;
+              const joinLink = sessionInfo.session?.join_url || sessionInfo.session?.session_link;
+              if (sessionInfo.status === "ACTIVE" && joinLink) {
+                window.location.href = joinLink;
               }
             }}
-            disabled={sessionInfo.status !== "VALID"}
+            disabled={sessionInfo.status !== "ACTIVE" || !(sessionInfo.session?.join_url || sessionInfo.session?.session_link)}
             className={`w-full py-2 rounded-lg text-sm font-medium transition-colors
-              ${sessionInfo.status === "VALID"
+              ${sessionInfo.status === "ACTIVE"
                 ? "bg-green-600 text-white hover:bg-green-700"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"}`}>
 
-            {sessionInfo.status === "VALID"
+            {sessionInfo.status === "ACTIVE"
               ? "Join Class"
               : sessionInfo.status === "UPCOMING"
               ? "Session Not Started"
@@ -138,40 +161,39 @@ async function checkSession() {
         </div>
         <StatCard
           title="Total Students"
-          value="1,248"
-          change="+12%"
+          value={summary?.metrics?.totalStudents ? String(summary.metrics.totalStudents) : "0"}
+          change={summary?.metrics?.currentMonthBookings ? `+${summary.metrics.currentMonthBookings}` : "0"}
           icon={Users}
           color="purple"
         />
         <StatCard
           title="Active Roadmaps"
-          value="18"
-          change="+3"
+          value={summary?.metrics?.activeRoadmaps ? String(summary.metrics.activeRoadmaps) : "0"}
+          change={summary?.highlights?.monthLabel || "This month"}
           icon={BookOpen}
           color="yellow"
         />
         <StatCard
           title="Monthly Earnings"
-          value="$8,450"
-          change="+23%"
+          value={`₹${(summary?.metrics?.monthlyEarnings || 0).toLocaleString("en-IN")}`}
+          change={summary?.metrics?.previousMonthEarnings
+            ? `${summary.metrics.monthlyEarnings >= summary.metrics.previousMonthEarnings ? "+" : "-"}${Math.abs(Math.round(((summary.metrics.monthlyEarnings - summary.metrics.previousMonthEarnings) / summary.metrics.previousMonthEarnings) * 100))}%`
+            : "This month"}
           icon={DollarSign}
           color="purple"
         />
         <StatCard
           title="Completion Rate"
-          value="78%"
-          change="+5%"
+          value={`${summary?.metrics?.completionRate || 0}%`}
+          change={summary?.metrics?.completedSessions ? `${summary.metrics.completedSessions} completed` : "0 completed"}
           icon={TrendingUp}
           color="yellow"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ActiveRoadmaps />
-        </div>
-        <div>
-          <RecentActivity />
+      <div className="grid grid-cols-1 gap-6">
+        <div className="lg:col-span-3">
+          <ActiveRoadmaps roadmapProgress={summary?.roadmapProgress || null} />
         </div>
       </div>
     </div>

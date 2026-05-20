@@ -12,12 +12,31 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import { useInView } from "react-intersection-observer";
 import HowItWorksScroll from "../components/howitworks.jsx";
-import RoadmapsSection from "../components/roadmaps.jsx";
-import Illustration from "../components/illustration.jsx";
 import roadmap from "../static/roadmap.png"
+import Paper from "../static/paper2.jpg";
 import review from "../static/review.png"
 import StudentDashboard from "../components/s_dashboard2.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
+import Comparison from "../components/comparison.jsx";
+const C = {
+  purple: "#6b46c1",
+  purpleDark: "#4c1d95",
+  purpleLight: "#f3eeff",
+  purpleTint: "#ede9fa",
+  yellow: "#f6c90e",
+  yellowLight: "#fff8dd",
+  ink: "#21153f",
+  muted: "#766f8e",
+  border: "#e8e1f5",
+  bg: "#faf8ff",
+  white: "#ffffff",
+  green: "#16a34a",
+  greenLight: "#dcfce7",
+  blue: "#0ea5e9",
+  blueLight: "#e0f2fe",
+  red: "#dc2626",
+  redLight: "#fef2f2",
+};
 const containerVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.18 } },
@@ -35,18 +54,10 @@ const fadeIn = {
   show: { opacity: 1, transition: { duration: 0.6 } },
 };
 
-const LEADERBOARD = [
-  { rank: 1, name: "Priya S.",   path: "Backend Dev",  cp: 5, score: 94, streak: 18, medal: "🥇" },
-  { rank: 2, name: "Arjun M.",   path: "Full Stack",   cp: 4, score: 91, streak: 14, medal: "🥈" },
-  { rank: 3, name: "Neha K.",    path: "ML Engineer",  cp: 6, score: 89, streak: 21, medal: "🥉" },
-  { rank: 4, name: "Rohit V.",   path: "Backend Dev",  cp: 3, score: 85, streak: 9,  medal: null },
-  { rank: 5, name: "Fatima Z.",  path: "Frontend Dev", cp: 4, score: 83, streak: 12, medal: null },
-];
-
 const PAID_FEATURES = [
-  { icon: "👨‍💻", title: "12 Live Checkpoint Reviews",   desc: "Your mentor assesses your work like a senior colleague — not grading, but asking if you're truly ready." },
+  { icon: "👨‍💻", title: "1+4 Live Checkpoint Reviews",   desc: "Your mentor assesses your work like a senior colleague — not grading, but asking if you're truly ready." },
   { icon: "🎤", title: "Interview Coaching Sessions",    desc: "2–3 sessions on how you communicate under pressure. Confidence, clarity, real feedback." },
-  { icon: "🏆", title: "Leaderboard & Cohort Access",   desc: "Compete with peers on quality, consistency, and communication — not just speed." },
+  { icon: "🏆", title: "Mentor Scorecards & Cohort Access",   desc: "Track readiness with your mentor and stay aligned with the cohort without turning it into a leaderboard." },
   { icon: "✅", title: "Verified Portfolio Entry",       desc: "Checkpoint history + mentor sign-off = evidence employers can actually assess." },
   { icon: "🤝", title: "Mentor Referral Network",       desc: "When you're ready, your mentor opens doors backed by real evidence — not a hollow LinkedIn endorsement." },
   { icon: "📊", title: "Progress Tracking Dashboard",   desc: "Every session, streak, and checkpoint — visible to you and your mentor. No hiding, no coasting." },
@@ -60,7 +71,7 @@ const AI_CHAT = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Aakash Verma", role: "Now @ Razorpay", text: "I finished 4 Udemy courses and still couldn't answer 'tell me about a project you built.' AlgoNest fixed that in 3 months.", av: "AV" },
+  { name: "Aakash Verma", role: "Now @ Razorpay", text: "I finished 4 online programs and still couldn't answer 'tell me about a project you built.' AlgoNest fixed that in 3 months.", av: "AV" },
   { name: "Sneha Patel",  role: "Now @ Zepto",    text: "The mentor didn't teach me — they pushed me to think. That difference got me the offer.", av: "SP" },
   { name: "Ravi Kumar",   role: "Now @ Groww",    text: "The AI companion blocked me from copy-pasting. Annoying at first. Best thing that happened to me.", av: "RK" },
 ];
@@ -108,11 +119,11 @@ function CollageSection({ label, headline, sub, cta, ctaLink, children, dark, fl
               <SectionLabel dark={dark}>{label}</SectionLabel>
             </motion.div>
             <motion.h2 variants={itemVariants}
-              className={`text-4xl lg:text-5xl font-bold leading-tight mb-5 ${dark ? "text-white" : "text-[#1a0533]"}`}
+              className={`text-4xl lg:text-5xl font-bold leading-tight mb-5 ${dark ? "text-gray-300" : "text-[#1a0533]"}`}
               dangerouslySetInnerHTML={{ __html: headline }}
             />
             <motion.p variants={itemVariants}
-              className={`text-lg leading-relaxed mb-8 max-w-md ${dark ? "text-white/55" : "text-gray-500"}`}>
+              className={`text-lg leading-relaxed mb-8 max-w-md ${dark ? "text-white" : "text-gray-400"}`}>
               {sub}
             </motion.p>
             {cta && (
@@ -136,6 +147,191 @@ function CollageSection({ label, headline, sub, cta, ctaLink, children, dark, fl
           >
             {children}
           </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExecutionTimelineSection() {
+  const steps = [
+    {
+      step: "01",
+      title: "Project Roadmaps",
+      tone: "#0ea5e9",
+      glow: "rgba(14,165,233,0.16)",
+      text: "Build the project first. Prove you can ship, document, and explain the decisions behind the work.",
+    },
+    {
+      step: "02",
+      title: "CS Fundamentals",
+      tone: "#7c3aed",
+      glow: "rgba(124,58,237,0.16)",
+      text: "Lock down DSA, OOP, DBMS, OS, and DCCN so the interview room cannot shake the foundation.",
+    },
+    {
+      step: "03",
+      title: "Grill Sessions",
+      tone: "#f59e0b",
+      glow: "rgba(245,158,11,0.16)",
+      text: "Pressure-test the story with a placed professional who reviews your resume, choices, and depth like an interviewer.",
+    },
+  ];
+
+  return (
+    <section className="w-full bg-white py-12 md:py-16">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.26em]" style={{ color: C.purple }}>
+              Execution timeline
+            </div>
+            <h3 className="mt-2 text-3xl font-bold leading-tight md:text-4xl" style={{ color: C.ink }}>
+              Project first, fundamentals second, pressure last.
+            </h3>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 md:text-base" style={{ color: C.muted }}>
+            The order matters. Each stage sets up the next one, so the line moves left to right with no shortcuts.
+          </p>
+        </div>
+
+        <div className="relative">
+          <div className="absolute left-0 right-0 top-10 hidden h-[3px] rounded-full bg-gray-200 md:block" />
+          <motion.div
+            className="absolute left-0 right-0 top-10 hidden h-[3px] rounded-full md:block"
+            style={{
+              background: "linear-gradient(90deg, #0ea5e9 0%, #7c3aed 54%, #f59e0b 100%)",
+              transformOrigin: "left",
+            }}
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            viewport={{ once: true, amount: 0.4 }}
+          />
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.step}
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7, delay: index * 0.14, ease: [0.22, 1, 0.36, 1] }}
+                viewport={{ once: true, amount: 0.35 }}
+                className="relative pt-0 md:pt-14"
+              >
+                <div className="mb-4 flex items-center gap-3 md:mb-6 md:block">
+                  <div
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 bg-white shadow-[0_10px_30px_rgba(33,21,63,0.08)]"
+                    style={{ borderColor: step.tone }}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-full"
+                      style={{
+                        background: step.tone,
+                        boxShadow: `0 0 0 12px ${step.glow}`,
+                        animation: "nodePulse 2.4s ease-in-out infinite",
+                        animationDelay: `${index * 180}ms`,
+                      }}
+                    />
+                  </div>
+                  <div className="md:mt-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em]" style={{ color: step.tone }}>
+                      {step.step}
+                    </div>
+                    <h4 className="mt-1 text-2xl font-bold" style={{ color: C.ink }}>
+                      {step.title}
+                    </h4>
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-3xl border bg-white p-5 shadow-[0_16px_36px_rgba(33,21,63,0.06)]"
+                  style={{ borderColor: `${step.tone}28` }}
+                >
+                  <div
+                    className="mb-4 h-1.5 w-20 rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${step.tone}, transparent)` }}
+                  />
+                  <p className="text-sm leading-7" style={{ color: C.muted }}>
+                    {step.text}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes nodePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+          }
+        `}</style>
+      </div>
+    </section>
+  );
+}
+
+function JourneyPathSection() {
+  return (
+    <section className="relative bg-[#0f0020] py-24 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-24 left-[-8%] h-72 w-72 rounded-full bg-[#6b46c1]/25 blur-3xl" />
+        <div className="absolute top-8 right-[-6%] h-80 w-80 rounded-full bg-[#f6c90e]/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_35%)]" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-6">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <div>
+            <SectionLabel dark>Path to Opportunity</SectionLabel>
+            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+              Build the route. Defend the route. Place with evidence.
+            </h2>
+            <p className="text-white/60 text-lg leading-8 max-w-2xl">
+              The timeline above sets the order. This visual shows the same system in action:
+              a project route, an AI companion that challenges your thinking, and the checkpoint trail that proves the work.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {[
+                "Project first",
+                "CS second",
+                "Grill last",
+              ].map((pill) => (
+                <span
+                  key={pill}
+                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/80"
+                >
+                  {pill}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="relative h-[420px] w-full max-w-[560px]">
+              <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#f0ecfc] to-[#e8e3f8] border border-white/10 shadow-2xl shadow-black/20">
+                <img src={roadmap} alt="Platform roadmap" className="w-full h-full object-cover object-top opacity-90 p-2" />
+              </div>
+              <div className="absolute -bottom-6 -left-6 bg-[#1a0533] rounded-2xl p-5 w-64 shadow-2xl border border-white/10">
+                <p className="text-[#f6c90e] text-xs font-bold mb-3">🤖 AI Build Companion</p>
+                <div className="space-y-2">
+                  <div className="bg-white/10 rounded-lg p-2.5">
+                    <p className="text-white/50 text-[10px] mb-1">You</p>
+                    <p className="text-white text-xs">Write middleware for me?</p>
+                  </div>
+                  <div className="bg-[#6b46c1]/40 rounded-lg p-2.5">
+                    <p className="text-[#f6c90e] text-[10px] mb-1">Companion</p>
+                    <p className="text-white text-xs">What should middleware check before the route runs?</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -top-4 -right-4 rounded-xl bg-[#f6c90e] px-4 py-3 shadow-lg">
+                <p className="text-[#1a0533] text-xs font-bold">⚡ Quiz Passed</p>
+                <p className="text-[#1a0533]/70 text-[10px]">Express Routing · 9/10</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -210,7 +406,7 @@ useEffect(() => {
           className="relative bg-no-repeat bg-cover bg-center overflow-hidden"
           style={{ backgroundImage: `url(${bg7})` }}
         >
-          <div className="relative max-w-7xl mx-auto px-6 pt-[3%] pb-0 text-center">
+          <div className="relative max-w-7xl mx-auto px-6 pt-[7%] pb-0 text-center">
 
             {/* Eyebrow */}
             <motion.div
@@ -220,7 +416,7 @@ useEffect(() => {
             >
               <span className="inline-flex items-center gap-2 bg-white/80 border border-purple-200 rounded-full px-5 py-2 text-sm font-semibold text-[#6b46c1] shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-[#f6c90e] animate-pulse" />
-                One stop for project launch
+                One stop for Placement preparation
               </span>
             </motion.div>
 
@@ -228,27 +424,28 @@ useEffect(() => {
             <motion.h1
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-4xl lg:text-5xl font-bold leading-tight"
+              className="text-4xl md:text-4xl lg:text-5xl font-bold leading-tight pt-[3%]"
             >
-              Self-paced, personalized project building,<br />
-              <span className="text-[#6b46c1]">now <span className="text-[#f6c90e] text-shadow-lg">smarter</span> with AI  <br/>
-                and 1:1 mentor.</span><br />
-              {/* <span className="text-[#f6c90e]"></span> */}
+              Get job-ready results with
+              <br />
+              <span className="text-[#6b46c1]">
+                 expert, clear milestones, and guaranteed outcomes.</span><br />
+              {/* <span className="text-[#f6c90e] text-shadow-lg">sharper</span> */}
             </motion.h1>
 
             {/* Subline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.25 }}
-              className="mt-6 text-lg text-gray-800 max-w-2xl mx-auto leading-relaxed"
+              className="mt-8 text-lg text-gray-800 max-w-2xl mx-auto leading-relaxed"
             >
-              Take your ownership on the project. Learn industry fundamentals
-              and build your capstone project in parallel — with someone who vouches
-              for you at the end.
+              <span className="text-[#f6c90e]">Ditch the hype, build real skills.</span>
+              <br />Take ownership of the work. Prepare the fundamentals, build the proof,
+              and walk into the room with someone who can vouch for you at the end.
             </motion.p>
 
             {/* Product strong points — pill grid */}
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.38 }}
               className="mt-8 flex flex-wrap justify-center gap-2.5"
@@ -264,7 +461,7 @@ useEffect(() => {
                   <span>{icon}</span> {label}
                 </span>
               ))}
-            </motion.div>
+            </motion.div> */}
 
             {/* CTAs */}
             <motion.div
@@ -274,11 +471,11 @@ useEffect(() => {
             >
               <Link to="/careerQuiz"
                 className="bg-[#6b46c1] text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 hover:shadow-purple-300">
-                Start Free — Pick Your Path →
+                Start Free Preview →
               </Link>
-              <Link to="/#howitworks"
+              <Link to="/#journey"
                 className="text-[#6b46c1] font-semibold hover:underline underline-offset-4 flex items-center gap-1.5">
-                See how it works ↓
+                See the assessment system ↓
               </Link>
             </motion.div>
           </div>
@@ -304,9 +501,9 @@ useEffect(() => {
               variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
               className="text-3xl md:text-4xl font-medium leading-relaxed max-w-3xl mx-auto"
             >
-              AlgoNest doesn't sell courses.{" "}
-              <span className="bg-[#f6c90e] text-[#1a0533] px-2 rounded font-bold">It sells ownership</span>{" "}
-              — bring your ideas live, with personal study plan.
+              AlgoNest does not teach students.{" "}
+              <span className="bg-[#f6c90e] text-[#1a0533] px-2 rounded font-bold">It prepares them to prove</span>{" "}
+              what they know in front of a human who will not let them bluff.
             </motion.p>
 
             <motion.div
@@ -315,10 +512,10 @@ useEffect(() => {
               className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-8"
             >
               {[
-                { v: "80%",    l: "Eng grads can't find relevant roles" },
-                { v: "~5%",    l: "MOOC completion rate globally" },
-                { v: "₹9,999", l: "All-in package. No hidden fees." },
-                { v: "12",     l: "Live mentor checkpoint reviews" },
+                { v: "80%",    l: "Engineers struggle to defend project decisions" },
+                { v: "~5%",    l: "People finish passive online programs" },
+                { v: "₹9,999", l: "Full assessment system. No hidden fees." },
+                { v: "1+4",     l: "Live mentor checkpoint reviews" },
               ].map((s, i) => (
                 <motion.div key={i} variants={itemVariants}>
                   <div className="text-4xl font-extrabold text-[#f6c90e] mb-2">{s.v}</div>
@@ -333,328 +530,375 @@ useEffect(() => {
         </section>
 
         {/* ══════════════════════════════════════════
-            THE QUESTION — CAPSTONE
+            THE PROBLEM
         ══════════════════════════════════════════ */}
-        <section className="py-24 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-
+        <section className="bg-white py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <motion.div
-                variants={containerVariants} initial="hidden"
-                whileInView="show" viewport={{ once: true, amount: 0.3 }}
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.3 }}
               >
                 <motion.div variants={itemVariants}>
-                  <SectionLabel>The Problem</SectionLabel>
+                  <div className="inline-flex items-center rounded-full border border-[#6b46c1]/15 bg-[#f4efff] px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#6b46c1]">
+                    THE REAL PROBLEM
+                  </div>
                 </motion.div>
-                <motion.h2 variants={itemVariants}
-                  className="text-4xl lg:text-5xl font-bold leading-tight mb-6 text-[#1a0533]">
-                  Have you not started<br />
-                  your <span className="text-[#6b46c1]">CAPSTONE</span><br />
-                  project yet?
+
+                <motion.h2
+                  variants={itemVariants}
+                  className="mt-5 text-4xl font-bold leading-tight tracking-tight text-[#1a0533] md:text-5xl"
+                >
+                  You have studied for months.
+                  <br />
+                  Still not ready
                 </motion.h2>
 
-                <motion.div variants={itemVariants} className="flex flex-wrap gap-3 mb-8">
+
+
+                <div className="relative z-10 mt-8 space-y-3">
                   {[
-                    "Don't know which cohort or bootcamp is reliable?",
-                    "No fixed roadmap or guidance",
-                    "Few months before job applications",
-                    "Studies, DSA and work exhaustion",
-                    "No time for project building",
+                    "You can list three projects on your resume but cannot explain why you made the decisions in any",
+                    "You have watched DSA videos for six months but you freeze when someone asks you to explain",
+                    "You don't know which companies you can actually crack now and which ones need four more weeks of specific work.",
                   ].map((t) => (
-                    <div key={t} className="flex items-center gap-2 border border-red-100 bg-red-50 rounded-xl px-4 py-2.5 text-sm text-gray-700">
-                      <span className="w-5 h-5 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-bold flex-shrink-0">✕</span>
-                      {t}
+                    <div
+                      key={t}
+                      className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-[0_10px_28px_rgba(33,21,63,0.04)]"
+                    >
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6c90e]/20 text-xs font-bold text-[#b7791f]">
+                        •
+                      </span>
+                      <p className="text-sm leading-7 text-gray-700">{t}</p>
                     </div>
                   ))}
-                </motion.div>
+                </div>
 
-                <motion.p variants={itemVariants} className="text-2xl font-bold text-[#1a0533] mb-8">
-                  Stop hopping.<br />
-                  <span className="text-[#6b46c1]">Start building with a plan.</span>
+                <motion.p
+                  variants={itemVariants}
+                  className="mt-8 max-w-2xl text-xl font-semibold leading-8 text-[#1a0533]"
+                >
+                  That honest conversation is exactly what AlgoNest is built around.
                 </motion.p>
 
-                <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
-                  <Link to="/careerQuiz"
-                    className="bg-[#6b46c1] text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-lg shadow-purple-100">
-                    Start Free — Pick Your Path →
+                <motion.div variants={itemVariants} className="mt-8 flex flex-wrap gap-4">
+                  <Link
+                    to="/careerQuiz"
+                    className="rounded-lg bg-[#6b46c1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-purple-100 transition-all hover:bg-purple-700"
+                  >
+                    Start Free Preview →
                   </Link>
-                  <Link to="/#howitworks"
-                    className="text-[#6b46c1] font-semibold self-center hover:underline underline-offset-4">
+                  <Link
+                    to="/#howitworks"
+                    className="self-center font-semibold text-[#6b46c1] underline-offset-4 hover:underline"
+                  >
                     See how it works ↓
                   </Link>
                 </motion.div>
               </motion.div>
 
-              {/* Roadmap mini visual */}
               <motion.div
-                variants={fadeUp} initial="hidden"
-                whileInView="show" viewport={{ once: true }}
-                className="flex justify-center"
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.35 }}
+                className="flex items-start justify-center"
               >
-                <div className="relative bg-[#faf8ff] border border-purple-100 rounded-3xl p-8 w-full max-w-md shadow-xl shadow-purple-50">
-                  <p className="text-xs font-bold text-[#6b46c1] tracking-widest uppercase mb-6">Backend Developer · MERN Path</p>
-                  <div className="space-y-4">
-                    {[
-                      { n: 1, t: "Node.js & JS Runtime",       done: true  },
-                      { n: 2, t: "Express Setup & Routing",     done: true  },
-                      { n: 3, t: "Middleware & Error Handling",  active: true },
-                      { n: 4, t: "REST API Design",             locked: true },
-                      { n: 5, t: "Database Integration",        locked: true },
-                    ].map((l) => (
-                      <div key={l.n} className={`flex items-center gap-4 p-3.5 rounded-xl transition-all ${
-                        l.done   ? "bg-green-50 border border-green-200" :
-                        l.active ? "bg-[#6b46c1] text-white shadow-lg shadow-purple-200" :
-                        "bg-white border border-gray-100 opacity-50"
-                      }`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                          l.done   ? "bg-green-500 text-white" :
-                          l.active ? "bg-white text-[#6b46c1]" :
-                          "bg-gray-100 text-gray-400"
-                        }`}>
-                          {l.done ? "✓" : l.n}
-                        </div>
-                        <span className={`text-sm font-semibold ${l.active ? "text-white" : l.locked ? "text-gray-400" : "text-gray-700"}`}>
-                          {l.t}
-                        </span>
-                        {l.active && <span className="ml-auto text-xs bg-[#f6c90e] text-[#1a0533] px-2.5 py-1 rounded-full font-bold">Active</span>}
+                <div
+                  className="mt-8 w-full max-w-xl rounded-3xl border border-gray-200 p-6 shadow-[0_18px_50px_rgba(33,21,63,0.08)]"
+                  style={{
+                    backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.48)), url(${Paper})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-4 mt-8">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: C.purple }}>
+                        Scorecard
                       </div>
-                    ))}
+                      <h3 className="mt-2 text-2xl font-bold text-[#1a0533]">
+                        Readiness Verdict - 2 weeks away
+                      </h3>
+                      <p className="mt-2 text-sm leading-7 text-gray-500">
+                        Session notes from a placed reviewer, written the way a mentor would record them.
+                      </p>
+                    </div>
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-8 border-[#f3eeff] bg-white shadow-inner">
+                      <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+                        <path
+                          d="M18 2.2a15.8 15.8 0 1 1 0 31.6a15.8 15.8 0 1 1 0-31.6"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="4"
+                        />
+                        <motion.path
+                          d="M18 2.2a15.8 15.8 0 1 1 0 31.6a15.8 15.8 0 1 1 0-31.6"
+                          fill="none"
+                          stroke="#6b46c1"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeDasharray="78.8"
+                          initial={{ strokeDashoffset: 78.8 }}
+                          whileInView={{ strokeDashoffset: 18.5 }}
+                          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                          viewport={{ once: true, amount: 0.4 }}
+                        />
+                      </svg>
+                    </div>
                   </div>
-                  <div className="mt-5 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full w-[37%] bg-gradient-to-r from-[#6b46c1] to-[#f6c90e] rounded-full" />
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-[#dbeafe] bg-[#f8fbff] p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "#0369a1" }}>
+                          Companies you can target now
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {["Zoho", "Capgemini", "Infosys Digital"].map((company) => (
+                            <span
+                              key={company}
+                              className="rounded-full border border-[#93c5fd] bg-white px-3 py-1 text-xs font-semibold text-[#1d4ed8]"
+                            >
+                              {company}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#fee2e2] bg-[#fffafa] p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "#b91c1c" }}>
+                          Biggest gap
+                        </div>
+                        <p className="mt-2 text-sm leading-7 text-gray-700">
+                          Cannot explain auth flow decisions under pressure.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex h-full flex-col justify-between rounded-2xl border border-gray-200 bg-[#fafafa] p-4">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: C.purple }}>
+                          Mentor note
+                        </div>
+                        <p className="mt-3 text-sm leading-7 text-gray-700">
+                          “You know the solution. Now make the reasoning impossible to shake.”
+                        </p>
+                      </div>
+                      <div className="mt-6 rounded-2xl bg-[#f4efff] p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: C.purple }}>
+                          Skill confidence
+                        </div>
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{ background: "linear-gradient(90deg, #6b46c1, #f6c90e)" }}
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "68%" }}
+                            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                            viewport={{ once: true, amount: 0.4 }}
+                          />
+                        </div>
+                        <div className="mt-2 text-xs font-medium text-gray-600">Gap narrowed by session feedback</div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">3 of 8 lessons · Checkpoint 1 in progress</p>
                 </div>
               </motion.div>
             </div>
           </div>
         </section>
+        <ExecutionTimelineSection />
+        <div id="journey">
+          <JourneyPathSection />
+        </div>
 
         {/* ══════════════════════════════════════════
-            SECTION 3 — ROADMAP + AI + QUIZZES
-            Screenshot collage block
+            CS FUNDAMENTALS
         ══════════════════════════════════════════ */}
         <CollageSection
-          label="Learn & Build in Parallel"
-          headline='Roadmap + Quizzes +<br /><span class="text-[#6b46c1]">The AI teaches you how to think like the engineer you will claim to be</span>'
-          sub="Follow a structured path built from 100+ real job descriptions. Learn exactly what companies hire for — in the order your project needs it. Every topic has a quiz, a build task, and an AI guide."
-          cta="Explore Roadmaps"
+          label="CS Fundamentals"
+          headline='Know it. Explain it. Defend it.<br /><span class="text-[#6b46c1]">Company-wise curated patterns + quizzes</span>'
+          sub="DSA, OOP, DBMS, OS, and DCCN. Curated by company, backed by quiz prompts, and mapped to the patterns interviewers actually press on."
+          cta="Explore CS Fundamentals + Quiz + Pattern Plans"
           ctaLink="/roadmaps"
           dark={false}
         >
-          {/* Screenshot collage */}
-          <div className="relative h-[420px]">
-            {/* Main screenshot placeholder */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#f0ecfc] to-[#e8e3f8] border border-purple-100 shadow-2xl shadow-purple-100">
-              <img src={roadmap} alt="Platform roadmap" className="w-full h-full object-cover object-top opacity-90 p-2" />
-            </div>
-            {/* Floating AI chat card */}
-            <div className="absolute -bottom-6 -left-6 bg-[#1a0533] rounded-2xl p-5 w-64 shadow-2xl border border-white/10">
-              <p className="text-[#f6c90e] text-xs font-bold mb-3">🤖 AI Build Companion</p>
-              <div className="space-y-2">
-                <div className="bg-white/10 rounded-lg p-2.5">
-                  <p className="text-white/50 text-[10px] mb-1">You</p>
-                  <p className="text-white text-xs">Write middleware for me?</p>
-                </div>
-                <div className="bg-[#6b46c1]/40 rounded-lg p-2.5">
-                  <p className="text-[#f6c90e] text-[10px] mb-1">Companion</p>
-                  <p className="text-white text-xs">What should middleware check before the route runs?</p>
-                </div>
+          <div className="grid h-[420px] rounded-3xl border border-purple-100 bg-[#faf8ff] p-6 shadow-[0_18px_50px_rgba(107,70,193,0.08)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em]" style={{ color: C.purple }}>
+                  Company-wise curated
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-[#1a0533]">
+                  Pattern plans that force explanation under pressure.
+                </h3>
+              </div>
+              <div className="rounded-full bg-white px-4 py-2 text-xs font-bold text-[#6b46c1] shadow-sm">
+                Quiz + Pattern Plans
               </div>
             </div>
-            {/* Quiz badge */}
-            <div className="absolute -top-4 -right-4 bg-[#f6c90e] rounded-xl px-4 py-3 shadow-lg">
-              <p className="text-[#1a0533] text-xs font-bold">⚡ Quiz Passed</p>
-              <p className="text-[#1a0533]/70 text-[10px]">Express Routing · 9/10</p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-[1.05fr_0.95fr]">
+              <div className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: C.muted }}>
+                  Topics
+                </div>
+                <div className="">
+                  {[
+                    ["DSA", "Prove the approach, not just the answer."],
+                    ["OOP", "Defend design choices and tradeoffs."],
+                    ["DBMS", "Explain how data survives pressure."],
+                    ["OS", "Show process, memory, and concurrency control."],
+                    ["DCCN", "Speak clearly about networks under stress."],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="rounded-xl border border-gray-100 px-3 py-3">
+                      <div className="text-sm font-bold text-[#1a0533]">{title}</div>
+                      <div className="mt-1 text-xs leading-6 text-gray-500">{desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between rounded-2xl border border-[#ddd6fe] bg-[#f4efff] p-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: C.purple }}>
+                    Curated by company
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {["Zoho", "Capgemini", "Infosys", "TCS", "Cognizant"].map((company) => (
+                      <span key={company} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#4c1d95] shadow-sm">
+                        {company}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-sm leading-7 text-[#1a0533]">
+                    Pattern plans show what each company tends to press on, so preparation stays specific.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: C.purple }}>
+                    Quiz readiness
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, #6b46c1, #f6c90e)" }}
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "76%" }}
+                      transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                      viewport={{ once: true, amount: 0.3 }}
+                    />
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">Curated quizzes + pattern plans loaded</div>
+                </div>
+              </div>
             </div>
           </div>
         </CollageSection>
 
         {/* ══════════════════════════════════════════
-            SECTION 4 — CHECKPOINTS + MENTOR + GIT
+            GRILL SESSIONS
         ══════════════════════════════════════════ */}
         <CollageSection
-          label="Get Validated"
-          headline='Checkpoints. Mentor reviews.<br /><span class="text-[#f6c90e]">Git repo that&apos;s yours.</span>'
-          sub="At each milestone, your mentor reviews your actual project — not a quiz, not a test. A professional conversation: walk me through your auth flow, why JWT? Pass it and your verified badge goes live."
-          cta="Book Session 0 — Free"
+          label="Grill Sessions"
+          headline='Pressure-test the truth.<br /><span class="text-[#f6c90e]">One session tells you what&apos;s real.</span>'
+          sub="A placed professional reviews your resume, your project decisions, and your depth. You leave with a verdict, gaps, and what to change next."
+          cta="Explore Grill Study Plan"
           ctaLink="/consult"
           dark={true}
           flip={true}
         >
-          {/* Screenshot collage */}
-          <div className="relative h-[420px]">
-            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#2a0f4a] via-[#1a0533] to-[#110021] border border-white/10 shadow-2xl p-6">
-              <div className="flex items-center justify-between mb-5">
+          <div className="relative h-[420px] mt-8">
+            <div className="absolute inset-0 rounded-2xl border border-white/10 bg-gradient-to-br from-[#2a0f4a] via-[#1a0533] to-[#0f0020] p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-white/35 font-bold">Checkpoint Review Room</p>
-                  <p className="text-white font-semibold text-sm mt-2">Checkpoint 2 · Authentication & Middleware</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-white/35 font-bold">Grill Session Result</p>
+                  <h3 className="mt-2 text-2xl font-bold text-white">
+                    Readiness verdict - 2 weeks away
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-white/65">
+                    Clear, honest feedback. No softening.
+                  </p>
                 </div>
-                <span className="bg-[#f6c90e]/15 text-[#f6c90e] border border-[#f6c90e]/20 text-[10px] font-bold px-3 py-1.5 rounded-full">
-                  Live Review
-                </span>
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-8 border-white/10 bg-white/5">
+                  <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+                    <path
+                      d="M18 2.2a15.8 15.8 0 1 1 0 31.6a15.8 15.8 0 1 1 0-31.6"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.18)"
+                      strokeWidth="4"
+                    />
+                    <motion.path
+                      d="M18 2.2a15.8 15.8 0 1 1 0 31.6a15.8 15.8 0 1 1 0-31.6"
+                      fill="none"
+                      stroke="#f6c90e"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeDasharray="78.8"
+                      initial={{ strokeDashoffset: 78.8 }}
+                      whileInView={{ strokeDashoffset: 28 }}
+                      transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                      viewport={{ once: true, amount: 0.4 }}
+                    />
+                  </svg>
+                </div>
               </div>
 
-              <div className="grid grid-cols-[1.2fr_0.8fr] gap-4 h-[calc(100%-52px)]">
-                <div className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col">
-                  <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#6b46c1] to-[#8b5cf6] flex items-center justify-center text-white font-bold text-sm">
-                      AN
+              <div className="mt-6 grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">
+                      Companies you can target now
                     </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold">Aryan M.</p>
-                      <p className="text-white/40 text-xs">Razorpay · SDE-2 · Mentor Reviewer</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    <div className="rounded-xl bg-white/6 border border-white/8 p-3">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-white/35 font-bold">Review Prompt</p>
-                      <p className="text-white text-xs mt-2 leading-relaxed">
-                        Walk me through your JWT auth flow. Where does validation happen, and why did you choose middleware over route-level checks?
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-[#6b46c1]/20 border border-[#8b5cf6]/20 p-3">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8ccff] font-bold">Student Explanation</p>
-                      <p className="text-white/85 text-xs mt-2 leading-relaxed">
-                        Token verification happens before protected routes run. I used middleware so auth logic stays reusable and routes only handle business flow.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 pt-1">
-                      {[
-                        ["Reasoning", "8.8/10"],
-                        ["Clarity", "9.1/10"],
-                        ["Ownership", "Strong"],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-xl bg-white/6 border border-white/8 px-3 py-3">
-                          <p className="text-[10px] uppercase tracking-[0.16em] text-white/35 font-bold">{label}</p>
-                          <p className="text-white text-xs font-semibold mt-2">{value}</p>
-                        </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {["Zoho", "Capgemini", "Infosys Digital"].map((company) => (
+                        <span key={company} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white">
+                          {company}
+                        </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-4">
-                    <div className="rounded-xl bg-[#f6c90e]/10 border border-[#f6c90e]/20 px-4 py-3">
-                      <p className="text-[#f6c90e] text-[10px] uppercase tracking-[0.18em] font-bold">Mentor Note</p>
-                      <p className="text-white/80 text-xs mt-2 italic leading-relaxed">
-                        “You didn’t just implement auth. You could explain the tradeoff clearly, which means the system is actually yours.”
-                      </p>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f6c90e]">
+                      Biggest gap
                     </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div className="rounded-2xl bg-white text-[#1a0533] p-4 shadow-xl">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#6b46c1] font-bold">Review Outcome</p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-lg">✅</div>
-                      <div>
-                        <p className="font-bold text-sm">Checkpoint cleared</p>
-                        <p className="text-xs text-gray-500">Verified by mentor review</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex gap-2 flex-wrap">
-                      <span className="text-[10px] bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-semibold">Auth reasoning ✓</span>
-                      <span className="text-[10px] bg-purple-100 text-[#6b46c1] px-2.5 py-1 rounded-full font-semibold">Git verified ✓</span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-white/35 font-bold">Git Activity</p>
-                    <div className="mt-3 space-y-2">
-                      {[
-                        "feat: add auth middleware and token guard",
-                        "refactor: protect job routes with reusable middleware",
-                        "docs: explain JWT flow in project notes",
-                      ].map((commit) => (
-                        <div key={commit} className="rounded-xl bg-[#0f0020]/60 border border-white/8 px-3 py-2">
-                          <p className="text-[#d6cfff] text-[11px] font-mono">{commit}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#6b46c1]/20 border border-[#8b5cf6]/20 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8ccff] font-bold">Next Unlock</p>
-                    <p className="text-white text-sm font-semibold mt-2">Checkpoint 3 opens after quiz + session sign-off</p>
-                    <p className="text-white/55 text-xs mt-2 leading-relaxed">
-                      Every review compounds into a project trail that mentors can genuinely stand behind.
+                    <p className="mt-2 text-sm leading-7 text-white/85">
+                      Cannot explain auth flow decisions under pressure.
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-            {/* Checkpoint card */}
-            <div className="absolute -bottom-4 -right-4 bg-white rounded-2xl p-5 w-72 shadow-2xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-lg">✅</div>
-                <div>
-                  <p className="font-bold text-sm text-[#1a0533]">Checkpoint 2 — Passed</p>
-                  <p className="text-xs text-gray-400">Mentor: Aryan M. · Razorpay SDE-2</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 italic">"Explained JWT flow clearly. Auth middleware decision was well-justified."</p>
-              <div className="flex gap-2 mt-3">
-                <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-semibold">Explanation ✓</span>
-                <span className="text-xs bg-purple-100 text-[#6b46c1] px-2.5 py-1 rounded-full font-semibold">Git Verified ✓</span>
-              </div>
-            </div>
-          </div>
-        </CollageSection>
 
-        {/* ══════════════════════════════════════════
-            SECTION 5 — COMPETE FOR BEST PROJECT
-        ══════════════════════════════════════════ */}
-        <CollageSection
-          label="Compete & Win"
-          headline='Best project wins.<br /><span class="text-[#6b46c1]">Titles + perks.</span>'
-          sub="Ranked on checkpoint quality, consistency, explanation clarity, and community contribution. No single metric can be gamed — you have to actually do the work."
-          cta="See Leaderboard"
-          ctaLink="/community"
-          dark={false}
-        >
-          {/* Leaderboard collage */}
-          <div className="relative h-[420px]">
-            <div className="absolute inset-4 rounded-2xl bg-[#1a0533] border border-white/10 shadow-2xl overflow-hidden p-6">
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-white font-bold text-sm">Backend Developer Path</p>
-                <span className="text-[#f6c90e] text-xs font-semibold">Live Rankings</span>
-              </div>
-              <div className="space-y-3">
-                {LEADERBOARD.map((s, i) => (
-                  <div key={i} className={`flex items-center gap-3 p-3 rounded-xl ${
-                    i === 0 ? "bg-[#f6c90e]/10 border border-[#f6c90e]/20" : "bg-white/5"
-                  }`}>
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i === 0 ? "bg-[#f6c90e] text-[#333]" :
-                      i === 1 ? "bg-white/20 text-white" :
-                      i === 2 ? "bg-orange-400/20 text-orange-300" :
-                      "bg-white/10 text-white/40"
-                    }`}>{s.medal || s.rank}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-semibold truncate">{s.name}</p>
-                      <p className="text-white/40 text-xs">CP {s.cp}/6 · {s.streak}d streak</p>
+                <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">
+                      Mentor note
                     </div>
-                    <span className={`font-bold text-sm ${i === 0 ? "text-[#f6c90e]" : "text-white/50"}`}>{s.score}</span>
+                    <p className="mt-3 text-sm leading-7 text-white/85">
+                      “You know the solution. Now make the reasoning impossible to shake.”
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-            {/* Scoring breakdown pill */}
-            <div className="absolute -top-4 -right-2 bg-white rounded-2xl px-5 py-4 shadow-xl border border-purple-100">
-              <p className="text-xs font-bold text-[#6b46c1] mb-2">Score Breakdown</p>
-              {[["Quality", 40], ["Consistency", 25], ["Clarity", 20], ["Community", 15]].map(([l, p]) => (
-                <div key={l} className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] text-gray-500 w-20">{l}</span>
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#6b46c1] rounded-full" style={{ width: `${p * 2}%` }} />
+                  <div className="mt-6 rounded-2xl bg-[#f6c90e]/10 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f6c90e]">
+                      Session outcome
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: "linear-gradient(90deg, #f6c90e, #fff2ad)" }}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: "68%" }}
+                        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                        viewport={{ once: true, amount: 0.3 }}
+                      />
+                    </div>
+                    <div className="mt-2 text-xs text-white/65">Gap narrowed by session feedback</div>
                   </div>
-                  <span className="text-[10px] text-gray-400">{p}%</span>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </CollageSection>
@@ -712,109 +956,105 @@ useEffect(() => {
         </CollageSection>
 
         {/* ══════════════════════════════════════════
-            ILLUSTRATION COMPONENT
+            PATH TO OPPORTUNITY
         ══════════════════════════════════════════ */}
-        <Illustration />
-
+        <Comparison />
         {/* ══════════════════════════════════════════
             FREE vs PAID — TABS
         ══════════════════════════════════════════ */}
-        <section id="pricing" className="bg-[#1a0533] py-24">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-14">
-              <SectionLabel dark>Two Ways In</SectionLabel>
-              <h2 className="text-4xl font-bold text-white mb-3">Start free. Upgrade when serious.</h2>
-              <p className="text-white/50">The free tier never expires. No credit card. No catch.</p>
-            </div>
+        <section id="pricing" className="bg-[#1a0533] py-16">
+  <div className="max-w-7xl mx-auto px-6">
+    {/* Header */}
+    <div className="text-center mb-10">
+      <SectionLabel dark>Two Ways In</SectionLabel>
+      <h2 className="text-3xl font-bold text-white mb-2">
+        Start free. Upgrade when serious.
+      </h2>
+      <p className="text-white/50 text-sm">
+        No credit card. No catch. Just execution.
+      </p>
+    </div>
 
-            <div className="flex justify-center mb-12">
-              <div className="bg-white/10 rounded-full p-1 flex">
-                {[["free","🆓 Free Tier"],["paid","⭐ Paid Package"]].map(([k, label]) => (
-                  <button key={k} onClick={() => setAiTab(k)}
-                    className={`px-8 py-3 rounded-full font-semibold text-sm transition-all ${
-                      aiTab === k ? "bg-[#f6c90e] text-[#333]" : "text-white/60 hover:text-white"
-                    }`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+    {/* SIDE BY SIDE */}
+    <div className="grid md:grid-cols-2 gap-6 items-stretch">
 
-            {aiTab === "free" ? (
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <span className="inline-block bg-green-400/20 text-green-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">Always Free</span>
-                  <h3 className="text-3xl font-bold text-white mb-6">Everything you need to start building seriously</h3>
-                  <ul className="space-y-4">
-                    {[
-                      "Project-first roadmaps built from real job descriptions",
-                      "AI Build Companion — scaffolds, never does it for you",
-                      "Role-specific paths: Backend, Full Stack, ML, Frontend & more",
-                      "Community leaderboard — see peers on the same path",
-                      "Profile & progress visibility — shareable, competitive",
-                    ].map((f, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="text-[#f6c90e] mt-0.5 flex-shrink-0">✓</span>
-                        <span className="text-white/75 text-sm">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to="/start"
-                    className="mt-8 inline-block bg-white text-[#6b46c1] font-bold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all">
-                    Start Free — No Card Needed →
-                  </Link>
-                </div>
+      {/* LEFT — FREE */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+        <div>
+          <span className="inline-block bg-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+            Free Tier
+          </span>
 
-                <div className="bg-[#0d0020] rounded-3xl p-6 border border-white/10">
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                    <span className="ml-2 text-white/40 text-xs">AI Build Companion</span>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 mb-4">
-                    <p className="text-[#f6c90e] text-xs">📍 Backend Dev · Checkpoint 2 · Designing REST API</p>
-                  </div>
-                  <div className="space-y-3">
-                    {AI_CHAT.map((m, i) => (
-                      <div key={i} className={`rounded-xl p-3 ${m.role === "user" ? "bg-white/10 ml-8" : "bg-[#6b46c1]/30"}`}>
-                        <p className={`text-xs mb-1 ${m.role === "user" ? "text-white/40" : "text-[#f6c90e]"}`}>
-                          {m.role === "user" ? "You" : "AI Companion"}
-                        </p>
-                        <p className="text-white/90 text-xs leading-relaxed">{m.msg}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-baseline gap-2 mb-3">
-                    <span className="text-5xl font-extrabold text-white">₹9,999</span>
-                    <span className="text-white/40 text-lg">/ complete package</span>
-                  </div>
-                  <p className="text-white/55">One payment. 3–4 months. One deployed project. One job-ready professional.</p>
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {PAID_FEATURES.map((f, i) => (
-                    <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-[#f6c90e]/30 transition-colors">
-                      <div className="text-3xl mb-4">{f.icon}</div>
-                      <h4 className="text-white font-bold mb-2">{f.title}</h4>
-                      <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-center mt-10">
-                  <Link to="/start"
-                    className="inline-block bg-[#f6c90e] text-[#333] font-bold px-10 py-5 rounded-xl text-lg hover:bg-yellow-400 transition-all hover:shadow-2xl hover:shadow-yellow-400/20">
-                    Get The Full Package — ₹9,999 →
-                  </Link>
-                </div>
-              </div>
-            )}
+          <h3 className="text-2xl font-bold text-white mb-4">
+            Build with structure. Zero cost.
+          </h3>
+
+          <ul className="space-y-3">
+            {[
+              "Project-first roadmaps from real job descriptions",
+              "AI Companion — guides, never builds for you",
+              "Role-specific paths (Backend, ML, Frontend, etc.)",
+              "Leaderboard — visible progress vs peers",
+              "Public profile — proof of work"
+            ].map((f, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span className="text-[#f6c90e] text-lg mt-0.5">✓</span>
+                <span className="text-gray-300 text-lg leading-snug">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <Link
+          to="/roadmaps"
+          className="mt-6 inline-block text-center bg-white text-[#6b46c1] font-semibold px-5 py-3 rounded-lg text-sm hover:bg-gray-100 transition"
+        >
+          Start Free →
+        </Link>
+      </div>
+
+      {/* RIGHT — PAID (DOMINANT) */}
+      <div className="bg-gradient-to-br from-[#f6c90e]/20 to-[#6b46c1]/20 border border-[#f6c90e]/30 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
+        <div>
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-3xl font-extrabold text-white">₹9,999</span>
+            <span className="text-white/40 text-sm">/ full route</span>
           </div>
-        </section>
+
+          <h3 className="text-xl font-bold text-white mb-4">
+            Outcome. Not content.
+          </h3>
+
+          <div className="space-y-3">
+            {PAID_FEATURES.slice(0, 5).map((f, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg p-3"
+              >
+                <div className="text-lg">{f.icon}</div>
+                <div>
+                  <p className="text-white text-sm font-semibold leading-tight">
+                    {f.title}
+                  </p>
+                  <p className="text-white/50 text-xs leading-snug">
+                    {f.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Link
+          to="/start"
+          className="mt-6 inline-block text-center bg-[#f6c90e] text-[#333] font-bold px-6 py-3 rounded-lg text-sm hover:bg-yellow-400 transition shadow-md"
+        >
+          Get Full Package →
+        </Link>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* ══════════════════════════════════════════
             HOW IT WORKS
@@ -822,83 +1062,6 @@ useEffect(() => {
         <div id="howitworks">
           <HowItWorksScroll />
         </div>
-
-        {/* ══════════════════════════════════════════
-            LEADERBOARD SECTION
-        ══════════════════════════════════════════ */}
-        <section className="bg-[#1a0533] py-24">
-          <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <SectionLabel dark>Compete and Win</SectionLabel>
-              <h2 className="text-4xl font-bold text-white mb-5">
-                Progress is more fun<br />
-                <span className="text-[#f6c90e]">when it's visible.</span>
-              </h2>
-              <p className="text-white/55 text-lg mb-8 leading-relaxed">
-                Your rank among peers on the same career path. Updated as you hit checkpoints.
-                Ranked on quality, consistency, and communication — not just speed.
-              </p>
-              <div className="space-y-3">
-                {[
-                  { l: "Checkpoint Quality",     pct: 40, c: "#6b46c1" },
-                  { l: "Weekly Consistency",     pct: 25, c: "#f6c90e" },
-                  { l: "Explanation Clarity",    pct: 20, c: "#8b5cf6" },
-                  { l: "Community Contribution", pct: 15, c: "#a78bfa" },
-                ].map((m, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-1.5">
-                      <span className="text-white/65">{m.l}</span>
-                      <span className="text-white/35">{m.pct}%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }} whileInView={{ width: `${m.pct * 2.2}%` }}
-                        transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
-                        viewport={{ once: true }}
-                        className="h-full rounded-full"
-                        style={{ background: m.c }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white/5 rounded-3xl p-6 border border-white/10">
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="text-white font-bold">Backend Developer Path</h4>
-                <span className="text-white/40 text-xs">Live Rankings</span>
-              </div>
-              <div className="space-y-3">
-                {LEADERBOARD.map((s, i) => (
-                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${
-                    i === 0 ? "bg-[#f6c90e]/10 border border-[#f6c90e]/20" : "bg-white/5 hover:bg-white/10"
-                  }`}>
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i === 0 ? "bg-[#f6c90e] text-[#333]" :
-                      i === 1 ? "bg-white/20 text-white" :
-                      i === 2 ? "bg-orange-400/20 text-orange-300" :
-                      "bg-white/10 text-white/40"
-                    }`}>{s.medal || s.rank}</span>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-semibold">{s.name}</p>
-                      <p className="text-white/40 text-xs">Checkpoint {s.cp}/6 · {s.streak}-day streak</p>
-                    </div>
-                    <span className={`font-bold text-sm ${i === 0 ? "text-[#f6c90e]" : "text-white/55"}`}>{s.score}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-[#6b46c1]/20 border border-[#6b46c1]/40 mt-2">
-                  <span className="w-7 h-7 rounded-full bg-[#6b46c1] flex items-center justify-center text-white text-xs font-bold">You</span>
-                  <div className="flex-1">
-                    <p className="text-white text-sm font-semibold">Your position</p>
-                    <p className="text-white/40 text-xs">Checkpoint 1/6 · Just started</p>
-                  </div>
-                  <span className="text-[#6b46c1] text-sm font-bold">#24</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ══════════════════════════════════════════
             MENTORS
@@ -959,7 +1122,7 @@ useEffect(() => {
             <div className="text-center mb-14">
               <SectionLabel>Results</SectionLabel>
               <h2 className="text-4xl font-semibold text-[#1a0533]">
-                From confused learners<br />
+                From uncertain candidates<br />
                 <span className="text-[#6b46c1]">to placed professionals</span>
               </h2>
             </div>
@@ -998,12 +1161,12 @@ useEffect(() => {
           <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
             <div>
               <h2 className="text-5xl font-bold leading-tight mb-6 text-white">
-                Stop hopping mentors.<br />
-                <span className="text-[#f6c90e]">Take a structured flight.</span>
+                Stop preparing in circles.<br />
+                <span className="text-[#f6c90e]">Start proving with intent.</span>
               </h2>
               <p className="text-lg text-purple-100 max-w-xl mb-10 leading-relaxed">
                 Real progress comes from a clear plan, an AI that challenges you to think,
-                a mentor who validates you're ready, and a community that keeps you moving.
+                a mentor who validates you under pressure, and a community that keeps you moving.
               </p>
               <div className="flex flex-wrap gap-5 items-center">
                 <Link to="/start"
@@ -1036,7 +1199,7 @@ useEffect(() => {
               <div>
                 <h3 className="text-lg font-bold text-[#1a0533] mb-3">AlgoNest</h3>
                 <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                  In the AI era, proof beats credentials. AlgoNest turns learners into
+                  In the AI era, proof beats credentials. AlgoNest turns candidates into
                   placed professionals through structured execution and human validation.
                 </p>
               </div>
@@ -1057,7 +1220,7 @@ useEffect(() => {
             </div>
             <div className="border-t border-gray-100 mt-16 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-400">© {new Date().getFullYear()} AlgoNest. All rights reserved.</p>
-              <p className="text-sm text-gray-400">Built for completion, not consumption.</p>
+              <p className="text-sm text-gray-400">Built for proof, not passive consumption.</p>
             </div>
           </div>
         </footer>

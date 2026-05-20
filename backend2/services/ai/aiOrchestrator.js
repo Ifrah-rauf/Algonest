@@ -23,7 +23,7 @@ export async function generateAIResponse({
 }) {
   console.log("AI_PROVIDER value:", JSON.stringify(process.env.AI_PROVIDER));
 
-  // 1. Build FULL RAG context (IMPORTANT: pass message)
+  // 1. Build FULL RAG context
   const context = await buildContext(uid, message);
 
   // 2. Log RAG context info so we can see if RAG was used
@@ -72,11 +72,9 @@ export async function generateAIResponse({
     console.warn("[RAG] Skipping embedding save for assistant — sId missing or saveEmbeddingMessage unavailable.");
   }
 
-  // 6. Maintain memory (summaries / compression)
-  // 6. Maintain memory (summaries / compression)
   try {
     // maybeSummarize expects a numeric sId and a provider function.
-    // pass the resolved `sId` from buildContext and the same provider used for Claude.
+    // passing the resolved `sId` from buildContext and the same provider used for Claude.
     if (context?.sId) {
       await maybeSummarize(context.sId, callClaude);
     } else {

@@ -16,11 +16,14 @@ import lessonRoutes from "./routes/lessonRoutes.js";
 import quizRoutes from "./routes/quizRoutes.js";
 import teacherDashboardRoutes from "./routes/teacherDashboardRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
+import contentRoutes from "./routes/contentRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
+import { startSessionReminderScheduler } from "./services/sessionReminderScheduler.js";
 const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(express.json()); // parse JSON bodies
+app.use(express.json({ limit: "6mb" })); // parse JSON bodies
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -49,6 +52,10 @@ app.use("/api/quiz", quizRoutes);
 // teacher dashboard routes (students list, etc.)
 app.use("/api/teachers", teacherDashboardRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/content", contentRoutes);
+app.use("/api/projects", projectRoutes);
+startSessionReminderScheduler();
+
 app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);
 });

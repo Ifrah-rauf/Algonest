@@ -1,53 +1,36 @@
 import { DollarSign, TrendingUp, CreditCard, Calendar } from 'lucide-react';
-
-const monthlyData = [
-  { month: 'Jan', earnings: 6200 },
-  { month: 'Feb', earnings: 6800 },
-  { month: 'Mar', earnings: 7200 },
-  { month: 'Apr', earnings: 7800 },
-  { month: 'May', earnings: 8450 },
-];
-
-const transactions = [
-  {
-    id: 1,
-    roadmap: 'Full Stack Web Development',
-    date: '2026-01-30',
-    amount: '$2,450',
-    students: 50,
-  },
-  {
-    id: 2,
-    roadmap: 'React & TypeScript Mastery',
-    date: '2026-01-29',
-    amount: '$1,890',
-    students: 45,
-  },
-  {
-    id: 3,
-    roadmap: 'Python Data Science Path',
-    date: '2026-01-28',
-    amount: '$1,620',
-    students: 30,
-  },
-  {
-    id: 4,
-    roadmap: 'Mobile App Development',
-    date: '2026-01-27',
-    amount: '$1,080',
-    students: 25,
-  },
-  {
-    id: 5,
-    roadmap: 'Full Stack Web Development',
-    date: '2026-01-26',
-    amount: '$1,410',
-    students: 32,
-  },
-];
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export function Earnings() {
-  const maxEarnings = Math.max(...monthlyData.map((d) => d.earnings));
+  const { user } = useAuth();
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    async function loadEarnings() {
+      if (!user?.uid) return;
+
+      try {
+        const res = await fetch("http://localhost:5000/api/teachers/earnings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: user.uid }),
+        });
+        const body = await res.json();
+        if (body.success) {
+          setData(body.data);
+        }
+      } catch (error) {
+        console.error("Failed to load earnings:", error);
+      }
+    }
+
+    loadEarnings();
+  }, [user?.uid]);
+
+  const monthlyData = data?.monthlyData || [];
+  const transactions = data?.recentTransactions || [];
+  const maxEarnings = Math.max(...monthlyData.map((d) => d.earnings), 1);
 
   return (
     <div className="p-8">
@@ -59,19 +42,23 @@ export function Earnings() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">₹{(data?.yearlyTotal || 0).toLocaleString("en-IN")}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">$36,450</p>
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <TrendingUp className="w-4 h-4" />
+              <span>
+                {data?.currentMonth?.change === null || data?.currentMonth?.change === undefined
+                  ? "This month"
+                  : `${data.currentMonth.change > 0 ? "+" : "-"}${Math.abs(data.currentMonth.change)}% from last month`}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <TrendingUp className="w-4 h-4" />
-            <span>+18% from last month</span>
-          </div>
-        </div>
 
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -80,12 +67,16 @@ export function Earnings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">This Month</p>
-              <p className="text-2xl font-bold text-gray-900">$8,450</p>
+              <p className="text-2xl font-bold text-gray-900">₹{(data?.currentMonth?.earnings || 0).toLocaleString("en-IN")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-green-600">
             <TrendingUp className="w-4 h-4" />
-            <span>+23% from April</span>
+            <span>
+              {data?.currentMonth?.change === null || data?.currentMonth?.change === undefined
+                ? `${data?.currentMonth?.bookings || 0} bookings this month`
+                : `${data.currentMonth.change > 0 ? "+" : "-"}${Math.abs(data.currentMonth.change)}% from last month`}
+            </span>
           </div>
         </div>
 
@@ -96,10 +87,10 @@ export function Earnings() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Next Payout</p>
-              <p className="text-2xl font-bold text-gray-900">$8,450</p>
+              <p className="text-2xl font-bold text-gray-900">₹{(data?.currentMonth?.earnings || 0).toLocaleString("en-IN")}</p>
             </div>
           </div>
-          <p className="text-sm text-gray-600">Due on Feb 15, 2026</p>
+          <p className="text-sm text-gray-600">Current month total from booked students</p>
         </div>
       </div>
 
@@ -112,7 +103,7 @@ export function Earnings() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-700">{data.month}</span>
                   <span className="text-sm font-bold text-gray-900">
-                    ${data.earnings.toLocaleString()}
+                    ₹{data.earnings.toLocaleString("en-IN")}
                   </span>
                 </div>
                 <div className="bg-gray-200 rounded-full h-3">
@@ -137,10 +128,10 @@ export function Earnings() {
                 <div>
                   <p className="font-semibold text-gray-900">{transaction.roadmap}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {transaction.students} students • {transaction.date}
+                    {transaction.student} • {new Date(transaction.date).toLocaleDateString("en-IN")}
                   </p>
                 </div>
-                <span className="font-bold text-green-600">{transaction.amount}</span>
+                <span className="font-bold text-green-600">₹{transaction.amount.toLocaleString("en-IN")}</span>
               </div>
             ))}
           </div>

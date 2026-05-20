@@ -12,3 +12,10 @@ COLORS:
   --sidebar-bg: #ffffff;
   --text-dark: #333;
 }
+
+COLORS: {
+  #6b46c1; 
+  #f6c90e; 
+  #ffffff;
+  #333;
+}

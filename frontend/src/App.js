@@ -14,6 +14,7 @@ import ScrollToHash from "./components/ScrollToHash";
 import Roadmaps from "./components/roadmaps";
 import Howitworks from "./components/howitworks";
 import MyRoadmaps from "./pages/ExploreRoadmaps";
+import BookingPage from "./pages/BookingPage";
 import CareerQuiz from "./pages/CareerQuiz";
 // Assuming authContext is imported; adjust if needed
 import { useAuth } from "./context/AuthContext.jsx";// Replace with actual path
@@ -59,6 +60,7 @@ function App() {
         <Route path="/roadmap_express" element={<RoadmapExpress />} />
         <Route path="/howitworks" element={<Howitworks />} />
         <Route path="/roadmaps" element={<MyRoadmaps />} />
+        <Route path="/book-now" element={<BookingPage />} />
         <Route path="/careerquiz" element={<CareerQuiz />} />
 
       </Routes>

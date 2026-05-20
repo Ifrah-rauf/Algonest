@@ -199,5 +199,66 @@ async function getUser(uid) {
   return toPublicUser(data);
 }
 
+async function updateStudentProfile({ uid, name, bio, education, pfp }) {
+  const cleanUid = String(uid || "").trim();
+  if (!cleanUid) throw new Error("uid is required");
 
-export { signup, login, firebaseLogin, saveUser, getUser };
+  const cleanName = String(name || "").trim();
+  const cleanBio = String(bio || "").trim();
+  const cleanEducation = String(education || "").trim();
+  const cleanPfp = String(pfp || "").trim();
+
+  const { data: authRow, error: authError } = await supabase
+    .from("auth")
+    .select("uid, name, email, role")
+    .eq("uid", cleanUid)
+    .maybeSingle();
+
+  if (authError) throw new Error(authError.message);
+  if (!authRow) throw new Error("User not found");
+
+  if (cleanName) {
+    const { error: authUpdateError } = await supabase
+      .from("auth")
+      .update({ name: cleanName })
+      .eq("uid", cleanUid);
+
+    if (authUpdateError) throw new Error(authUpdateError.message);
+  }
+
+  const { data: studentRow, error: studentError } = await supabase
+    .from("student")
+    .select("s_id, uid, name, bio, education")
+    .eq("uid", cleanUid)
+    .maybeSingle();
+
+  if (studentError) throw new Error(studentError.message);
+  if (!studentRow) throw new Error("Student profile not found");
+
+  const studentUpdate = {
+    name: cleanName || studentRow.name,
+    bio: cleanBio,
+    education: cleanEducation,
+    pfp: cleanPfp || null,
+  };
+
+  const { data: updatedStudent, error: updateError } = await supabase
+    .from("student")
+    .update(studentUpdate)
+    .eq("uid", cleanUid)
+    .select("s_id, uid, name, bio, education, pfp, total_bookings, active_booking_id")
+    .single();
+
+  if (updateError) throw new Error(updateError.message);
+
+  return {
+    auth: toPublicUser({
+      ...authRow,
+      name: studentUpdate.name,
+    }),
+    student: updatedStudent,
+  };
+}
+
+
+export { signup, login, firebaseLogin, saveUser, getUser, updateStudentProfile };

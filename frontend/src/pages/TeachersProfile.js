@@ -133,7 +133,7 @@ const TeacherProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const { id } = useParams();
   const location = useLocation();
-  const checkpointFlow = location.state?.checkpointFlow || null;
+  const gateFlow = location.state?.gateFlow || location.state?.checkpointFlow || location.state?.interviewFlow || null;
   const [teacher, setTeacher] = useState(location.state?.teacher || null);
   const [availability, setAvailability] = useState([]);
   const [editAvailability, setEditAvailability] = useState(false);
@@ -217,16 +217,16 @@ const TeacherProfile = () => {
         style={{ background: "linear-gradient(90deg, #7C3AED, #FCD34D)" }} /> */}
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
-        {checkpointFlow && (
+        {gateFlow && (
           <div className="mb-6 rounded-3xl border border-yellow-200 bg-yellow-50 px-6 py-5 shadow-sm">
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-700">
-              Checkpoint Booking
+              {gateFlow.kind === "interview" ? "Interview Booking" : "Checkpoint Booking"}
             </div>
             <div className="mt-1 text-xl font-bold text-gray-900">
-              Book a mentor for {checkpointFlow.title}
+              Book a mentor for {gateFlow.title}
             </div>
             <p className="mt-1 text-sm text-gray-600">
-              After you confirm a slot, we&apos;ll connect that new session to your checkpoint and send you right back to the roadmap.
+              After you confirm a slot, we&apos;ll connect that new session to your roadmap gate and send you right back to the roadmap.
             </p>
           </div>
         )}
@@ -495,7 +495,7 @@ const TeacherProfile = () => {
                   meeting_link={teacher.meeting_link}
                   avail={availability}
                   timeSlots={timeSlots}
-                  checkpointFlow={checkpointFlow}
+                  gateFlow={gateFlow}
                 />
               )}
             </div>

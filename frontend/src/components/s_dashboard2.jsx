@@ -101,19 +101,19 @@ function buildNewsFeed({ data, sessionInfo }) {
   const activeCourse = data?.activeCourse || null;
   const interviews = buildInterviewSlots(data);
 
-  return [
-    {
-      type: "Roadmap Signal",
-      title: lessonProgress?.nextLessonTitle
-        ? `Next lesson to crack: ${lessonProgress.nextLessonTitle}`
+    return [
+      {
+        type: "Roadmap Signal",
+        title: lessonProgress?.nextLessonTitle
+        ? `Next checkpoint to defend: ${lessonProgress.nextLessonTitle}`
         : activeCourse
-        ? `Your roadmap is live: ${activeCourse.title}`
+        ? `Your route is live: ${activeCourse.title}`
         : "You can preview milestone 1 right now",
       body: lessonProgress?.nextLessonTitle
-        ? "Stay close to the next lesson so you move into your next checkpoint with confidence."
+        ? "Stay close to the next checkpoint so you move into it with confidence."
         : activeCourse
-        ? "Your project path is active. Keep momentum steady and use sessions before checkpoint deadlines pile up."
-        : "Explore the first milestone and see how the guided project flow feels before you commit to a plan.",
+        ? "Your project path is active. Keep momentum steady and use sessions before assessment deadlines pile up."
+        : "Explore the first milestone and see how the guided proof flow feels before you commit to a plan.",
       accent: C.purple,
       bg: C.purpleLight,
     },
@@ -138,10 +138,10 @@ function buildNewsFeed({ data, sessionInfo }) {
       type: "Interview Track",
       title: interviews[0]?.start_time
         ? `${interviews[0].title} is on the horizon`
-        : "Interview loop is waiting for roadmap progress",
+        : "Interview loop is waiting for route progress",
       body: interviews[0]?.start_time
         ? `Your next interview checkpoint is scheduled for ${formatDateTimeLabel(interviews[0].start_time)}.`
-        : "Mock interviews will appear here as your roadmap and mentor journey move forward.",
+        : "Mock interviews will appear here as your route and mentor journey move forward.",
       accent: C.blue,
       bg: C.blueLight,
     },
@@ -156,7 +156,7 @@ function buildOpportunityFeed({ data, hasAnyBooking }) {
   return [
     {
       eyebrow: "Announcement",
-      title: hasAnyBooking ? "Your learning window is active" : "You are in preview mode",
+      title: hasAnyBooking ? "Your assessment window is active" : "You are in preview mode",
       body: hasAnyBooking
         ? `Your active plan stays available until ${formatDateLabel(activeCourse?.expiry_date, "your plan window ends")}.`
         : "Preview the first milestone, explore the experience, and activate a plan when you want the full project system.",
@@ -165,14 +165,14 @@ function buildOpportunityFeed({ data, hasAnyBooking }) {
       eyebrow: "Mentor Content",
       title: hasAnyBooking ? "Use mentor time strategically" : "Mentor reviews unlock with a plan",
       body: hasAnyBooking
-        ? `${remainingSessions ?? 0} session(s) remain. Save one for checkpoint review if your next lesson feels shaky.`
-        : "Teacher guidance, checkpoint reviews, and live sessions open after your first booking.",
+        ? `${remainingSessions ?? 0} session(s) remain. Save one for checkpoint review if your next step feels shaky.`
+        : "Mentor guidance, checkpoint reviews, and live sessions open after your first booking.",
     },
     {
       eyebrow: "Opportunity",
       title: lessonProgress?.completedLessons > 0 ? "Your proof of work is growing" : "Your first shipped milestone matters most",
       body: lessonProgress?.completedLessons > 0
-        ? "Each completed lesson and checkpoint gets you closer to a portfolio that actually reflects real building."
+        ? "Each completed checkpoint gets you closer to a portfolio that actually reflects real proof."
         : "Even one completed milestone creates useful proof of consistency. Start with momentum, not perfection.",
     },
   ];
@@ -187,7 +187,7 @@ function buildQuickPrompts({ data, hasAnyBooking, sessionInfo }) {
     return [
       "Show me how the AI Build Companion would guide me through milestone 1.",
       "What kind of project help do I unlock once I activate a plan?",
-      "Help me understand how AlgoNest combines roadmap, AI, and mentor checkpoints.",
+      "Help me understand how AlgoNest combines route, AI, and mentor checkpoints.",
     ];
   }
 
@@ -379,16 +379,16 @@ function HomeTab({ data, hasAnyBooking }) {
           <div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
               <Pill bg="rgba(255,255,255,0.12)" color={C.white}>{student.cohort}</Pill>
-              <Pill bg="rgba(246,201,14,0.18)" color={C.yellow}>{hasAnyBooking ? "Active learner" : "Preview mode"}</Pill>
+              <Pill bg="rgba(246,201,14,0.18)" color={C.yellow}>{hasAnyBooking ? "Active candidate" : "Preview mode"}</Pill>
             </div>
             <div style={{ fontSize: 31, fontWeight: 800, lineHeight: 1.2 }}>
               This is your build workspace, {student.name.split(" ")[0]}.
             </div>
             <div style={{ marginTop: 10, fontSize: 14, color: "rgba(255,255,255,0.78)", lineHeight: 1.75, maxWidth: 720 }}>
-              Track your roadmap, stay ready for sessions and checkpoints, and keep the next meaningful action visible every time you log in.
+              Track your route, stay ready for sessions and checkpoints, and keep the next meaningful action visible every time you log in.
             </div>
             <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <ActionButton onClick={() => navigate("/roadmap_express")}>
+              <ActionButton onClick={() => navigate(`/roadmap_express?courseId=${activeCourse?.courseId || 1}`)}>
                 {activeCourse ? "Continue Your Roadmap" : "Explore Milestone 1"}
               </ActionButton>
               <ActionButton href={hasAnyBooking ? "/teachers" : "/#pricing"} subtle>
@@ -408,8 +408,8 @@ function HomeTab({ data, hasAnyBooking }) {
           >
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[
-                [activeCourse?.title || "Roadmap preview", "Current path"],
-                [`${lessonProgress.completedLessons || 0}/${lessonProgress.totalLessons || 1}`, "Lessons done"],
+                [activeCourse?.title || "Route preview", "Current path"],
+                [`${lessonProgress.completedLessons || 0}/${lessonProgress.totalLessons || 1}`, "Checkpoints done"],
                 [`${lessonProgress.progressPct || 0}%`, "Progress"],
                 [sessionInfo.status === "ACTIVE" ? "Live now" : sessionInfo.status === "UPCOMING" ? "Upcoming" : "Quiet", "Session state"],
               ].map(([value, label]) => (
@@ -439,13 +439,13 @@ function HomeTab({ data, hasAnyBooking }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 18 }}>
             <div>
               <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 8 }}>
-                Continue Your Roadmap
+                Continue Your Route
               </div>
               <div style={{ fontSize: 24, fontWeight: 800, color: C.ink }}>
                 {activeCourse?.title || "Start with milestone one"}
               </div>
               <div style={{ marginTop: 8, fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
-                {activeCourse?.desc || "You can explore the first milestone right now. Activate a plan to unlock the full guided project system."}
+                {activeCourse?.desc || "You can explore the first milestone right now. Activate a plan to unlock the full guided proof system."}
               </div>
             </div>
             <Pill bg={C.yellowLight} color="#8a5a00">{activeCourse?.planTitle || "No plan yet"}</Pill>
@@ -454,28 +454,28 @@ function HomeTab({ data, hasAnyBooking }) {
           <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div style={{ padding: "14px 14px", borderRadius: 18, background: C.bg, border: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>{lessonProgress.completedLessons || 0}</div>
-              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Lessons completed</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Checkpoints completed</div>
             </div>
             <div style={{ padding: "14px 14px", borderRadius: 18, background: C.bg, border: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>{lessonProgress.remainingLessons || 0}</div>
-              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Lessons remaining</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Checkpoints remaining</div>
             </div>
             <div style={{ padding: "14px 14px", borderRadius: 18, background: C.bg, border: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 15, fontWeight: 800, color: C.purple, lineHeight: 1.35 }}>
                 {lessonProgress.nextLessonTitle || "Checkpoint gate ahead"}
               </div>
-              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Next lesson</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>Next checkpoint</div>
             </div>
           </div>
 
           <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "14px 16px", borderRadius: 18, background: C.purpleLight }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>Roadmap window</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>Assessment window</div>
               <div style={{ marginTop: 4, fontSize: 11, color: C.muted }}>
                 {student.packageStart} to {student.packageEnd}
               </div>
             </div>
-            <ActionButton onClick={() => navigate("/roadmap_express")}>Go to Course</ActionButton>
+            <ActionButton onClick={() => navigate(`/roadmap_express?courseId=${activeCourse?.courseId || 1}`)}>Go to Route</ActionButton>
           </div>
         </Surface>
 
@@ -487,7 +487,7 @@ function HomeTab({ data, hasAnyBooking }) {
             Open your AI Build Companion with a useful starting prompt.
           </div>
           <div style={{ marginTop: 8, fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
-            Jump into the roadmap and let the companion pick up context from where you are, instead of starting from a blank page.
+            Jump into the route and let the companion pick up context from where you are, instead of starting from a blank page.
           </div>
 
           <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -495,7 +495,7 @@ function HomeTab({ data, hasAnyBooking }) {
               <button
                 key={prompt}
                 type="button"
-                onClick={() => navigate("/roadmap_express", { state: { dashboardAiPrompt: prompt } })}
+                onClick={() => navigate(`/roadmap_express?courseId=${activeCourse?.courseId || 1}`, { state: { dashboardAiPrompt: prompt } })}
                 style={{
                   textAlign: "left",
                   borderRadius: 16,
@@ -636,7 +636,7 @@ function LeaderboardTab({ isUnlocked }) {
     return (
       <LockedPanel
         title="Leaderboard & scores unlock after your first booking"
-        body="Rankings and score history appear only after your learning journey becomes active through a present or past booking."
+        body="Rankings and score history appear only after your assessment journey becomes active through a present or past booking."
       />
     );
   }

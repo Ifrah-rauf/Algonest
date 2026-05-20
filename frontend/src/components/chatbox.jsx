@@ -53,12 +53,13 @@ export default function ChatBox({
   initialMessage = "Hey — I'm your Build Companion...",
   pendingMessage = "",
   onPendingConsumed = () => {},
-  lessonId = null,   // ← add this prop
+  lessonId = null,
   isLocked = false,
   lockedTitle = "AI Build Companion is locked",
   lockedDescription = "Start a plan to unlock guided debugging, mentor-style prompts, and project-specific help as you build.",
   lockedCtaHref = "/#pricing",
   lockedFooter = "Locked: to create project, see plans",
+  onUserMessageSent = () => {},
 }) {
   const { user } = useAuth();
 
@@ -72,6 +73,12 @@ export default function ChatBox({
   // ── Load history from DB on mount ─────────────────────────────────────
   useEffect(() => {
     async function loadHistory() {
+      // Don't load anything when locked — preview card handles the UI
+      if (isLocked) {
+        setHistoryLoading(false);
+        return;
+      }
+
       if (!user?.uid) {
         setMessages([{ role: "assistant", content: initialMessage }]);
         setHistoryLoading(false);
@@ -87,13 +94,11 @@ export default function ChatBox({
         const data = await res.json();
 
         if (data.history?.length > 0) {
-          // Map DB format { role, content } to component format
           setMessages(data.history.map(m => ({
             role:    m.role,
             content: m.content,
           })));
         } else {
-          // First ever session — show the greeting
           setMessages([{ role: "assistant", content: initialMessage }]);
         }
       } catch {
@@ -104,13 +109,18 @@ export default function ChatBox({
     }
 
     loadHistory();
-  }, [initialMessage, user?.uid]);
+  }, [initialMessage, user?.uid, isLocked]);
 
   async function sendDirectMessage(text) {
     if (!text.trim() || loading || isLocked) return;
 
     const userMsg = { role: "user", content: text.trim() };
     setMessages(prev => [...prev, userMsg]);
+    try {
+      onUserMessageSent();
+    } catch (e) {
+      // swallow
+    }
     setLoading(true);
 
     try {
@@ -121,8 +131,8 @@ export default function ChatBox({
           uid:          user?.uid,
           message:      userMsg.content,
           systemPrompt,
-          lessonId,     // ← pass current lesson to backend
-          history:      [],   // DB handles history now
+          lessonId,
+          history:      [],
         }),
       });
 
@@ -174,6 +184,7 @@ export default function ChatBox({
       </div>
     );
   }
+
   return (
     <div style={{
       width: "40%", borderLeft: "1px solid #e8e4f0",
@@ -228,6 +239,7 @@ export default function ChatBox({
         flex: 1, overflowY: "auto", padding: "16px 18px",
         display: "flex", flexDirection: "column", gap: 12,
       }}>
+        {/* Locked preview card — only shown when isLocked=true */}
         {isLocked && (
           <div style={{
             background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
@@ -276,7 +288,8 @@ export default function ChatBox({
           </div>
         )}
 
-        {messages.map((msg, i) => (
+        {/* Real messages — only shown when isLocked=false */}
+        {!isLocked && messages.map((msg, i) => (
           <div key={i} style={{
             display: "flex", gap: 8, alignItems: "flex-start",
             flexDirection: msg.role === "user" ? "row-reverse" : "row",
@@ -306,8 +319,8 @@ export default function ChatBox({
           </div>
         ))}
 
-        {/* Typing indicator */}
-        {loading && (
+        {/* Typing indicator — only shown when isLocked=false */}
+        {!isLocked && loading && (
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
@@ -329,6 +342,7 @@ export default function ChatBox({
             </div>
           </div>
         )}
+
         <div ref={chatEndRef} />
       </div>
 
@@ -338,7 +352,7 @@ export default function ChatBox({
         background: "#faf9ff", flexShrink: 0,
       }}>
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-            <textarea
+          <textarea
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}

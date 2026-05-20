@@ -59,36 +59,25 @@ export async function getActiveCourse(uid) {
 
   if (!bookings?.length) return null;
   const booking = bookings[0];
-  let course = null;
 
-  if (booking.course_id) {
-    const { data: courseData } = await supabase
-      .from("courses")
-      .select("course_id, title, description, domain, status")
-      .eq("course_id", booking.course_id)
-      .maybeSingle();
+  // Fetch course by course_id from booking (replaces plan_id logic)
+  if (!booking.course_id) return null;
 
-    course = courseData || null;
-  }
+  const { data: courseData } = await supabase
+    .from("courses")
+    .select("course_id, title, description, domain, status")
+    .eq("course_id", booking.course_id)
+    .maybeSingle();
 
-  const { data: plans } = await supabase
-    .from("plan")
-    .select("plan_name, sessions, description")
-    .eq("plan_id", booking.plan_id)
-    .limit(1);
-
-  const plan = plans?.[0];
-  if (!plan) return null;
+  if (!courseData) return null;
 
   return {
-    courseId: booking.course_id || course?.course_id || null,
-    desc: course?.description || plan.description,
-    title: course?.title || plan.plan_name,
-    domain: course?.domain || null,
-    courseStatus: course?.status || null,
-    plan_id: booking.plan_id,
-    planTitle: plan.plan_name,
-    totalSessions: plan.sessions,
+    courseId: booking.course_id,
+    desc: courseData.description,
+    title: courseData.title,
+    domain: courseData.domain || null,
+    courseStatus: courseData.status || null,
+    totalSessions: booking.remainingsessions,
     remainingSessions: booking.remainingsessions,
     booking_date: booking.booking_date,
     expiry_date: booking.expiry_date,
