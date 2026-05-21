@@ -17,7 +17,7 @@ import quizRoutes from "./routes/quizRoutes.js";
 import teacherDashboardRoutes from "./routes/teacherDashboardRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
-
+import studentRoutes from "./routes/studentRoutes.js";
 const app = express();
 const PORT = 5000;
 
@@ -52,6 +52,7 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/teachers", teacherDashboardRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/student", studentRoutes);
 app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);
 });

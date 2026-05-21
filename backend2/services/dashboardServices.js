@@ -182,7 +182,7 @@ export async function getLessonProgressSummary(uid, courseId) {
         .order("order_index", { ascending: true }),
       supabase
         .from("lesson_progress")
-        .select("lesson_id, completed")
+        .select("lesson_id, completed, completed_at, quiz_marks, quiz_passed, quiz_attempt")
         .eq("s_id", studentId),
     ]);
 
@@ -202,6 +202,23 @@ export async function getLessonProgressSummary(uid, courseId) {
   const nextLesson = lessonList.find(
     (lesson) => !progressByLessonId[lesson.lesson_id]?.completed
   );
+  const lessonById = Object.fromEntries(
+    lessonList.map((lesson) => [lesson.lesson_id, lesson])
+  );
+  const quizRows = (progressRows || []).filter((row) => row.quiz_attempt);
+  const quizAttempts = quizRows.length;
+  const passedQuizAttempts = quizRows.filter((row) => Boolean(row.quiz_passed)).length;
+  const latestQuiz = [...quizRows].sort((a, b) => {
+    const aCompletedAt = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+    const bCompletedAt = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+
+    if (aCompletedAt !== bCompletedAt) return bCompletedAt - aCompletedAt;
+
+    return (
+      (lessonById[b.lesson_id]?.order_index || 0) -
+      (lessonById[a.lesson_id]?.order_index || 0)
+    );
+  })[0];
 
   return {
     totalLessons,
@@ -211,6 +228,16 @@ export async function getLessonProgressSummary(uid, courseId) {
       ? Math.round((completedLessons / totalLessons) * 100)
       : 0,
     nextLessonTitle: nextLesson?.title || null,
+    quiz_attempts: quizAttempts,
+    attempted: quizAttempts,
+    quiz_marks: latestQuiz?.quiz_marks ?? null,
+    latestScore: latestQuiz?.quiz_marks ?? null,
+    quiz_passed: latestQuiz?.quiz_passed ?? null,
+    latestPassed: latestQuiz?.quiz_passed ?? null,
+    latestLessonTitle: latestQuiz ? lessonById[latestQuiz.lesson_id]?.title || null : null,
+    passRate: quizAttempts
+      ? `${Math.round((passedQuizAttempts / quizAttempts) * 100)}% pass rate`
+      : null,
   };
 }
 

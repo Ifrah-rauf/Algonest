@@ -18,26 +18,25 @@ export async function getProjectRecommendations(uid) {
 
   const s_id = student.s_id;
 
-  // 2. Find the latest booking for this student and get its course domain
-  const { data: booking, error: bookingError } = await supabase
-    .from("booking")
-    .select("courses(domain)")
-    .eq("s_id", s_id)
-    .order("booking_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Step 2: get course_id from the most recent active booking
+const { data: booking } = await supabase
+  .from("booking")
+  .select("course_id, courses(domain)")
+  .eq("s_id", s_id)
+  .order("booking_date", { ascending: false })
+  .limit(1)
+  .maybeSingle();
 
-  if (bookingError) throw new Error(bookingError.message);
+const course_id = booking?.course_id;
+if (!course_id) return [];
 
-  const domain = booking?.courses?.domain;
-  if (!domain) return [];
+// Step 3: fetch projects by course_id
+const { data: projects, error: projectError } = await supabase
+  .from("project")
+  .select("project_id, project_title, last_progress, course_id")
+  .eq("course_id", course_id)
+  .limit(5);
 
-  // 3. Fetch projects matching that domain
-  const { data: projects, error: projectError } = await supabase
-    .from("project")
-    .select("project_id, project_title, last_progress, domain")
-    .eq("domain", domain)
-    .limit(5);
 
   if (projectError) throw new Error(projectError.message);
 

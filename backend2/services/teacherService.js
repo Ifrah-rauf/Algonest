@@ -182,46 +182,42 @@ export async function fetchTeacherById(id) {
    Fetch mentors by plan IDs
 ============================================================ */
 
-
-/**
- * Get mentors for a given domain.
- * @param {string} domain - The course domain (e.g. "Backend", "Frontend")
- * @returns {Promise<{ mentors: Array }>}
- */
 export async function getMentorsByDomain(domain) {
-  // 1. Resolve course_id from domain
-  const { data: course, error: courseError } = await supabase
+  if (!domain) return { mentors: [] };
+
+  // 1. Get all courses for this domain
+  const { data: courses, error: courseError } = await supabase
     .from("courses")
     .select("course_id")
-    .eq("domain", domain)
-    .limit(1)
-    .maybeSingle();
+    .eq("domain", domain);
 
   if (courseError) throw new Error(courseError.message);
-  if (!course) return { mentors: [] };
+  if (!courses?.length) return { mentors: [] };
 
-  const course_id = course.course_id;
+  const courseIds = courses.map(c => c.course_id);
 
-  // 2. Get teachers mapped to that course
+  // 2. Get all teacher mappings for those courses
   const { data: mappings, error: teacherError } = await supabase
     .from("course_teacher_mapping")
     .select("t_id")
-    .eq("course_id", course_id);
+    .in("course_id", courseIds);
 
   if (teacherError) throw new Error(teacherError.message);
-  if (!mappings || mappings.length === 0) return { mentors: [] };
+  if (!mappings?.length) return { mentors: [] };
 
-  // 3. Fetch teacher details separately
   const ids = mappings.map(m => m.t_id);
+
+  // 3. Fetch teacher details
   const { data: teacherDetails, error: detailError } = await supabase
     .from("teacher")
-    .select("name, bio, expertise")
+    .select("t_id, name, bio, pfp, verified, specialisation_id, experience")
     .in("t_id", ids);
 
   if (detailError) throw new Error(detailError.message);
 
   return { mentors: teacherDetails || [] };
 }
+
 
 export async function fetchMentors(planIds) {
   const { data: mapping, error: mapErr } = await supabase
