@@ -4,6 +4,7 @@ import ChatBox from "../components/chatbox";
 import LessonQuiz from "../components/LessonQuiz";
 import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext";
+import RoadmapBookingOverview from "./roadmap_booking_overview";
 
 const COMPANION_SYSTEM = `You are the AlgoNest AI Build Companion — an expert backend engineering tutor embedded inside the AlgoNest learning platform.
 
@@ -114,6 +115,11 @@ function getCourseIdFromLocation(location) {
   const stateCourseId = location.state?.courseId;
   const parsed = Number(queryCourseId || stateCourseId || 1);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function getActiveTabFromLocation(location) {
+  const params = new URLSearchParams(location.search || "");
+  return params.get("tab") === "booking" ? "booking" : "roadmap";
 }
 
 function PartyBurst() {
@@ -375,6 +381,20 @@ export default function AlgoNestRoadmap() {
   const location = useLocation();
   const navigate = useNavigate();
   const courseId = getCourseIdFromLocation(location);
+  const activeTab = getActiveTabFromLocation(location);
+
+  function setActiveTab(tab) {
+    const nextParams = new URLSearchParams(location.search || "");
+    nextParams.set("courseId", String(courseId));
+    nextParams.set("tab", tab);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${nextParams.toString()}`,
+      },
+      { replace: false, state: location.state || null }
+    );
+  }
 
   const [lessons,        setLessons]        = useState([]);
   const [lessonTopics,   setLessonTopics]   = useState({});
@@ -393,8 +413,11 @@ export default function AlgoNestRoadmap() {
   const [quizLessonId, setQuizLessonId] = useState(null);
   const [checkpointCelebration, setCheckpointCelebration] = useState(null);
   const [checkpointSuccess, setCheckpointSuccess] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [activeCourseData, setActiveCourseData] = useState(null);
   const [hasActiveBooking, setHasActiveBooking] = useState(false);
   const [hasAnyBooking, setHasAnyBooking] = useState(false);
+  const [resolvedDomain, setResolvedDomain] = useState(null);
   const [aiInputCount, setAiInputCount] = useState(0);
   const [aiLockedByUsage, setAiLockedByUsage] = useState(false);
 
@@ -453,9 +476,6 @@ export default function AlgoNestRoadmap() {
       const checkpointsData = await checkpointsRes.json();
       const interviewsData = await interviewsRes.json();
       // responses array may include additional entries when user is logged in
-      let dashboardData = null;
-      let activeCourseData = null;
-
       const visibleLessons = (lessonsData.data || []).filter(
         (lesson) => Number(lesson.order_index) >= 1
       );
@@ -486,35 +506,44 @@ export default function AlgoNestRoadmap() {
 
       // derive booking state from dashboard summary if available
       if (user?.uid) {
-        // responses order: index 5 => activeCourseRes, index 6 => dashboardRes, index 7 => progressRes, 8 => checkpointProgressRes, 9 => interviewProgressRes
-        const activeCourseResIdx = 5;
-        const dashboardResIdx = 6;
+        let activeCourseJson = null;
+        let dashboardJson = null;
 
         try {
-          const activeCourseJson = await activeCourseRes.json();
-          activeCourseData = activeCourseJson.course || null;
+          activeCourseJson = await activeCourseRes.json();
+          setActiveCourseData(activeCourseJson.course || null);
         } catch (e) {
-          activeCourseData = null;
+          setActiveCourseData(null);
         }
 
         try {
-          const dashboardJson = await dashboardRes.json();
-          dashboardData = dashboardJson.data || null;
+          dashboardJson = await dashboardRes.json();
+          setDashboardData(dashboardJson.data || null);
         } catch (e) {
-          dashboardData = null;
+          setDashboardData(null);
         }
 
-        const dashboardActiveCourse = dashboardData?.activeCourse || null;
-        const dashboardHasAnyBooking = Boolean(dashboardData?.hasAnyBooking);
+        const dashboardDataValue = dashboardJson?.data || null;
+        const activeCourseDataValue = activeCourseJson?.course || null;
+        const dashboardActiveCourse = dashboardDataValue?.activeCourse || null;
+        const dashboardHasAnyBooking = Boolean(dashboardDataValue?.hasAnyBooking);
+        const dashboardDomain =
+          dashboardDataValue?.domain ||
+          dashboardDataValue?.profile?.domain ||
+          dashboardActiveCourse?.domain ||
+          activeCourseDataValue?.domain ||
+          null;
 
         // A booking is valid for this roadmap if activeCourse exists and its courseId matches
         const validForThisCourse = (dashboardActiveCourse && Number(dashboardActiveCourse.courseId) === Number(courseId));
 
         setHasActiveBooking(Boolean(validForThisCourse));
         setHasAnyBooking(dashboardHasAnyBooking);
+        setResolvedDomain(dashboardDomain);
       } else {
         setHasActiveBooking(false);
         setHasAnyBooking(false);
+        setResolvedDomain(null);
       }
 
       if (progressRes) {
@@ -570,8 +599,8 @@ export default function AlgoNestRoadmap() {
 
   function handleUserAIMessage() {
     if (!user?.uid) return;
-    // only count for users who do not have an active booking (preview mode)
-    if (hasActiveBooking) return;
+    // only count preview usage when AI is actually available
+    if (!canUseAI || hasActiveBooking) return;
 
     const key = `ai_inputs:${user.uid}`;
     const next = aiInputCount + 1;
@@ -592,6 +621,7 @@ export default function AlgoNestRoadmap() {
     if (!user?.uid) {
       setHasActiveBooking(false);
       setCheckpointProgressMap({});
+      setResolvedDomain(null);
     }
   }, [user?.uid]);
 
@@ -680,7 +710,7 @@ export default function AlgoNestRoadmap() {
 
   function askAi(e, lesson) {
     e.stopPropagation(); // prevent any parent click handlers
-    if (!hasActiveBooking) return;
+    if (!canUseAI) return;
     setAskedLessonId(lesson.lesson_id); // visual feedback
     setActiveLessonId(lesson.lesson_id);
     setPendingMessage(
@@ -778,13 +808,17 @@ export default function AlgoNestRoadmap() {
     ? "ready"
     : "locked";
 
-  // Determine AI/chat availability based on booking state (Rule 2)
+  // Determine AI/chat availability based on resolved domain + booking state
   const isAuthenticated = Boolean(user?.uid);
+  const hasDomain = Boolean(resolvedDomain);
   let canUseAI = false;
   let chatLockReason = null; // e.g., "other_roadmap"
 
   if (isAuthenticated) {
-    if (hasActiveBooking) {
+    if (!hasDomain) {
+      canUseAI = false;
+      chatLockReason = "no_domain";
+    } else if (hasActiveBooking) {
       // Active booking for this roadmap: full AI access
       canUseAI = true;
     } else if (hasAnyBooking && !hasActiveBooking) {
@@ -809,6 +843,10 @@ export default function AlgoNestRoadmap() {
     chatLockedTitle = "Create your study plan";
     chatLockedDescription = "You have used the AI preview 15 times. Create a study plan to continue using the companion.";
     chatLockedCta = "/#pricing";
+  } else if (chatLockReason === "no_domain") {
+    chatLockedTitle = "Select a domain first";
+    chatLockedDescription = "AI depends on your selected domain. Choose a roadmap or booking that sets your domain before using the companion.";
+    chatLockedCta = "/dashboard";
   } else if (chatLockReason === "other_roadmap") {
     chatLockedTitle = "you have other roadmap in continuation";
     chatLockedDescription = "This course is not your active roadmap. Switch to your active roadmap to continue using the AI companion.";
@@ -850,10 +888,49 @@ export default function AlgoNestRoadmap() {
         boxShadow: "0 1px 14px rgba(107,70,193,0.06)",
         backdropFilter: "blur(12px)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9991b8", fontFamily: "monospace" }}>
-          <span style={{ color: "#444" }}>Backend Dev</span>
-          <span style={{ color: "#d0c8f0" }}>/</span>
-          <span style={{ color: "#6b46c1", fontWeight: 600 }}>Node.js + Express</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9991b8", fontFamily: "monospace" }}>
+            <span style={{ color: "#444" }}>Backend Dev</span>
+            <span style={{ color: "#d0c8f0" }}>/</span>
+            <span style={{ color: "#6b46c1", fontWeight: 600 }}>Node.js + Express</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab("roadmap")}
+              style={{
+                border: "1px solid transparent",
+                background: activeTab === "roadmap" ? "#efe7ff" : "transparent",
+                color: activeTab === "roadmap" ? "#5b21b6" : "#8b7bb8",
+                borderRadius: 0,
+                padding: "8px 12px",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "none",
+              }}
+            >
+              Tab 1 · Roadmap
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("booking")}
+              style={{
+                border: "1px solid transparent",
+                background: activeTab === "booking" ? "#efe7ff" : "transparent",
+                color: activeTab === "booking" ? "#5b21b6" : "#8b7bb8",
+                borderRadius: 0,
+                padding: "8px 12px",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "none",
+              }}
+            >
+              Tab 2 · Booking & Overview
+            </button>
+          </div>
         </div>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
@@ -884,6 +961,7 @@ export default function AlgoNestRoadmap() {
       </header>
 
       {/* ── BODY ── */}
+      {activeTab === "roadmap" ? (
       <div style={{
         flex: 1,
         display: "flex",
@@ -1021,7 +1099,7 @@ export default function AlgoNestRoadmap() {
                   { label: "Lessons", value: `${completedCount}/${totalLessons}`, color: "#6b46c1" },
                   { label: "Checkpoints", value: `${checkpoints.length}`, color: "#b45309" },
                   { label: "Interviews", value: `${interviews.length}`, color: "#059669" },
-                  { label: "AI Access", value: hasActiveBooking ? "Unlocked" : "Preview", color: hasActiveBooking ? "#059669" : "#6b46c1" },
+                  { label: "AI Access", value: hasDomain ? (hasActiveBooking ? "Unlocked" : "Preview") : "Locked", color: hasDomain ? (hasActiveBooking ? "#059669" : "#6b46c1") : "#dc2626" },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -1170,23 +1248,23 @@ export default function AlgoNestRoadmap() {
                           onClick={e => askAi(e, lesson)}
                           style={{
                             fontSize: 10, fontFamily: "monospace", fontWeight: 700,
-                            background: !hasActiveBooking ? "#f3f4f6" : isAsked ? "#6b46c1" : "#f0ecfc",
-                            color:      !hasActiveBooking ? "#9ca3af" : isAsked ? "#fff" : "#6b46c1",
-                            border: `1px solid ${!hasActiveBooking ? "#e5e7eb" : isAsked ? "#6b46c1" : "#d8d0f0"}`,
+                            background: !canUseAI ? "#f3f4f6" : isAsked ? "#6b46c1" : "#f0ecfc",
+                            color:      !canUseAI ? "#9ca3af" : isAsked ? "#fff" : "#6b46c1",
+                            border: `1px solid ${!canUseAI ? "#e5e7eb" : isAsked ? "#6b46c1" : "#d8d0f0"}`,
                             borderRadius: 6, padding: "5px 12px",
-                            cursor: !hasActiveBooking ? "not-allowed" : "pointer",
+                            cursor: !canUseAI ? "not-allowed" : "pointer",
                             transition: "all 0.2s",
-                            boxShadow: !hasActiveBooking ? "none" : isAsked ? "0 2px 8px rgba(107,70,193,0.3)" : "none",
-                            transform: !hasActiveBooking ? "scale(1)" : isAsked ? "scale(0.97)" : "scale(1)",
+                            boxShadow: !canUseAI ? "none" : isAsked ? "0 2px 8px rgba(107,70,193,0.3)" : "none",
+                            transform: !canUseAI ? "scale(1)" : isAsked ? "scale(0.97)" : "scale(1)",
                           }}
                         >
-                          {!hasActiveBooking ? "AI Locked" : isAsked ? "Sent ✓" : "Ask AI →"}
+                          {!canUseAI ? "AI Locked" : isAsked ? "Sent ✓" : "Ask AI →"}
                         </button>
                       )}
 
                       {!isLocked && (
                         user?.uid ? (
-                          hasActiveBooking ? (
+                          canUseAI ? (
                             <button
                               onClick={e => openLessonQuiz(e, lesson.lesson_id)}
                               style={{
@@ -1402,17 +1480,17 @@ export default function AlgoNestRoadmap() {
                             onClick={e => askAi(e, lesson)}
                             style={{
                               fontSize: 11, fontFamily: "monospace", fontWeight: 600,
-                              background: !hasActiveBooking ? "#f9fafb" : "#fff",
-                              color: !hasActiveBooking ? "#9ca3af" : "#6b46c1",
-                              border: `1.5px solid ${!hasActiveBooking ? "#e5e7eb" : "#d8d0f0"}`, borderRadius: 8,
+                              background: !canUseAI ? "#f9fafb" : "#fff",
+                              color: !canUseAI ? "#9ca3af" : "#6b46c1",
+                              border: `1.5px solid ${!canUseAI ? "#e5e7eb" : "#d8d0f0"}`, borderRadius: 8,
                               padding: "9px 18px", cursor: "pointer",
                             }}
                           >
-                            {hasActiveBooking ? "Ask companion about this →" : "AI Locked"}
+                            {canUseAI ? "Ask companion about this →" : "AI Locked"}
                           </button>
 
                           {user?.uid ? (
-                            hasActiveBooking ? (
+                            canUseAI ? (
                               <button
                                 onClick={e => openLessonQuiz(e, lesson.lesson_id)}
                                 style={{
@@ -1632,6 +1710,7 @@ export default function AlgoNestRoadmap() {
           pendingMessage={pendingMessage}
           onPendingConsumed={() => setPendingMessage("")}
           lessonId={activeLessonId}
+          courseId={courseId}
           isLocked={chatIsLocked}
           lockedTitle={chatLockedTitle}
           lockedDescription={chatLockedDescription}
@@ -1648,6 +1727,29 @@ export default function AlgoNestRoadmap() {
           onResultSaved={refreshLessonProgress}
         />
       </div>
+      ) : (
+        <div style={{
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          padding: "18px 22px 22px",
+          width: "100%",
+        }}>
+          <RoadmapBookingOverview
+            user={user}
+            dashboardData={dashboardData}
+            activeCourseData={activeCourseData}
+            selectedCourse={dashboardData?.selectedCourse || null}
+            lessonProgress={dashboardData?.lessonProgress || null}
+            hasAnyBooking={hasAnyBooking}
+            hasActiveBooking={hasActiveBooking}
+            resolvedDomain={resolvedDomain}
+            courseId={courseId}
+            navigate={navigate}
+            onGoToRoadmap={() => setActiveTab("roadmap")}
+          />
+        </div>
+      )}
 
       <style>{`
         ::-webkit-scrollbar { width: 5px; }

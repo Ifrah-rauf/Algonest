@@ -71,9 +71,13 @@ function formatDateTimeLabel(value, fallback = "Date & time to be scheduled") {
   });
 }
 
+function getCurrentRoadmap(data) {
+  return data?.roadmapContext?.roadmap || data?.activeCourse || data?.selectedCourse || null;
+}
+
 function buildStudentView(data) {
   const profile = data?.profile || {};
-  const activeCourse = data?.activeCourse || null;
+  const activeCourse = getCurrentRoadmap(data);
 
   return {
     name: profile.name || "Student",
@@ -98,7 +102,7 @@ function buildInterviewSlots(data) {
 
 function buildNewsFeed({ data, sessionInfo }) {
   const lessonProgress = data?.lessonProgress || {};
-  const activeCourse = data?.activeCourse || null;
+  const activeCourse = getCurrentRoadmap(data);
   const interviews = buildInterviewSlots(data);
 
     return [
@@ -149,16 +153,17 @@ function buildNewsFeed({ data, sessionInfo }) {
 }
 
 function buildOpportunityFeed({ data, hasAnyBooking }) {
-  const activeCourse = data?.activeCourse || null;
+  const activeCourse = getCurrentRoadmap(data);
   const lessonProgress = data?.lessonProgress || {};
   const remainingSessions = activeCourse?.remainingSessions ?? null;
+  const hasRoadmap = Boolean(activeCourse);
 
   return [
     {
       eyebrow: "Announcement",
-      title: hasAnyBooking ? "Your assessment window is active" : "You are in preview mode",
-      body: hasAnyBooking
-        ? `Your active plan stays available until ${formatDateLabel(activeCourse?.expiry_date, "your plan window ends")}.`
+      title: hasRoadmap ? "Your roadmap is active" : "You are in preview mode",
+      body: hasRoadmap
+        ? `Your current roadmap stays available until ${formatDateLabel(activeCourse?.expiry_date, "your plan window ends")}.`
         : "Preview the first milestone, explore the experience, and activate a plan when you want the full project system.",
     },
     {
@@ -178,12 +183,13 @@ function buildOpportunityFeed({ data, hasAnyBooking }) {
   ];
 }
 
-function buildQuickPrompts({ data, hasAnyBooking, sessionInfo }) {
+function buildQuickPrompts({ data, sessionInfo }) {
+  const hasRoadmap = Boolean(getCurrentRoadmap(data));
   const nextLesson = data?.lessonProgress?.nextLessonTitle;
-  const currentTrack = data?.activeCourse?.title || "my roadmap";
+  const currentTrack = getCurrentRoadmap(data)?.title || "my roadmap";
   const upcomingInterview = buildInterviewSlots(data).find((slot) => slot.start_time);
 
-  if (!hasAnyBooking) {
+  if (!hasRoadmap) {
     return [
       "Show me how the AI Build Companion would guide me through milestone 1.",
       "What kind of project help do I unlock once I activate a plan?",
@@ -322,7 +328,7 @@ function HomeTab({ data, hasAnyBooking }) {
   const navigate = useNavigate();
   const student = buildStudentView(data);
   const interviews = buildInterviewSlots(data);
-  const activeCourse = data?.activeCourse || null;
+  const activeCourse = getCurrentRoadmap(data);
   const lessonProgress = data?.lessonProgress || {};
   const [sessionInfo, setSessionInfo] = useState({
     status: "NONE",
@@ -355,8 +361,8 @@ function HomeTab({ data, hasAnyBooking }) {
   const newsFeed = useMemo(() => buildNewsFeed({ data, sessionInfo }), [data, sessionInfo]);
   const opportunityFeed = useMemo(() => buildOpportunityFeed({ data, hasAnyBooking }), [data, hasAnyBooking]);
   const quickPrompts = useMemo(
-    () => buildQuickPrompts({ data, hasAnyBooking, sessionInfo }),
-    [data, hasAnyBooking, sessionInfo]
+    () => buildQuickPrompts({ data, sessionInfo }),
+    [data, sessionInfo]
   );
 
   return (
@@ -379,7 +385,7 @@ function HomeTab({ data, hasAnyBooking }) {
           <div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
               <Pill bg="rgba(255,255,255,0.12)" color={C.white}>{student.cohort}</Pill>
-              <Pill bg="rgba(246,201,14,0.18)" color={C.yellow}>{hasAnyBooking ? "Active candidate" : "Preview mode"}</Pill>
+              <Pill bg="rgba(246,201,14,0.18)" color={C.yellow}>{activeCourse ? "Active roadmap" : "Preview mode"}</Pill>
             </div>
             <div style={{ fontSize: 31, fontWeight: 800, lineHeight: 1.2 }}>
               This is your build workspace, {student.name.split(" ")[0]}.

@@ -18,59 +18,26 @@ export async function getProjectRecommendations(uid) {
 
   const s_id = student.s_id;
 
-  // 2. Find the latest booking for this student and get its course/course meta
-  const { data: booking, error: bookingError } = await supabase
-    .from("booking")
-    .select("booking_id, course_id, booking_date, courses:course_id ( course_id, title, description, domain )")
-    .eq("s_id", s_id)
-    .order("booking_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Step 2: get course_id from the most recent active booking
+const { data: booking } = await supabase
+  .from("booking")
+  .select("course_id, courses(domain)")
+  .eq("s_id", s_id)
+  .order("booking_date", { ascending: false })
+  .limit(1)
+  .maybeSingle();
 
-  if (bookingError) throw new Error(bookingError.message);
+const course_id = booking?.course_id;
+if (!course_id) return [];
 
-  const courseId = booking?.course_id || booking?.courses?.course_id || null;
-  if (!courseId) return [];
-
-  const [{ data: projects, error: projectError }, { data: courseRow, error: courseError }] = await Promise.all([
-    supabase
-    .from("project")
-    .select("project_id, project_title, last_progress, booking_id, course_id")
-    .eq("course_id", courseId)
-    .order("project_id", { ascending: false })
-    .limit(6),
-    supabase
-      .from("courses")
-      .select("course_id, title, description, domain")
-      .eq("course_id", courseId)
-      .maybeSingle(),
-  ]);
+// Step 3: fetch projects by course_id
+const { data: projects, error: projectError } = await supabase
+  .from("project")
+  .select("project_id, project_title, last_progress, course_id")
+  .eq("course_id", course_id)
+  .limit(5);
 
   if (projectError) throw new Error(projectError.message);
-  if (courseError) throw new Error(courseError.message);
 
-  const mappedProjects = (projects || []).map((project) => ({
-    ...project,
-    id: project.project_id,
-    title: project.project_title || courseRow?.title || "Project roadmap",
-    project_title: project.project_title || courseRow?.title || "Project roadmap",
-    last_progress: project.last_progress || courseRow?.description || "Recommended from your current course.",
-    course_title: courseRow?.title || "Current course",
-    domain: courseRow?.domain || null,
-  }));
-
-  if (mappedProjects.length) return mappedProjects;
-
-  return [
-    {
-      id: `course-${courseId}`,
-      project_id: null,
-      project_title: courseRow?.title || "Project roadmap",
-      last_progress: courseRow?.description || "Start with a project aligned to your active course.",
-      booking_id: booking.booking_id || null,
-      course_id: courseId,
-      course_title: courseRow?.title || "Current course",
-      domain: courseRow?.domain || null,
-    },
-  ];
+  return projects || [];
 }

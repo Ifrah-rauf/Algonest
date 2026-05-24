@@ -19,6 +19,7 @@ import supportRoutes from "./routes/supportRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import { startSessionReminderScheduler } from "./services/sessionReminderScheduler.js";
+import studentRoutes from "./routes/studentRoutes.js";
 const app = express();
 const PORT = 5000;
 
@@ -54,6 +55,7 @@ app.use("/api/teachers", teacherDashboardRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/student", studentRoutes);
 startSessionReminderScheduler();
 
 app.listen(PORT, '0.0.0.0', () => { 

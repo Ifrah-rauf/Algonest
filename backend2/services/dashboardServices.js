@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase.js";
+import { resolveStudentRoadmapContext } from "./roadmapContext.js";
 
 async function getStudentIdByUid(uid) {
   const { data: studentRow, error } = await supabase
@@ -9,22 +10,6 @@ async function getStudentIdByUid(uid) {
 
   if (error) throw error;
   return studentRow?.s_id || null;
-}
-
-async function getHasAnyBooking(uid) {
-  const studentId = await getStudentIdByUid(uid);
-  if (!studentId) return false;
-
-  const { data: booking, error } = await supabase
-    .from("booking")
-    .select("booking_id")
-    .eq("s_id", studentId)
-    .order("booking_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return Boolean(booking?.booking_id);
 }
 
 async function getBookingIdsByStudentId(studentId) {
@@ -40,48 +25,8 @@ async function getBookingIdsByStudentId(studentId) {
 }
 
 export async function getActiveCourse(uid) {
-  const { data: students } = await supabase
-    .from("student")
-    .select("s_id")
-    .eq("uid", uid)
-    .limit(1);
-
-  if (!students?.length) return null;
-  const s_id = students[0].s_id;
-
-  const { data: bookings } = await supabase
-    .from("booking")
-    .select("*")
-    .eq("s_id", s_id)
-    .gt("expiry_date", new Date().toISOString())
-    .order("booking_date", { ascending: false })
-    .limit(1);
-
-  if (!bookings?.length) return null;
-  const booking = bookings[0];
-
-  // Fetch course by course_id from booking (replaces plan_id logic)
-  if (!booking.course_id) return null;
-
-  const { data: courseData } = await supabase
-    .from("courses")
-    .select("course_id, title, description, domain, status")
-    .eq("course_id", booking.course_id)
-    .maybeSingle();
-
-  if (!courseData) return null;
-
-  return {
-    courseId: booking.course_id,
-    desc: courseData.description,
-    title: courseData.title,
-    domain: courseData.domain || null,
-    courseStatus: courseData.status || null,
-    totalSessions: booking.remainingsessions,
-    remainingSessions: booking.remainingsessions,
-    booking_date: booking.booking_date,
-    expiry_date: booking.expiry_date,
-  };
+  const context = await resolveStudentRoadmapContext({ uid });
+  return context.source === "booking" ? context.activeCourse : null;
 }
 
 export async function getInterviewSessions(uid) {
@@ -171,7 +116,7 @@ export async function getLessonProgressSummary(uid, courseId) {
         .order("order_index", { ascending: true }),
       supabase
         .from("lesson_progress")
-        .select("lesson_id, completed")
+        .select("lesson_id, completed, completed_at, quiz_marks, quiz_passed, quiz_attempt")
         .eq("s_id", studentId),
     ]);
 
@@ -191,7 +136,23 @@ export async function getLessonProgressSummary(uid, courseId) {
   const nextLesson = lessonList.find(
     (lesson) => !progressByLessonId[lesson.lesson_id]?.completed
   );
+const lessonById = Object.fromEntries(
+    lessonList.map((lesson) => [lesson.lesson_id, lesson])
+  );
+  const quizRows = (progressRows || []).filter((row) => row.quiz_attempt);
+  const quizAttempts = quizRows.length;
+  const passedQuizAttempts = quizRows.filter((row) => Boolean(row.quiz_passed)).length;
+  const latestQuiz = [...quizRows].sort((a, b) => {
+    const aCompletedAt = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+    const bCompletedAt = b.completed_at ? new Date(b.completed_at).getTime() : 0;
 
+    if (aCompletedAt !== bCompletedAt) return bCompletedAt - aCompletedAt;
+
+    return (
+      (lessonById[b.lesson_id]?.order_index || 0) -
+      (lessonById[a.lesson_id]?.order_index || 0)
+    );
+  })[0];
   return {
     totalLessons,
     completedLessons,
@@ -200,6 +161,16 @@ export async function getLessonProgressSummary(uid, courseId) {
       ? Math.round((completedLessons / totalLessons) * 100)
       : 0,
     nextLessonTitle: nextLesson?.title || null,
+    quiz_attempts: quizAttempts,
+    attempted: quizAttempts,
+    quiz_marks: latestQuiz?.quiz_marks ?? null,
+    latestScore: latestQuiz?.quiz_marks ?? null,
+    quiz_passed: latestQuiz?.quiz_passed ?? null,
+    latestPassed: latestQuiz?.quiz_passed ?? null,
+    latestLessonTitle: latestQuiz ? lessonById[latestQuiz.lesson_id]?.title || null : null,
+    passRate: quizAttempts
+      ? `${Math.round((passedQuizAttempts / quizAttempts) * 100)}% pass rate`
+      : null,
   };
 }
 
@@ -252,29 +223,27 @@ export async function getDashboardfunc(uid) {
       data: teacher,
     };
   } else {
-    const { data: student, error } = await supabase
-      .from("student")
-      .select("*")
-      .eq("uid", uid)
-      .single();
-
-    if (error) throw error;
-
-    const activeCourse = await getActiveCourse(uid);
-    const [interviews, lessonProgress, hasAnyBooking] = await Promise.all([
+    const roadmapContext = await resolveStudentRoadmapContext({ uid });
+    const student = roadmapContext.student;
+    const selectedCourse = roadmapContext.selectedCourse;
+    const activeCourse = roadmapContext.activeCourse;
+    const currentCourseId = roadmapContext.roadmapCourseId;
+    const [interviews, lessonProgress] = await Promise.all([
       getInterviewSessions(uid),
-      getLessonProgressSummary(uid, activeCourse?.courseId),
-      getHasAnyBooking(uid),
+      getLessonProgressSummary(uid, currentCourseId),
     ]);
 
     return {
       role: "STUDENT",
       data: {
         profile: student,
+        roadmapContext,
+        selectedCourse,
         activeCourse,
+        domain: roadmapContext.domain || selectedCourse?.domain || activeCourse?.domain || student?.domain || null,
         interviews,
         lessonProgress,
-        hasAnyBooking,
+        hasAnyBooking: roadmapContext.source === "booking",
       },
     };
   }

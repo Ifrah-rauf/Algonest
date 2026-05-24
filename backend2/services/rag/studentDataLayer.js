@@ -3,6 +3,7 @@
 
 
 import {supabase} from '../../lib/supabase.js';
+import { resolveStudentRoadmapContext } from '../roadmapContext.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STUDENT
@@ -25,13 +26,8 @@ export async function getStudentProfile(sId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getStudentCourse(sId) {
-  const { data } = await supabase
-    .from('student_courses')
-    .select(`courses ( course_id, title, description, domain, status )`)
-    .eq('s_id', sId)
-    .maybeSingle();
-
-  return data?.courses ?? null;
+  const context = await resolveStudentRoadmapContext({ sId });
+  return context.selectedCourse ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

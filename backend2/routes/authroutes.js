@@ -6,7 +6,8 @@ import {
   logout,
   saveUser,
   getUser,
-  updateStudentProfile
+  updateStudentProfile,
+  updateStudentCourse
 } from "../controllers/authcontroller.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -25,5 +26,6 @@ router.post("/logout", logout);
 router.post("/save-user", validate(saveUserSchema), saveUser);
 router.get("/user/:uid", getUser);
 router.post("/update-student-profile", updateStudentProfile);
+router.post("/update-student-course", updateStudentCourse);
 
 export default router;

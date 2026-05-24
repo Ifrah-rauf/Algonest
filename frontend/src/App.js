@@ -16,6 +16,8 @@ import Howitworks from "./components/howitworks";
 import MyRoadmaps from "./pages/ExploreRoadmaps";
 import BookingPage from "./pages/BookingPage";
 import CareerQuiz from "./pages/CareerQuiz";
+import CSCore from "./pages/CSCore";
+import Grill from "./pages/Grill";
 // Assuming authContext is imported; adjust if needed
 import { useAuth } from "./context/AuthContext.jsx";// Replace with actual path
 
@@ -60,6 +62,8 @@ function App() {
         <Route path="/roadmap_express" element={<RoadmapExpress />} />
         <Route path="/howitworks" element={<Howitworks />} />
         <Route path="/roadmaps" element={<MyRoadmaps />} />
+        <Route path="/cscore" element={<CSCore />} />
+        <Route path="/grill" element={<Grill />} />
         <Route path="/book-now" element={<BookingPage />} />
         <Route path="/careerquiz" element={<CareerQuiz />} />
 

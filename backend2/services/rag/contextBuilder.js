@@ -16,6 +16,7 @@ import {
   getStudentMemory,
   getCurrentLesson,
   getLessonTopicsWithProgress,
+  getStudentCourse,
   searchRelevantMessages,
 } from './studentDataLayer.js';
 import { getEmbedding } from './embeddingService.js';
@@ -52,6 +53,7 @@ export async function buildContext(uid, message = '') {
     currentLesson: null,
     currentTopics: [],
     nextTopic: null,
+    selectedCourse: null,
   };
 
   const student = await fetchStudent(uid);
@@ -64,6 +66,7 @@ export async function buildContext(uid, message = '') {
     ]);
 
     ragContext.currentLesson = currentLesson || null;
+    ragContext.selectedCourse = await getStudentCourse(sId);
 
     // topics for current lesson (if any)
     if (currentLesson?.lesson_id) {
@@ -99,6 +102,7 @@ export async function buildContext(uid, message = '') {
     currentLesson:  ragContext?.currentLesson || null,
     currentTopics:  ragContext?.currentTopics || [],
     nextTopic:      ragContext?.nextTopic || null,
+    selectedCourse: ragContext?.selectedCourse || null,
     sId,                                  // ← expose sId so orchestrator can use it
   };
 }
@@ -110,7 +114,7 @@ export async function buildContext(uid, message = '') {
 async function fetchStudent(uid) {
   const { data, error } = await supabase
     .from('student')
-    .select('s_id, name, bio, education')
+    .select('s_id, name, bio, education, course_id')
     .eq('uid', uid)
     .single();
 

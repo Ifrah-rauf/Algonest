@@ -32,6 +32,16 @@ export async function sendTeacherQuery(req, res) {
   }
 }
 
+export async function sendGithubReviewRequest(req, res) {
+  try {
+    const { uid, githubUrl } = req.body || {};
+    const data = await supportService.sendGithubReviewMail({ uid, githubUrl });
+    return res.json({ success: true, data });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+}
+
 export async function sendAccountDeletionRequest(req, res) {
   try {
     const { uid } = req.body || {};

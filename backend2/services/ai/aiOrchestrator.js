@@ -19,7 +19,8 @@ export async function generateAIResponse({
   uid,
   message,
   systemPrompt,
-  lessonId = null
+  lessonId = null,
+  courseId = null
 }) {
   console.log("AI_PROVIDER value:", JSON.stringify(process.env.AI_PROVIDER));
 
@@ -33,6 +34,7 @@ export async function generateAIResponse({
     historyLength: context?.history?.length ?? 0,
     systemPromptPresent: Boolean(context?.systemPrompt),
     usedRag,
+    courseId,
   });
 
   // 3. Save user message to conv_history and embeddings (if we have sId)
@@ -51,10 +53,29 @@ export async function generateAIResponse({
   // 3. Use RAG-generated system prompt
   const finalSystemPrompt =
     context.systemPrompt || systemPrompt || DEFAULT_SYSTEM;
+  const selectedRoadmapLine = context?.selectedCourse
+    ? `Selected roadmap: ${context.selectedCourse.title || `Course #${context.selectedCourse.course_id}`}`
+    : context?.student?.course_id
+    ? `Selected roadmap: Course #${context.student.course_id}`
+    : "Selected roadmap: not set";
+  const selectedDomainLine = context?.domain
+    ? `Selected domain: ${context.domain}`
+    : context?.selectedCourse?.domain
+    ? `Selected domain: ${context.selectedCourse.domain}`
+    : "Selected domain: not set";
+
+  const expandedSystemPrompt = `${finalSystemPrompt}
+
+--- Roadmap Selection ---
+${selectedRoadmapLine}
+
+--- Domain Selection ---
+${selectedDomainLine}
+`.trim();
 
   // 4. Call Claude with structured history from RAG
   const reply = await callClaude({
-    systemPrompt: finalSystemPrompt,
+    systemPrompt: expandedSystemPrompt,
     history: context.history || [],
     message,
   });

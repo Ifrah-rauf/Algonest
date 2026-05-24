@@ -54,10 +54,13 @@ export default function ChatBox({
   pendingMessage = "",
   onPendingConsumed = () => {},
   lessonId = null,
+  courseId = null,
   isLocked = false,
   lockedTitle = "AI Build Companion is locked",
   lockedDescription = "Start a plan to unlock guided debugging, mentor-style prompts, and project-specific help as you build.",
   lockedCtaHref = "/#pricing",
+  lockedCtaOnClick = null,
+  lockedCtaLabel = "see plans",
   lockedFooter = "Locked: to create project, see plans",
   onUserMessageSent = () => {},
 }) {
@@ -128,23 +131,27 @@ export default function ChatBox({
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
-          uid:          user?.uid,
-          message:      userMsg.content,
-          systemPrompt,
-          lessonId,
+            uid:          user?.uid,
+            message:      userMsg.content,
+            systemPrompt,
+            lessonId,
+            courseId,
           history:      [],
         }),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || "AI request failed.");
+      }
       setMessages(prev => [
         ...prev,
         { role: "assistant", content: data.reply || "Sorry, couldn't respond." },
       ]);
-    } catch {
+    } catch (error) {
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Connection issue — try again." },
+        { role: "assistant", content: error?.message || "Connection issue — try again." },
       ]);
     } finally {
       setLoading(false);
@@ -396,7 +403,27 @@ export default function ChatBox({
         }}>
           {isLocked ? (
             <>
-              {lockedFooter} · <a href={lockedCtaHref} style={{ color: "#6b46c1", textDecoration: "underline" }}>see plans</a>
+              {lockedFooter} · {lockedCtaOnClick ? (
+                <button
+                  onClick={lockedCtaOnClick}
+                  type="button"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#6b46c1",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    padding: 0,
+                    font: "inherit",
+                  }}
+                >
+                  {lockedCtaLabel}
+                </button>
+              ) : (
+                <a href={lockedCtaHref} style={{ color: "#6b46c1", textDecoration: "underline" }}>
+                  {lockedCtaLabel}
+                </a>
+              )}
             </>
           ) : (
             <>Enter to send · Shift+Enter for new line · Click "Ask AI →" on any lesson</>

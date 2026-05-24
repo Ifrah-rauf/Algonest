@@ -24,6 +24,59 @@ function toPublicUser(userRow) {
   };
 }
 
+function parseImageDataUrl(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) return null;
+
+  const mimeType = match[1];
+  const base64 = match[2];
+  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!allowed.has(mimeType)) {
+    throw new Error("Only JPG, PNG, and WEBP images are allowed");
+  }
+
+  return {
+    mimeType,
+    buffer: Buffer.from(base64, "base64"),
+    extension: mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg",
+  };
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "avatar";
+}
+
+async function uploadStudentProfilePicture({ uid, pfp, username }) {
+  const cleanPfp = String(pfp || "").trim();
+  if (!cleanPfp) return null;
+
+  if (/^https?:\/\//i.test(cleanPfp)) {
+    return cleanPfp;
+  }
+
+  const parsed = parseImageDataUrl(cleanPfp);
+  if (!parsed) {
+    throw new Error("Profile picture must be a valid image URL or data URL");
+  }
+
+  const storagePath = `student_profile_pics/${uid}/${Date.now()}-${slugify(username)}.${parsed.extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("student_profile_pics")
+    .upload(storagePath, parsed.buffer, {
+      contentType: parsed.mimeType,
+      upsert: false,
+    });
+
+  if (uploadError) throw uploadError;
+
+  return supabase.storage.from("student_profile_pics").getPublicUrl(storagePath).data.publicUrl;
+}
+
 async function findAuthByUidOrEmail(uid, email) {
   if (uid) {
     const { data, error } = await supabase
@@ -217,6 +270,12 @@ async function updateStudentProfile({ uid, name, bio, education, pfp }) {
   if (authError) throw new Error(authError.message);
   if (!authRow) throw new Error("User not found");
 
+  const uploadedPfp = await uploadStudentProfilePicture({
+    uid: cleanUid,
+    pfp,
+    username: cleanName || authRow.name,
+  });
+
   if (cleanName) {
     const { error: authUpdateError } = await supabase
       .from("auth")
@@ -239,7 +298,7 @@ async function updateStudentProfile({ uid, name, bio, education, pfp }) {
     name: cleanName || studentRow.name,
     bio: cleanBio,
     education: cleanEducation,
-    pfp: cleanPfp || null,
+    pfp: uploadedPfp || cleanPfp || null,
   };
 
   const { data: updatedStudent, error: updateError } = await supabase
@@ -260,5 +319,57 @@ async function updateStudentProfile({ uid, name, bio, education, pfp }) {
   };
 }
 
+async function updateStudentCourse({ uid, courseId }) {
+  const cleanUid = String(uid || "").trim();
+  const parsedCourseId = Number(courseId);
 
-export { signup, login, firebaseLogin, saveUser, getUser, updateStudentProfile };
+  if (!cleanUid) throw new Error("uid is required");
+  if (!Number.isFinite(parsedCourseId) || parsedCourseId <= 0) {
+    throw new Error("courseId is required");
+  }
+
+  const { data: authRow, error: authError } = await supabase
+    .from("auth")
+    .select("uid, name, email, role")
+    .eq("uid", cleanUid)
+    .maybeSingle();
+
+  if (authError) throw new Error(authError.message);
+  if (!authRow) throw new Error("User not found");
+
+  const { data: courseRow, error: courseError } = await supabase
+    .from("courses")
+    .select("course_id, title, description, domain, type, status")
+    .eq("course_id", parsedCourseId)
+    .maybeSingle();
+
+  if (courseError) throw new Error(courseError.message);
+  if (!courseRow) throw new Error("Course not found");
+
+  const { data: studentRow, error: studentError } = await supabase
+    .from("student")
+    .select("s_id, uid, name, course_id")
+    .eq("uid", cleanUid)
+    .maybeSingle();
+
+  if (studentError) throw new Error(studentError.message);
+  if (!studentRow) throw new Error("Student profile not found");
+
+  const { data: updatedStudent, error: updateError } = await supabase
+    .from("student")
+    .update({ course_id: courseRow.course_id })
+    .eq("uid", cleanUid)
+    .select("s_id, uid, name, bio, education, pfp, total_bookings, active_booking_id, course_id")
+    .single();
+
+  if (updateError) throw new Error(updateError.message);
+
+  return {
+    auth: toPublicUser(authRow),
+    student: updatedStudent,
+    course: courseRow,
+  };
+}
+
+
+export { signup, login, firebaseLogin, saveUser, getUser, updateStudentProfile, updateStudentCourse };

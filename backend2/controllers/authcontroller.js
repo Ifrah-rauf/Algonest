@@ -61,6 +61,15 @@ async function updateStudentProfile(req, res) {
   }
 }
 
+async function updateStudentCourse(req, res) {
+  try {
+    const result = await authService.updateStudentCourse(req.body);
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
+}
+
 
 export {
   signup,
@@ -69,5 +78,6 @@ export {
   logout,
   saveUser,
   getUser,
-  updateStudentProfile
+  updateStudentProfile,
+  updateStudentCourse
 };

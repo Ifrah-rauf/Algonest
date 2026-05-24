@@ -3,6 +3,7 @@ import { transporter } from "../utils/mailer.js";
 
 const TEACHER_QUERY_RECIPIENT = "ifrahraufddps@gmail.com";
 const ACCOUNT_DELETION_RECIPIENT = "ifrahraufddps@gmail.com";
+const GITHUB_REVIEW_RECIPIENT = "ifrahraufddps@gmail.com";
 
 function escapeHtml(value) {
   return String(value || "")
@@ -72,6 +73,54 @@ export async function sendTeacherQueryMail({ uid, subject, body }) {
     sent: true,
     teacherEmail: authRow.email,
     recipient: TEACHER_QUERY_RECIPIENT,
+  };
+}
+
+export async function sendGithubReviewMail({ uid, githubUrl }) {
+  if (!uid || !githubUrl) {
+    throw new Error("uid and githubUrl are required");
+  }
+
+  const { data: authRow, error: authError } = await supabase
+    .from("auth")
+    .select("uid, name, email, role")
+    .eq("uid", uid)
+    .maybeSingle();
+
+  if (authError) throw authError;
+  if (!authRow) throw new Error("Student account not found");
+  if (String(authRow.role || "").toUpperCase() !== "STUDENT") {
+    throw new Error("Only students can submit repository reviews");
+  }
+  if (!authRow.email) {
+    throw new Error("Student email not found");
+  }
+
+  const cleanedGithubUrl = String(githubUrl).trim();
+  const cleanedName = escapeHtml(authRow.name || "AlgoNest Student");
+  const cleanedEmail = escapeHtml(authRow.email);
+
+  await transporter.sendMail({
+    from: `"AlgoNest Project Review" <ifrahraufddps@gmail.com>`,
+    to: GITHUB_REVIEW_RECIPIENT,
+    replyTo: authRow.email,
+    subject: `[GitHub Review Request] ${authRow.name || authRow.email || authRow.uid}`,
+    text: `Student: ${authRow.name || "Student"}\nStudent Email: ${authRow.email}\nGitHub URL: ${cleanedGithubUrl}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+        <h2 style="margin:0 0 12px;color:#534AB7">GitHub Review Request</h2>
+        <p><strong>Student:</strong> ${cleanedName}</p>
+        <p><strong>Student Email:</strong> ${cleanedEmail}</p>
+        <p><strong>GitHub URL:</strong> <a href="${escapeHtml(cleanedGithubUrl)}" target="_blank" rel="noreferrer">${escapeHtml(cleanedGithubUrl)}</a></p>
+        <p>The student submitted a repository for review from the AlgoNest roadmap page.</p>
+      </div>
+    `,
+  });
+
+  return {
+    sent: true,
+    studentEmail: authRow.email,
+    recipient: GITHUB_REVIEW_RECIPIENT,
   };
 }
 
