@@ -8,7 +8,14 @@ import {
   fetchLessonProgressByUid,
   fetchCheckpointProgressByUid,
   fetchInterviewProgressByUid,
-  getCheckpointBookingStatus
+  getCheckpointBookingStatus,
+  saveLessonAIQuestion,
+  saveLessonAssetProgress,
+  saveLessonCommitProof,
+  fetchLessonAssetProgressByUid,
+  fetchLessonCommitProofsByUid,
+  fetchLessonAIQuestionsByUid,
+  upsertLessonProgress
 } from "../services/lessonService.js";
 
 export async function getAllLessons(req, res) {
@@ -230,6 +237,221 @@ export async function getInterviewProgress(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch interview progress",
+    });
+  }
+}
+
+export async function trackLessonAIQuestion(req, res) {
+  try {
+    const {
+      userId,
+      lessonId,
+      courseId,
+      questionKey,
+      questionText,
+      completed,
+    } = req.body || {};
+    console.log("[trackLessonAIQuestion]", { userId, lessonId, courseId, questionKey, completed });
+
+    const data = await saveLessonAIQuestion({
+      userId,
+      lessonId,
+      courseId,
+      questionKey,
+      questionText,
+      completed,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data,
+      message: "AI question tracked.",
+    });
+  } catch (err) {
+    console.error("trackLessonAIQuestion error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to track AI question.",
+    });
+  }
+}
+
+export async function getLessonAIQuestions(req, res) {
+  try {
+    const { uid } = req.params;
+    const { courseId, lessonId } = req.query;
+
+    const data = await fetchLessonAIQuestionsByUid(
+      uid,
+      courseId ? Number(courseId) : null,
+      lessonId ? Number(lessonId) : null
+    );
+
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("getLessonAIQuestions error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to fetch AI questions.",
+    });
+  }
+}
+
+export async function saveLessonAssetAnswer(req, res) {
+  try {
+    const {
+      userId,
+      lessonId,
+      courseId,
+      assetKey,
+      answerText,
+      answered,
+    } = req.body || {};
+    console.log("[saveLessonAssetAnswer]", { userId, lessonId, courseId, assetKey, answered });
+
+    const data = await saveLessonAssetProgress({
+      userId,
+      lessonId,
+      courseId,
+      assetKey,
+      answerText,
+      answered,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data,
+      readyToUnlock: data.unlock?.readyToUnlock === true,
+      message: "Asset answer saved.",
+    });
+  } catch (err) {
+    console.error("saveLessonAssetAnswer error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to save asset answer.",
+    });
+  }
+}
+
+export async function getLessonAssetAnswers(req, res) {
+  try {
+    const { uid } = req.params;
+    const { courseId, lessonId } = req.query;
+
+    const data = await fetchLessonAssetProgressByUid(
+      uid,
+      courseId ? Number(courseId) : null,
+      lessonId ? Number(lessonId) : null
+    );
+
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("getLessonAssetAnswers error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to fetch asset answers.",
+    });
+  }
+}
+
+export async function submitLessonCommitProof(req, res) {
+  try {
+    const {
+      userId,
+      lessonId,
+      courseId,
+      repoUrl,
+      commitSha,
+      deliverable,
+      microProof,
+    } = req.body || {};
+    console.log("[submitLessonCommitProof]", { userId, lessonId, courseId, repoUrl, commitSha });
+
+    const data = await saveLessonCommitProof({
+      userId,
+      lessonId,
+      courseId,
+      repoUrl,
+      commitSha,
+      deliverable,
+      microProof,
+    });
+    const proof = data.row || data;
+    const verified = proof.verified === true;
+
+    return res.status(200).json({
+      success: true,
+      data,
+      verified,
+      readyToUnlock: data.unlock?.readyToUnlock === true,
+      message: verified
+        ? "Commit proof saved."
+        : "Commit proof saved, but the repo URL or commit SHA format could not be verified.",
+    });
+  } catch (err) {
+    console.error("submitLessonCommitProof error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to save commit proof.",
+    });
+  }
+}
+
+export async function getLessonCommitProofs(req, res) {
+  try {
+    const { uid } = req.params;
+    const { courseId, lessonId } = req.query;
+
+    const data = await fetchLessonCommitProofsByUid(
+      uid,
+      courseId ? Number(courseId) : null,
+      lessonId ? Number(lessonId) : null
+    );
+
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("getLessonCommitProofs error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to fetch commit proofs.",
+    });
+  }
+}
+
+export async function saveLessonProgress(req, res) {
+  try {
+    const {
+      userId,
+      lessonId,
+      completed,
+      completedAt,
+      quizMarks,
+      quizPassed,
+      quizAttempt,
+      readyToUnlock,
+    } = req.body || {};
+
+    const data = await upsertLessonProgress({
+      userId,
+      lessonId,
+      completed,
+      completedAt,
+      quizMarks,
+      quizPassed,
+      quizAttempt,
+      readyToUnlock,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data,
+      message: "Lesson progress saved.",
+    });
+  } catch (err) {
+    console.error("saveLessonProgress error:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to save lesson progress.",
     });
   }
 }

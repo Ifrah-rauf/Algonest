@@ -15,6 +15,10 @@ Try to give answers in pointers.
 Ask one focused question at a time. Be crisp — max 3 sentences unless explaining a concept.
 `.trim();
 
+function shouldLogAiPrompt() {
+  return process.env.RAG_DEBUG_PROMPT === 'true' || process.env.NODE_ENV !== 'production';
+}
+
 export async function generateAIResponse({
   uid,
   message,
@@ -72,6 +76,16 @@ ${selectedRoadmapLine}
 --- Domain Selection ---
 ${selectedDomainLine}
 `.trim();
+
+  if (shouldLogAiPrompt()) {
+    console.log("[RAG] Claude prompt inspection:", {
+      systemPrompt: expandedSystemPrompt,
+      messages: [
+        ...(context.history || []).map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: message },
+      ],
+    });
+  }
 
   // 4. Call Claude with structured history from RAG
   const reply = await callClaude({

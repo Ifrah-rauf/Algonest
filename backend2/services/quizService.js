@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase.js";
+import { checkUnlock } from "./lessonService.js";
 
 async function getStudentIdByUid(uid) {
   if (!uid) return null;
@@ -117,6 +118,9 @@ export async function saveLessonQuizResult({
     numericScore,
     quizPassed
   );
+  const unlock = studentId
+    ? await checkUnlock(studentId, numericLessonId)
+    : null;
 
   const nextLesson = quizPassed ? await activateNextLesson(currentLesson) : null;
 
@@ -125,6 +129,7 @@ export async function saveLessonQuizResult({
     nextLesson,
     studentId,
     progress,
+    unlock,
     quizResult: {
       score: numericScore,
       totalQuestions: numericTotalQuestions,

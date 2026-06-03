@@ -21,7 +21,10 @@ export async function saveMessage(sId, role, content, lessonId = null, topicId =
     topic_id:  topicId,
   });
 
-  if (error) console.error('[RAG] saveMessage error:', error.message);
+  if (error) {
+    console.error('[RAG] saveMessage error:', error.message);
+    throw error;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,5 +45,8 @@ export async function saveMentorFeedback(sId, supportId, feedbackText) {
     embedding,
   });
 
-  if (error) console.error('[RAG] saveMentorFeedback error:', error.message);
+  if (error) {
+    console.error('[RAG] saveMentorFeedback error:', error.message);
+    throw error;
+  }
 }

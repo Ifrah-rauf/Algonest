@@ -2,6 +2,27 @@ import { C } from "./constants";
 import { SectionCard } from "./ui";
 import { Link } from "react-router-dom";
 
+function getMentorTags(mentor) {
+  const specialisation = mentor.specialisation || {};
+  const expertise = Array.isArray(mentor.expertise)
+    ? mentor.expertise
+    : typeof mentor.expertise === "string"
+    ? mentor.expertise.split(",")
+    : [];
+
+  return [
+    specialisation.sp1,
+    specialisation.sp2,
+    specialisation.sp3,
+    specialisation.sp4,
+    ...expertise,
+    mentor.specialisation_id,
+  ]
+    .map((tag) => (typeof tag === "string" ? tag.trim() : tag))
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
 function CourseAds({ courses, activeCourse, navigate }) {
   const activeCourseId = activeCourse?.courseId || activeCourse?.course_id;
   const activeTitle = activeCourse?.title?.toLowerCase();
@@ -96,52 +117,56 @@ function MentorList({ mentors }) {
       </div>
       <div className="space-y-4">
         {mentors.length ? (
-          mentors.slice(0, 2).map((mentor) => (
-             <Link key={mentor.t_id} to={`/TeachersProfile/${mentor.t_id}`}>
-            <SectionCard key={mentor.t_id || mentor.name}>
-              <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                <img
-                  src={
-                    mentor.pfp ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      mentor.name || "Mentor"
-                    )}&background=6b46c1&color=fff`
-                  }
-                  alt={mentor.name || "Mentor"}
-                  className="h-12 w-12 shrink-0 rounded-full object-cover sm:h-14 sm:w-14"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate text-xl font-bold tracking-tight sm:text-2xl" style={{ color: C.ink }}>
-                      {mentor.name}
-                    </div>
-                    {mentor.verified ? <div className="h-2.5 w-2.5 rounded-full" style={{ background: C.purple }} /> : null}
-                  </div>
-                  <div className="text-sm" style={{ color: C.muted }}>
-                    @{(mentor.name || "mentor").replace(/\s+/g, "").toLowerCase()}
-                  </div>
-                  <div className="mt-1 text-sm" style={{ color: C.purple }}>
-                    {mentor.experience ? `SDE ${mentor.experience}` : "Mentor"}
-                  </div>
-                </div>
-              </div>
+          mentors.slice(0, 2).map((mentor) => {
+            const tags = getMentorTags(mentor);
 
-              <p className="mt-4 text-sm leading-7" style={{ color: C.muted }}>
-                {mentor.bio ||
-                  "Experienced mentor available for roadmap support, accountability, and checkpoint guidance."}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {(mentor.specialisation_id ? [mentor.specialisation_id] : ["Python", "Data Structures", "Algorithms"])
-                  .slice(0, 4)
-                  .map((tag) => (
-                    <span key={tag} className="rounded-full border px-3 py-1 text-xs font-medium" style={{ borderColor: C.border, color: C.ink, background: C.bg }}>
-                      {tag}
-                    </span>
-                  ))}
-              </div>
-            </SectionCard>
-            </Link>
-          ))
+            return (
+              <Link key={mentor.t_id || mentor.name} to={`/teachersProfile/${mentor.t_id}`}>
+                <SectionCard>
+                  <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                    <img
+                      src={
+                        mentor.pfp ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          mentor.name || "Mentor"
+                        )}&background=6b46c1&color=fff`
+                      }
+                      alt={mentor.name || "Mentor"}
+                      className="h-12 w-12 shrink-0 rounded-full object-cover sm:h-14 sm:w-14"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-xl font-bold tracking-tight sm:text-2xl" style={{ color: C.ink }}>
+                          {mentor.name}
+                        </div>
+                        {mentor.verified ? <div className="h-2.5 w-2.5 rounded-full" style={{ background: C.purple }} /> : null}
+                      </div>
+                      <div className="text-sm" style={{ color: C.muted }}>
+                        @{(mentor.name || "mentor").replace(/\s+/g, "").toLowerCase()}
+                      </div>
+                      <div className="mt-1 text-sm" style={{ color: C.purple }}>
+                        {mentor.experience ? `SDE ${mentor.experience}` : "Mentor"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 text-sm leading-7" style={{ color: C.muted }}>
+                    {mentor.bio ||
+                      "Experienced mentor available for roadmap support, accountability, and checkpoint guidance."}
+                  </p>
+                  {tags.length ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <span key={tag} className="rounded-full border px-3 py-1 text-xs font-medium" style={{ borderColor: C.border, color: C.ink, background: C.bg }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </SectionCard>
+              </Link>
+            );
+          })
         ) : (
           <SectionCard>
             <div className="text-sm" style={{ color: C.muted }}>

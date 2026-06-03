@@ -256,11 +256,22 @@ export async function searchRelevantMessages(sId, queryEmbedding, count = 5) {
 }
 
 export async function searchRelevantFeedback(sId, queryEmbedding, count = 3) {
-  const { data } = await supabase.rpc('match_mentor_feedback', {
+  const { data, error } = await supabase.rpc('match_mentor_feedback', {
     query_embedding: queryEmbedding,
     student_id:      sId,
     match_count:     count,
   });
 
-  return (data ?? []).filter((f) => f.similarity > 0.72);
+  if (error) {
+    console.error('[RAG] searchRelevantFeedback RPC error:', error.message || error);
+    return [];
+  }
+
+  const results = data ?? [];
+  console.log(`[RAG] searchRelevantFeedback: found ${results.length} candidates for sId=${sId}`);
+
+  const threshold = parseFloat(process.env.RAG_FEEDBACK_SIMILARITY_THRESHOLD || '0.72');
+  const filtered = results.filter((f) => (f.similarity ?? 0) >= threshold);
+  console.log(`[RAG] searchRelevantFeedback: ${filtered.length} passed threshold ${threshold}`);
+  return filtered;
 }

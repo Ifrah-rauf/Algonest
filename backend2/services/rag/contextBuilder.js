@@ -18,8 +18,63 @@ import {
   getLessonTopicsWithProgress,
   getStudentCourse,
   searchRelevantMessages,
+  searchRelevantFeedback,
 } from './studentDataLayer.js';
 import { getEmbedding } from './embeddingService.js';
+
+function compact(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function buildSystemPromptSections({ student, memory, selectedCourse, currentLesson, currentTopics, feedbackText }) {
+  const sections = [];
+
+  if (student) {
+    sections.push([
+      'Student profile:',
+      `Name: ${compact(student.name) || 'unknown'}`,
+      `Bio: ${compact(student.bio) || 'not provided'}`,
+      `Education: ${compact(student.education) || 'not provided'}`,
+    ].join('\n'));
+  }
+
+  if (selectedCourse) {
+    sections.push([
+      'Selected roadmap:',
+      `Title: ${compact(selectedCourse.title) || `Course #${selectedCourse.course_id}`}`,
+      `Domain: ${compact(selectedCourse.domain) || 'not set'}`,
+    ].join('\n'));
+  }
+
+  if (currentLesson) {
+    const topicLines = (currentTopics || []).length
+      ? currentTopics.map((topic, index) => {
+          const status = topic.completed ? 'completed' : 'not completed';
+          return `${index + 1}. ${compact(topic.title)} (${status})`;
+        }).join('\n')
+      : 'No current lesson topics found.';
+
+    sections.push([
+      'Lesson progress:',
+      `Current lesson: ${compact(currentLesson.title) || `Lesson #${currentLesson.lesson_id}`}`,
+      `Topics:\n${topicLines}`,
+    ].join('\n'));
+  }
+
+  if (memory?.summary) {
+    sections.push(`Student memory summary:\n${memory.summary}`);
+  }
+
+  if (feedbackText) {
+    sections.push(`Relevant mentor feedback:\n${feedbackText}`);
+  }
+
+  return sections.join('\n\n');
+}
+
+function shouldLogRagPrompt() {
+  return process.env.RAG_DEBUG_PROMPT === 'true' || process.env.NODE_ENV !== 'production';
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // buildContext — called by aiOrchestrator on every message
@@ -50,6 +105,7 @@ export async function buildContext(uid, message = '') {
   let ragContext = {
     systemPrompt: "",
     history: [],
+    relevantFeedback: [],
     currentLesson: null,
     currentTopics: [],
     nextTopic: null,
@@ -73,20 +129,37 @@ export async function buildContext(uid, message = '') {
       ragContext.currentTopics = await getLessonTopicsWithProgress(sId, currentLesson.lesson_id);
     }
 
-    // systemPrompt can include a short student memory summary to personalise the assistant
-    ragContext.systemPrompt = memory?.summary ? `Student memory summary: ${memory.summary}` : "";
-
     // Semantic search: embed the incoming message and search similar messages
+    let feedbackText = '';
     if (message && message.trim()) {
       try {
         const qEmbedding = await getEmbedding(message);
-        const sem = await searchRelevantMessages(sId, qEmbedding, 6);
+        const [sem, feedback] = await Promise.all([
+          searchRelevantMessages(sId, qEmbedding, 6),
+          searchRelevantFeedback(sId, qEmbedding, 3),
+        ]);
         // sem items expected to have content and role
         ragContext.history = (sem || []).map((m) => ({ role: m.role || 'assistant', content: m.content || m.text || '' }));
+        ragContext.relevantFeedback = feedback || [];
+
+        feedbackText = (feedback || [])
+          .map((f) => f.feedback_text || f.content || f.text || '')
+          .filter(Boolean)
+          .map((text, index) => `${index + 1}. ${text}`)
+          .join('\n');
       } catch (err) {
         console.error('contextBuilder.semantic search error:', err?.message || err);
       }
     }
+
+    ragContext.systemPrompt = buildSystemPromptSections({
+      student,
+      memory,
+      selectedCourse: ragContext.selectedCourse,
+      currentLesson: ragContext.currentLesson,
+      currentTopics: ragContext.currentTopics,
+      feedbackText,
+    });
   } catch (err) {
     console.error('contextBuilder.rag build error:', err?.message || err);
   }
@@ -94,6 +167,18 @@ export async function buildContext(uid, message = '') {
   // Step 3 — return merged context
   // systemPrompt is the fully assembled prompt from your RAG layer.
   // history comes from RAG (last 6 + semantic). recentHistory kept for client display.
+  if (shouldLogRagPrompt()) {
+    console.log('[RAG] buildContext prompt inspection:', {
+      sId,
+      hasStudentProfile: Boolean(student),
+      hasLessonProgress: Boolean(ragContext.currentLesson),
+      relevantChatMessages: ragContext.history.length,
+      relevantMentorFeedback: ragContext.relevantFeedback.length,
+      systemPrompt: ragContext.systemPrompt,
+      history: ragContext.history,
+    });
+  }
+
   return {
     student,                              // partner's field — orchestrator uses this
     recentHistory,                        // partner's field — used for client display
@@ -103,6 +188,7 @@ export async function buildContext(uid, message = '') {
     currentTopics:  ragContext?.currentTopics || [],
     nextTopic:      ragContext?.nextTopic || null,
     selectedCourse: ragContext?.selectedCourse || null,
+    domain:         ragContext?.selectedCourse?.domain || null,
     sId,                                  // ← expose sId so orchestrator can use it
   };
 }

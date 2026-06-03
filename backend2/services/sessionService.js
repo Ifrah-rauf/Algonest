@@ -176,3 +176,54 @@ export async function sessionHistory(uid){
         session: sessionData
     };
 }
+
+export async function completeSessionData({ sessionId, feedbackText = null }) {
+  if (!sessionId) {
+    throw new Error("sessionId is required");
+  }
+
+  const { data: session, error: sessionError } = await supabase
+    .from("session")
+    .select("session_id, booking_id")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (sessionError) {
+    throw new Error(`Failed to fetch session: ${sessionError.message}`);
+  }
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const { data: booking, error: bookingError } = await supabase
+    .from("booking")
+    .select("s_id")
+    .eq("booking_id", session.booking_id)
+    .maybeSingle();
+
+  if (bookingError) {
+    throw new Error(`Failed to fetch session booking: ${bookingError.message}`);
+  }
+  if (!booking?.s_id) {
+    throw new Error("Student not found for session");
+  }
+
+  const { data, error } = await supabase
+    .from("session")
+    .update({
+      marked_by_teacher: true,
+      feedback: feedbackText?.trim() || null,
+    })
+    .eq("session_id", sessionId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to complete session: ${error.message}`);
+  }
+
+  return {
+    ...data,
+    s_id: booking.s_id,
+  };
+}
