@@ -593,166 +593,339 @@ export default function AlgoNestPage() {
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "56px 48px 52px" }}>
 
-        {/* TOP BADGE */}
         <div
-          className={heroLoaded ? "hero-load-fade" : ""}
-          style={{ display: "inline-flex", alignItems: "center", gap: 8, background: LP, border: `1px solid #ddd8f8`, borderRadius: 100, padding: "5px 14px", marginBottom: 28 }}
-        >
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: P, flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: P, fontFamily: "'DM Sans'", letterSpacing: 0.3 }}>
-            India's execution-first platform for engineering students
-          </span>
-        </div>
-
-        {/* TWO COLUMN LAYOUT */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "start" }}>
-
-          {/* LEFT — headline + why + CTA */}
-          <div className={heroLoaded ? "hero-load" : ""}>
-            <h1 style={{ fontSize: "clamp(36px,4.5vw,58px)", fontWeight: 800, letterSpacing: -2, lineHeight: 1.06, marginBottom: 20 }}>
-              Skills prove you.<br />
-              <span style={{ position: "relative", display: "inline-block" }}>
-                Degrees don't.
-                <span style={{ position: "absolute", bottom: 4, left: 0, right: 0, height: 10, background: Y, zIndex: -1, borderRadius: 2, opacity: 0.8 }} />
-              </span>
-            </h1>
-
-            {/* WHY BLOCK */}
-            <div className={heroLoaded ? "hero-load-slow" : ""} style={{ background: "#fafafa", border: "1px solid #f0effc", borderLeft: `3px solid ${P}`, borderRadius: "0 10px 10px 0", padding: "16px 18px", marginBottom: 28 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: P, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1, fontFamily: "'DM Sans'" }}>Why skills-based learning?</p>
-              <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.7, fontFamily: "'DM Sans'" }}>
-                {/* 80% of India's engineering graduates are unemployable — not because they lack intelligence, but because nobody ever watched them build something real under pressure. Companies don't hire CVs anymore. They hire proof.
-                <span style={{ fontWeight: 700, color: "#0a0a0a" }}> AlgoNest makes that proof visible, verified, and vouched for by a human mentor.</span> */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
-                  [ "• Choose a role target — not a subject. Build toward a job."],
-                  ["• Work on your own real project, guided by a structured roadmap."],
-                  ["• AI companion tracks your gaps in real time — never writes code for you."],
-                  ["• 12 assessments + 4 mentor reviews + 2 mock interviews before you're done."],
-                  ["• Your project is recorded. Your thinking is documented. Your mentor vouches."],
-                ].map(([ic, tx], i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{ic}</span>
-                    <span style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, fontFamily: "'DM Sans'" }}>{tx}</span>
-                  </div>
-                ))}
-              </div>
-              
-              </p>
-            </div>
-
-            {/* HOW WE DO IT — compact list */}
-            {/* <div style={{ marginBottom: 36 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 14, fontFamily: "'DM Sans'" }}>How AlgoNest works</p>
-              
-            </div> */}
-
-          </div>
-
-          {/* RIGHT — 6 pillars grid */}
-          <div className={heroLoaded ? "hero-load-slow" : ""}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16, fontFamily: "'DM Sans'" }}>
-              What you get with every paid path
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {pillars.map((p, i) => (
-                <div
-                  key={i}
-                  className="pill-card"
-                  style={{
-                    background: "#fff",
-                    border: "1.5px solid #ececec",
-                    borderRadius: 14,
-                    padding: "18px 16px",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-                  }}>
-                  <div style={{ fontSize: 22, marginBottom: 8 }}>{p.icon}</div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#0a0a0a", marginBottom: 5, lineHeight: 1.25 }}>{p.title}</p>
-                  <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, fontFamily: "'DM Sans'" }}>{p.sub}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-                    {/* PRICING NUDGE */}
-            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-              <div
-                className={heroLoaded ? "hero-load-slow" : ""}
-                style={{
-                  marginTop: 14,
-                  background: "#0a0a0a",
-                  borderRadius: 14,
-                  padding: "18px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  width: "100%",
-                  maxWidth: 520,
-                }}
-              >
-                <div>
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans'", marginBottom: 4 }}>
-                    All of the above, all-in
-                  </p>
-                  <p style={{ fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: -0.8 }}>
-                    ₹9,999
-                    <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.4)", marginLeft: 8, letterSpacing: 0 }}>
-                      vs ₹50,000–₹85,000 elsewhere
-                    </span>
-                  </p>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ background: Y, color: "#0a0a0a", fontSize: 11, fontWeight: 800, padding: "5px 12px", borderRadius: 100, whiteSpace: "nowrap" }}>
-                    3–5 months · Mentor-verified
-                  </div>
-                </div>
-              </div>
-            </div>
-        <div
-          className={heroLoaded ? "hero-load-slow" : ""}
+          className={heroLoaded ? "hero-load" : ""}
           style={{
-            background: Y,
-            border: Y,
-            borderRadius: 14,
-            padding: "20px 22px",
-            marginTop:"20px",
-            maxWidth: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
           }}
         >
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#0a0a0a", fontFamily: "'Syne'" }}>
-              Have you decided your path?
-            </p>
+          <h1
+            style={{
+              fontSize: "clamp(38px, 5vw, 66px)",
+              fontWeight: 800,
+              letterSpacing: -2.4,
+              lineHeight: 1.02,
+              marginBottom: 22,
+              maxWidth: 900,
+            }}
+          >
+            Skills prove you.
+            <br />
+            <span style={{ position: "relative", display: "inline-block" }}>
+              Degrees don't.
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: 6,
+                  left: 0,
+                  right: 0,
+                  height: 10,
+                  background: Y,
+                  zIndex: -1,
+                  borderRadius: 2,
+                  opacity: 0.8,
+                }}
+              />
+            </span>
+          </h1>
+
+          <p
+            style={{
+              fontSize: 17,
+              color: "#4b5563",
+              lineHeight: 1.6,
+              fontFamily: "'DM Sans'",
+              maxWidth: 760,
+              marginBottom: 28,
+            }}
+          >
+            Work on your own real project, guided by a structured roadmap.
+          </p>
+
+          <div
+            className={heroLoaded ? "hero-load-slow" : ""}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 12,
+              width: "100%",
+              maxWidth: 980,
+              marginBottom: 18,
+            }}
+          >
+            {pillars.map((p, i) => (
+              <div
+                key={i}
+                className="pill-card"
+                style={{
+                  background: "#fff",
+                  border: "1.5px solid #ececec",
+                  borderRadius: 14,
+                  padding: "16px 14px",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+                  textAlign: "left",
+                  minHeight: 132,
+                }}
+              >
+                <div style={{ fontSize: 22, marginBottom: 8 }}>{p.icon}</div>
+                <p
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#0a0a0a",
+                    marginBottom: 5,
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {p.title}
+                </p>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    lineHeight: 1.55,
+                    fontFamily: "'DM Sans'",
+                  }}
+                >
+                  {p.sub}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className={heroLoaded ? "hero-load-slow" : ""}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              background: "#0a0a0a",
+              color: "#fff",
+              borderRadius: 999,
+              padding: "10px 14px",
+              marginTop: 4,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", fontFamily: "'DM Sans'" }}>
+              All of the above
+            </span>
+            <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>₹9,999</span>
+            <span style={{ fontSize: 11, fontWeight: 700, background: Y, color: "#0a0a0a", borderRadius: 100, padding: "4px 10px", whiteSpace: "nowrap" }}>
+              3–5 months · Mentor-verified
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* REVIEW SECTION */}
+    <section
+      style={{
+        // background: "#f6f1e6",
+        padding: "28px 48px 0",
+        marginBottom: 40,
+      }}
+    >
+      <div style={{ maxWidth: 1500, margin: "0 auto" }}>
+        <div
+          style={{
+            background: "#f6f1e6",
+            border: "3px solid rgba(12, 10, 30, 0.38)",
+            // borderRadius: 18,
+            padding: 18,
+            boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+              marginBottom: 14,
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "#fffaf0",
+                border: "1px solid rgba(83,74,183,0.16)",
+                borderRadius: 999,
+                padding: "5px 12px",
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: Y,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "#534AB7",
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  fontFamily: "'DM Sans'",
+                }}
+              >
+                Existing Project Review
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                color: "#6b7280",
+                fontFamily: "'DM Sans'",
+                letterSpacing: 0.3,
+              }}
+            >
+              Share your GitHub link for a mentor review.
+            </span>
+          </div>
+
+          <h2
+            style={{
+              fontSize: 26,
+              lineHeight: 1.1,
+              letterSpacing: -0.8,
+              fontWeight: 800,
+              color: "#111827",
+              marginBottom: 8,
+            }}
+          >
+            Already building something?
+          </h2>
+
+          <p
+            style={{
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: "#4b5563",
+              fontFamily: "'DM Sans'",
+              marginBottom: 14,
+              maxWidth: 840,
+            }}
+          >
+            Submit your existing GitHub project. Our mentors review the architecture,
+            code quality, execution depth and roadmap potential.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) auto",
+              gap: 12,
+              alignItems: "center",
+              background: "#fff",
+              border: "1px solid rgba(83,74,183,0.18)",
+              borderRadius: 16,
+              padding: 14,
+              boxShadow: "0 6px 20px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Paste GitHub repository or profile link"
+              value={githubLink}
+              onChange={(e) => {
+                setGithubLink(e.target.value);
+                if (reviewStatus) setReviewStatus(null);
+              }}
+              style={{
+                width: "100%",
+                background: "#f8fafc",
+                border: "1px solid #dbe2ee",
+                borderRadius: 12,
+                padding: "14px 16px",
+                color: "#0f172a",
+                fontSize: 12,
+                outline: "none",
+                fontFamily: "'DM Sans'",
+              }}
+            />
+
             <button
               type="button"
-              onClick={() => navigate("/careerquiz")}
+              disabled={reviewSubmitting}
+              onClick={handleSubmitForReview}
               style={{
-                background: "#fff",
-                color: "#0a0a0a",
-                border: "2px solid #0a0a0a",
-                padding: "11px 16px",
-                borderRadius: 9,
-                fontSize: 14,
+                background: P,
+                color: "#fff",
+                border: "none",
+                borderRadius: 12,
+                padding: "14px 18px",
+                fontSize: 12,
                 fontWeight: 800,
-                cursor: "pointer",
+                cursor: reviewSubmitting ? "not-allowed" : "pointer",
                 fontFamily: "'DM Sans'",
-                transition: "all 0.15s",
+                opacity: reviewSubmitting ? 0.82 : 1,
                 whiteSpace: "nowrap",
               }}
             >
-              Not sure? Take quiz
+              {reviewSubmitting ? "Submitting..." : "Submit"}
             </button>
+          </div>
+
+          {reviewStatus ? (
+            <div
+              style={{
+                marginTop: 12,
+                borderRadius: 12,
+                padding: "11px 12px",
+                fontSize: 12,
+                lineHeight: 1.5,
+                fontFamily: "'DM Sans'",
+                background:
+                  reviewStatus.type === "success"
+                    ? "rgba(34,197,94,0.10)"
+                    : "rgba(239,68,68,0.10)",
+                border: `1px solid ${
+                  reviewStatus.type === "success"
+                    ? "rgba(34,197,94,0.24)"
+                    : "rgba(239,68,68,0.24)"
+                }`,
+                color: reviewStatus.type === "success" ? "#166534" : "#b91c1c",
+              }}
+            >
+              {reviewStatus.message}
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 11,
+              color: "#6b7280",
+              lineHeight: 1.6,
+              fontFamily: "'DM Sans'",
+            }}
+          >
+            Reviews are manually evaluated. Low-effort clone projects may not receive mentor calls.
           </div>
         </div>
       </div>
     </section>
 
       {/* CATEGORY SECTION */}
+      
       <section
   style={{
     background: "linear-gradient(180deg, #140428 0%, #0f021d 100%)",
-    minHeight: "92vh",
+    // minHeight: "92vh",
     padding: "42px 0",
     position: "relative",
     overflow: "hidden",
@@ -776,272 +949,14 @@ export default function AlgoNestPage() {
     style={{
       width: "96%",
       maxWidth: 1500,
-      height: "calc(100vh - 120px)",
+      // minHeight: ,
       position: "relative",
       zIndex: 2,
-      display: "grid",
-      gridTemplateColumns: "1fr 90px 1.7fr",
-      gap: 20,
+      display: "flex",
+      flexDirection: "column",
+      gap: 22,
     }}
   >
-
-    {/* LEFT PANEL */}
-    <div
-      style={{
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 26,
-        padding: 26,
-        backdropFilter: "blur(12px)",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        overflow: "hidden",
-      }}
-    >
-      <div>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            background: "rgba(246,201,14,0.08)",
-            border: "1px solid rgba(246,201,14,0.18)",
-            borderRadius: 999,
-            padding: "5px 12px",
-            marginBottom: 18,
-          }}
-        >
-          <div
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: Y,
-            }}
-          />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#fef3c7",
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              fontFamily: "'DM Sans'",
-            }}
-          >
-            Existing Project Review
-          </span>
-        </div>
-
-        <h2
-          style={{
-            fontSize: 28,
-            lineHeight: 1.05,
-            letterSpacing: -1,
-            fontWeight: 800,
-            color: "#fff",
-            marginBottom: 12,
-          }}
-        >
-          Already building something?
-        </h2>
-
-        <p
-          style={{
-            fontSize: 12,
-            lineHeight: 1.7,
-            color: "rgba(255,255,255,0.68)",
-            fontFamily: "'DM Sans'",
-            marginBottom: 24,
-          }}
-        >
-          Submit your existing GitHub project. Our mentors review the architecture,
-          code quality, execution depth and roadmap potential. If selected, you'll
-          receive a mail within 1–2 days to schedule a mentor session.
-        </p>
-
-        <div
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 16,
-            padding: 14,
-            marginBottom: 18,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "rgba(255,255,255,0.45)",
-              textTransform: "uppercase",
-              letterSpacing: 1,
-              marginBottom: 10,
-            }}
-          >
-            What we review
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            {[
-              "Code structure & engineering depth",
-              "Originality and execution quality",
-              "Deployment readiness",
-              "Resume & hiring potential",
-            ].map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.78)",
-                  fontFamily: "'DM Sans'",
-                }}
-              >
-                <span style={{ color: Y }}>▸</span>
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Paste GitHub repository link"
-            value={githubLink}
-            onChange={(e) => {
-              setGithubLink(e.target.value);
-              if (reviewStatus) setReviewStatus(null);
-            }}
-            style={{
-              width: "100%",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              borderRadius: 12,
-              padding: "13px 14px",
-              color: "#fff",
-              fontSize: 12,
-              outline: "none",
-              fontFamily: "'DM Sans'",
-            }}
-          />
-
-          <button
-            type="button"
-            disabled={reviewSubmitting}
-            onClick={handleSubmitForReview}
-            style={{
-              width: "100%",
-              background: Y,
-              color: "#0a0a0a",
-              border: "none",
-              borderRadius: 12,
-              padding: "13px 14px",
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: reviewSubmitting ? "not-allowed" : "pointer",
-              fontFamily: "'DM Sans'",
-              opacity: reviewSubmitting ? 0.8 : 1,
-            }}
-          >
-            {reviewSubmitting ? "Submitting..." : "Submit for Review"}
-          </button>
-
-          {reviewStatus ? (
-            <div
-              style={{
-                borderRadius: 12,
-                padding: "11px 12px",
-                fontSize: 12,
-                lineHeight: 1.5,
-                fontFamily: "'DM Sans'",
-                background:
-                  reviewStatus.type === "success"
-                    ? "rgba(34,197,94,0.12)"
-                    : "rgba(239,68,68,0.12)",
-                border: `1px solid ${
-                  reviewStatus.type === "success"
-                    ? "rgba(34,197,94,0.28)"
-                    : "rgba(239,68,68,0.28)"
-                }`,
-                color: reviewStatus.type === "success" ? "#dcfce7" : "#fecaca",
-              }}
-            >
-              {reviewStatus.message}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: 20,
-          fontSize: 11,
-          color: "rgba(255,255,255,0.42)",
-          lineHeight: 1.6,
-          fontFamily: "'DM Sans'",
-        }}
-      >
-        Reviews are manually evaluated. Low-effort clone projects may not receive mentor calls.
-      </div>
-    </div>
-
-    {/* CENTER VISUAL DIVIDER */}
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 1,
-          height: "100%",
-          background:
-            "linear-gradient(180deg, transparent, rgba(255,255,255,0.18), transparent)",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          width: 52,
-          height: 52,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #534AB7, #2d1764)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: 12,
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 10px 30px rgba(83,74,183,0.35)",
-        }}
-      >
-        OR
-      </div>
-    </div>
-
-    {/* RIGHT PANEL */}
     <div
       style={{
         display: "flex",
@@ -1049,7 +964,8 @@ export default function AlgoNestPage() {
         overflow: "hidden",
       }}
     >
-      <div style={{ marginBottom: 26 }}>
+      <div 
+      style={{ marginBottom: 26 }}>
         <div
           style={{
             display: "inline-flex",
@@ -1099,10 +1015,10 @@ export default function AlgoNestPage() {
 
         <p
           style={{
-            fontSize: 13,
+            fontSize: 17,
             color: "rgba(255,255,255,0.66)",
             lineHeight: 1.7,
-            maxWidth: 760,
+            // maxWidth: 760,
             fontFamily: "'DM Sans'",
           }}
         >
@@ -1121,7 +1037,7 @@ export default function AlgoNestPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))",
+            gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
             gap: 16,
           }}
         >
@@ -1182,7 +1098,7 @@ export default function AlgoNestPage() {
 
                 <h3
                   style={{
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: 800,
                     color: "#fff",
                     marginBottom: 6,
@@ -1194,11 +1110,11 @@ export default function AlgoNestPage() {
 
                 <p
                   style={{
-                    fontSize: 11,
+                    fontSize: 16,
                     color: Y,
                     marginBottom: 12,
                     fontWeight: 700,
-                    lineHeight: 1.5,
+                    lineHeight: 1,
                   }}
                 >
                   {cat.tagline}
@@ -1206,9 +1122,9 @@ export default function AlgoNestPage() {
 
                 <p
                   style={{
-                    fontSize: 11,
+                    fontSize: 15,
                     color: "rgba(255,255,255,0.60)",
-                    lineHeight: 1.7,
+                    lineHeight: 2,
                     marginBottom: 14,
                     fontFamily: "'DM Sans'",
                   }}
@@ -1227,7 +1143,7 @@ export default function AlgoNestPage() {
                     <span
                       key={i}
                       style={{
-                        fontSize: 10,
+                        fontSize: 14,
                         background: "rgba(255,255,255,0.06)",
                         border: "1px solid rgba(255,255,255,0.08)",
                         color: "rgba(255,255,255,0.74)",
@@ -1290,7 +1206,14 @@ export default function AlgoNestPage() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 24 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 20,
+              alignItems: "start",
+            }}
+          >
             {!activeCat ? (
               <LockedStackCard
                 category={{

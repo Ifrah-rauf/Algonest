@@ -19,6 +19,15 @@ const EMPTY_FORM = {
   frameworks_id: "",
 };
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function Field({ label, icon: Icon, ...props }) {
   return (
     <label className="block">
@@ -188,7 +197,6 @@ export function TeacherEditProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Name" icon={User} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
             <Field label="Timezone" icon={Globe} value={form.timezone} onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))} />
-            <Field label="Profile Picture URL" icon={Upload} value={form.pfp} onChange={(e) => setForm((p) => ({ ...p, pfp: e.target.value }))} />
             <Field label="Experience" icon={Sparkles} value={form.experience} onChange={(e) => setForm((p) => ({ ...p, experience: e.target.value }))} />
             <Field label="Video Link" icon={Video} value={form.video_url} onChange={(e) => setForm((p) => ({ ...p, video_url: e.target.value }))} />
             <Field label="Meeting Link" icon={BookOpen} value={form.meeting_link} onChange={(e) => setForm((p) => ({ ...p, meeting_link: e.target.value }))} />
@@ -217,6 +225,58 @@ export function TeacherEditProfile() {
         </form>
 
         <div className="space-y-6">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+                <Upload size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Profile Picture</h3>
+                <p className="text-sm text-gray-500">Add or update your profile picture.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label
+                htmlFor="profile-pic-upload"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-purple-200 bg-purple-50 px-6 py-8 transition hover:bg-purple-100"
+              >
+                {form.pfp ? (
+                  <img
+                    src={form.pfp}
+                    alt="preview"
+                    className="mb-4 h-24 w-24 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-gray-200">
+                    <Upload size={28} className="text-gray-600" />
+                  </div>
+                )}
+
+                <div className="text-sm font-semibold text-gray-700">
+                  Drop image here or click to upload
+                </div>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  PNG, JPG, WEBP supported
+                </div>
+
+                <input
+                  id="profile-pic-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const dataUrl = await fileToDataUrl(file);
+                    setForm((p) => ({ ...p, pfp: dataUrl }));
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">

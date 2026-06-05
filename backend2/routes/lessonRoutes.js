@@ -9,7 +9,14 @@ import {
   getLessonProgress,
   getCheckpointProgress,
   getInterviewProgress,
-  getCheckpointStatus
+  getCheckpointStatus,
+  trackLessonAIQuestion,
+  getLessonAIQuestions,
+  saveLessonAssetAnswer,
+  getLessonAssetAnswers,
+  submitLessonCommitProof,
+  getLessonCommitProofs,
+  saveLessonProgress
 } from "../controllers/lessonController.js";
 
 const router = express.Router();
@@ -23,6 +30,15 @@ router.get("/checkpoint-progress/:uid", getCheckpointProgress);
 router.get("/interview-progress/:uid", getInterviewProgress);
 router.get("/checkpoints/:checkpointId/status", getCheckpointStatus);
 router.get("/progress/:uid", getLessonProgress);
+router.post("/progress", saveLessonProgress);
+router.get("/ai-questions/:uid", getLessonAIQuestions);
+router.post("/ai-questions", trackLessonAIQuestion);
+router.post("/ai-question", trackLessonAIQuestion);
+router.get("/assets/:uid", getLessonAssetAnswers);
+router.post("/assets", saveLessonAssetAnswer);
+router.get("/commit-proofs/:uid", getLessonCommitProofs);
+router.post("/commit-proofs", submitLessonCommitProof);
+router.post("/github-commit", submitLessonCommitProof);
 router.get("/:lessonId", getLesson);
 
 export default router;

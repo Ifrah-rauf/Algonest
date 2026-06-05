@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../lib/supabase.js";
 
-const VALID_ROLES = new Set(["STUDENT", "TEACHER"]);
+const VALID_ROLES = new Set(["STUDENT", "TEACHER", "ADMIN"]);
 
 function normalizeEmail(mail) {
   return String(mail || "").trim().toLowerCase();
@@ -121,6 +121,10 @@ async function ensureProfileForRole({ uid, username, role }) {
 
       if (insertError) throw new Error(insertError.message);
     }
+    return;
+  }
+
+  if (role === "ADMIN") {
     return;
   }
 

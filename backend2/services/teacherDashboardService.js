@@ -2,6 +2,55 @@ import { supabase } from "../lib/supabase.js";
 
 const SESSION_VALUE = 4000;
 
+function parseImageDataUrl(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) return null;
+
+  const mimeType = match[1];
+  const base64 = match[2];
+  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!allowed.has(mimeType)) {
+    throw new Error("Only JPG, PNG, and WEBP images are allowed");
+  }
+
+  return {
+    mimeType,
+    buffer: Buffer.from(base64, "base64"),
+    extension: mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg",
+  };
+}
+
+async function uploadTeacherProfilePicture({ uid, pfp, username }) {
+  const cleanPfp = String(pfp || "").trim();
+  if (!cleanPfp) return null;
+
+  if (/^https?:\/\//i.test(cleanPfp)) {
+    return cleanPfp;
+  }
+
+  const parsed = parseImageDataUrl(cleanPfp);
+  if (!parsed) {
+    throw new Error("Profile picture must be a valid image URL or data URL");
+  }
+
+  const storagePath = `teacher_profile_pics/${uid}/${Date.now()}-${String(username || "teacher")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)}.${parsed.extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("teacher_profile_pics")
+    .upload(storagePath, parsed.buffer, {
+      contentType: parsed.mimeType,
+      upsert: false,
+    });
+
+  if (uploadError) throw uploadError;
+
+  return supabase.storage.from("teacher_profile_pics").getPublicUrl(storagePath).data.publicUrl;
+}
+
 function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -124,7 +173,7 @@ async function getTeacherCourseMapping(t_id) {
   if (!t_id) return [];
 
   const { data, error } = await supabase
-    .from("course_mapping")
+    .from("course_teacher_mapping")
     .select("id, created_at, t_id, course_id")
     .eq("t_id", t_id)
     .order("created_at", { ascending: false });
@@ -307,6 +356,11 @@ export async function getTeacherOverviewByUid(uid) {
   const totalEarnings = bookings.length * SESSION_VALUE;
   const activeRoadmaps = roadmapProgress.active.length;
   const latestStudentNames = students.slice(0, 5).map((student) => student.name).filter(Boolean);
+  const planNames = [...new Set(
+    courses
+      .map((course) => course.title)
+      .filter(Boolean)
+  )].slice(0, 4);
 
   return {
     teacher: {
@@ -328,7 +382,7 @@ export async function getTeacherOverviewByUid(uid) {
     highlights: {
       monthLabel: monthLabel(now),
       topStudents: latestStudentNames,
-      planNames: plans.map((plan) => plan.plan_name).slice(0, 4),
+      planNames,
       courses: courseMappings.map((mapping) => ({
         id: mapping.id,
         course_id: mapping.course_id,
@@ -378,6 +432,16 @@ export async function updateTeacherProfileByUid(uid, updates) {
 
   if (!Object.keys(payload).length) {
     throw new Error("No valid profile fields provided");
+  }
+
+  // Handle profile picture upload if provided
+  if (payload.pfp) {
+    const uploadedPfp = await uploadTeacherProfilePicture({
+      uid,
+      pfp: payload.pfp,
+      username: payload.name || updates.name || "teacher",
+    });
+    payload.pfp = uploadedPfp || payload.pfp;
   }
 
   const { data, error } = await supabase

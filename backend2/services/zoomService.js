@@ -32,38 +32,46 @@ export async function createZoomMeeting({
   duration,
   timezone = "UTC",
   waitingRoom = true,
-  joinBeforeHost = false
+  joinBeforeHost = false,
+  hostEmail = null,
+  alternativeHost = null,
 }) {
-  console.log("params",topic,startTime,duration);
+  console.log("params", topic, startTime, duration);
   if (!topic || !startTime || !duration) {
     throw new Error("Missing required Zoom meeting parameters");
   }
 
   const token = await getZoomAccessToken();
 
-  const response = await axios.post(
-    "https://api.zoom.us/v2/users/me/meetings",
-    {
-      topic,
-      type: 2, // scheduled meeting
-      start_time: startTime, // must be ISO string
-      duration,
-      timezone,
-      settings: {
-        waiting_room: waitingRoom,
-        join_before_host: joinBeforeHost,
-        participant_video: true,
-        host_video: true,
-        mute_upon_entry: false,
-        approval_type: 0 // automatically approve
-      }
+  const url = hostEmail
+    ? `https://api.zoom.us/v2/users/${encodeURIComponent(hostEmail)}/meetings`
+    : "https://api.zoom.us/v2/users/me/meetings";
+
+  const payload = {
+    topic,
+    type: 2,
+    start_time: startTime,
+    duration,
+    timezone,
+    settings: {
+      waiting_room: waitingRoom,
+      join_before_host: joinBeforeHost,
+      participant_video: true,
+      host_video: true,
+      mute_upon_entry: false,
+      approval_type: 0,
     },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-  );
+  };
+
+  if (alternativeHost) {
+    payload.settings.alternative_hosts = alternativeHost;
+  }
+
+  const response = await axios.post(url, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return response.data;
 }
@@ -90,14 +98,42 @@ async function deleteZoomMeeting(meetingId) {
  * Creates Zoom meeting + inserts into session table
  */
 export async function createSessionWithZoom(data) {
-  const { booking_id, t_id, startTime, title } = data;
+  const { booking_id, t_id, startTime, title, duration = 30 } = data;
 
   if (!booking_id || !t_id || !startTime) {
     throw new Error("Missing required fields");
   }
 
-  // 1️⃣ Create Zoom Meeting
-  const meeting = await createZoomMeeting(startTime, title);
+  // 1️⃣ Lookup teacher email and create Zoom Meeting under teacher's Zoom user when possible
+  let teacherEmail = null;
+  try {
+    const { data: teacherRow, error: tErr } = await supabase
+      .from("teacher")
+      .select("uid")
+      .eq("t_id", t_id)
+      .maybeSingle();
+
+    if (!tErr && teacherRow?.uid) {
+      const { data: authRow, error: aErr } = await supabase
+        .from("auth")
+        .select("email")
+        .eq("uid", teacherRow.uid)
+        .maybeSingle();
+      if (!aErr && authRow?.email) teacherEmail = authRow.email;
+    }
+  } catch (e) {
+    // ignore and fall back to service account
+    teacherEmail = null;
+  }
+
+  const meeting = await createZoomMeeting({
+    topic: title || "AlgoNest Session",
+    startTime,
+    duration,
+    hostEmail: teacherEmail,
+    // keep service account as alternative host so system can manage meeting if needed
+    alternativeHost: process.env.SENDER_MAIL || null,
+  });
 
   try {
     // 2️⃣ Insert Into Database
@@ -112,8 +148,9 @@ export async function createSessionWithZoom(data) {
           join_url: meeting.join_url,
           start_url: meeting.start_url,
           start_time: startTime,
+          duration,
           title: title || "AlgoNest Session",
-          status: "VALID",
+          status: "BOOKED",
         },
       ])
       .select();

@@ -159,6 +159,16 @@ export default function ActivityTab({
                     </div>
                     <div>{roadmap.enrolled}</div>
                   </div>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/roadmap_express?courseId=${roadmap.id}`)}
+                      className="rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110 md:text-sm"
+                      style={{ backgroundColor: C.purple }}
+                    >
+                      Open Roadmap
+                    </button>
+                  </div>
                 </div>
               </SectionCard>
             ))

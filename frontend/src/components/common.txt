@@ -19,3 +19,5 @@ COLORS: {
   #ffffff;
   #333;
 }
+#d1fae5
+#002c1e

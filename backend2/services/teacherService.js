@@ -334,7 +334,20 @@ export async function getMentorsByDomain(domain) {
   const ids = mappings.map(m => m.t_id);
   const { data: teacherDetails, error: detailError } = await supabase
     .from("teacher")
-    .select("name, bio, expertise")
+    .select(`
+      t_id,
+      name,
+      bio,
+      education,
+      pfp,
+      rating,
+      experience,
+      verified,
+      teaching_style,
+      meeting_link,
+      expertise,
+      specialisation:specialisation ( sp1, sp2, sp3, sp4 )
+    `)
     .in("t_id", ids);
 
   if (detailError) throw new Error(detailError.message);

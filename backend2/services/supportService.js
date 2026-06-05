@@ -1,9 +1,9 @@
 import { supabase } from "../lib/supabase.js";
 import { transporter } from "../utils/mailer.js";
 
-const TEACHER_QUERY_RECIPIENT = "ifrahraufddps@gmail.com";
-const ACCOUNT_DELETION_RECIPIENT = "ifrahraufddps@gmail.com";
-const GITHUB_REVIEW_RECIPIENT = "ifrahraufddps@gmail.com";
+const TEACHER_QUERY_RECIPIENT = process.env.SENDER_MAIL || "algonest.edtech@gmail.com";
+const ACCOUNT_DELETION_RECIPIENT = process.env.SENDER_MAIL || "algonest.edtech@gmail.com";
+const GITHUB_REVIEW_RECIPIENT = process.env.SENDER_MAIL || "algonest.edtech@gmail.com";
 
 function escapeHtml(value) {
   return String(value || "")
@@ -53,7 +53,7 @@ export async function sendTeacherQueryMail({ uid, subject, body }) {
   const cleanedBody = String(body).trim();
 
   await transporter.sendMail({
-    from: `"AlgoNest Teacher Query" <ifrahraufddps@gmail.com>`,
+    from: `"AlgoNest Teacher Query" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
     to: TEACHER_QUERY_RECIPIENT,
     replyTo: authRow.email,
     subject: `[Teacher Query] ${cleanedSubject}`,
@@ -101,7 +101,7 @@ export async function sendGithubReviewMail({ uid, githubUrl }) {
   const cleanedEmail = escapeHtml(authRow.email);
 
   await transporter.sendMail({
-    from: `"AlgoNest Project Review" <ifrahraufddps@gmail.com>`,
+    from: `"AlgoNest Project Review" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
     to: GITHUB_REVIEW_RECIPIENT,
     replyTo: authRow.email,
     subject: `[GitHub Review Request] ${authRow.name || authRow.email || authRow.uid}`,
@@ -143,7 +143,7 @@ export async function sendAccountDeletionRequestMail({ uid }) {
   const cleanedRole = escapeHtml(authRow.role || "STUDENT");
 
   await transporter.sendMail({
-    from: `"AlgoNest Account Requests" <ifrahraufddps@gmail.com>`,
+    from: `"AlgoNest Account Requests" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
     to: ACCOUNT_DELETION_RECIPIENT,
     replyTo: authRow.email || undefined,
     subject: `[Account Deletion Request] ${authRow.name || authRow.email || authRow.uid}`,

@@ -42,6 +42,135 @@ function getNearestUpcomingDate(targetDayOfWeek, startmin) {
   result.setHours(0, 0, 0, 0);
   return result;
 }
+
+function formatLocalDateOnly(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeDateInput(dateValue, fallbackDate) {
+  const raw = String(dateValue || "").trim();
+  if (raw) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const parsed = formatLocalDateOnly(raw);
+    if (parsed) return parsed;
+  }
+
+  return formatLocalDateOnly(fallbackDate);
+}
+
+function buildDateTimeString(dateOnly, minutes) {
+  const raw = String(dateOnly || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+
+  const year = raw.slice(0, 4);
+  const month = raw.slice(5, 7);
+  const day = raw.slice(8, 10);
+  const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+  const minute = String(minutes % 60).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hour}:${minute}:00`;
+}
+
+function buildExpectedTimeslots(availabilityRow) {
+  if (!availabilityRow) return [];
+
+  const startmin = Number(availabilityRow.startmin);
+  const endmin = Number(availabilityRow.endmin);
+  const slotgranularity = Number(availabilityRow.slotgranularity || 30);
+  const dateOnly = normalizeDateInput(availabilityRow.date, getNearestUpcomingDate(availabilityRow.dayofweek, startmin));
+
+  if (!dateOnly || !Number.isFinite(startmin) || !Number.isFinite(endmin) || endmin <= startmin) {
+    return [];
+  }
+
+  const slots = [];
+  let currentStart = startmin;
+
+  while (currentStart + slotgranularity <= endmin) {
+    const currentEnd = currentStart + slotgranularity;
+    const startat = buildDateTimeString(dateOnly, currentStart);
+    const endat = buildDateTimeString(dateOnly, currentEnd);
+
+    if (startat && endat) {
+      slots.push({
+        teacherid: availabilityRow.teacherid,
+        availabilityid: availabilityRow.a_id,
+        startat,
+        endat,
+        durationmin: slotgranularity,
+        isbooked: false,
+      });
+    }
+
+    currentStart += slotgranularity;
+  }
+
+  return slots;
+}
+
+async function syncTimeslotsForAvailability(availabilityRow) {
+  if (!availabilityRow?.a_id) return;
+
+  const expected = buildExpectedTimeslots(availabilityRow);
+  if (!expected.length) return;
+
+  console.debug("[syncTimeslots] rebuilding", {
+    a_id: availabilityRow.a_id,
+    teacherid: availabilityRow.teacherid,
+    date: availabilityRow.date,
+    dayofweek: availabilityRow.dayofweek,
+    startmin: availabilityRow.startmin,
+    endmin: availabilityRow.endmin,
+    slotgranularity: availabilityRow.slotgranularity,
+    expectedCount: expected.length,
+  });
+
+  const { error: deleteError } = await supabase
+    .from("timeslot")
+    .delete()
+    .eq("availabilityid", availabilityRow.a_id);
+
+  if (deleteError) {
+    console.error("[syncTimeslots] delete failed", {
+      a_id: availabilityRow.a_id,
+      error: deleteError,
+    });
+    throw deleteError;
+  }
+
+  const { error: insertError } = await supabase
+    .from("timeslot")
+    .insert(expected);
+
+  if (insertError) {
+    console.error("[syncTimeslots] insert failed", {
+      a_id: availabilityRow.a_id,
+      error: insertError,
+      sample: expected[0] || null,
+    });
+    throw insertError;
+  }
+
+  console.debug("[syncTimeslots] success", {
+    a_id: availabilityRow.a_id,
+    inserted: expected.length,
+  });
+}
+
+function normalizeSlotType(type, isfree) {
+  const cleanType = String(type || "").trim().toLowerCase();
+  if (cleanType === "free") return "session";
+  if (cleanType === "session") return "session";
+  if (cleanType === "plan") return "plan";
+  return isfree ? "session" : "plan";
+}
 // HELPER FUNCTIONS END------------------------------------------
 
 //  * Fetch all availability slots for a teacher
@@ -100,21 +229,39 @@ export async function createAvailabilitySlot(uid, slotData) {
   if (endmin <= startmin) {
     throw new Error("endmin must be greater than startmin");
   }
+  const normalizedType = normalizeSlotType(type, isfree);
   const nearestDate = getNearestUpcomingDate(dayofweek, startmin);
+  const normalizedDate = normalizeDateInput(date, nearestDate);
+  console.debug("[createAvailabilitySlot] incoming", {
+    uid,
+    teacherId,
+    dayofweek,
+    date,
+    normalizedDate,
+    startmin,
+    endmin,
+    slotgranularity,
+    isfree,
+    type,
+    normalizedType,
+    active,
+    kind,
+    price,
+  });
   const { data, error } = await supabase
     .from("availability")
     .insert([
       {
         teacherid: teacherId,
         dayofweek,
-        date:nearestDate.toISOString(),
+        date: normalizedDate,
         startmin,
         endmin,
         slotgranularity,
         isfree,
         active,
         kind,
-        type,
+        type: normalizedType,
         desc,
         price: price !== "" ? price : null,
       },
@@ -123,6 +270,12 @@ export async function createAvailabilitySlot(uid, slotData) {
     .single();
 
   if (error) throw new Error(`Failed to create slot: ${error.message}`);
+  try {
+    await syncTimeslotsForAvailability(data);
+  } catch (timeslotError) {
+    console.error("[createAvailabilitySlot] timeslot sync failed:", timeslotError.message);
+  }
+  console.debug("[createAvailabilitySlot] saved", { a_id: data.a_id, teacherid: data.teacherid });
   return data;
 }
 
@@ -136,7 +289,7 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
   // Ownership check — fetch existing day/startmin too for date recalculation
   const { data: existing, error: fetchError } = await supabase
     .from("availability")
-    .select("a_id, teacherid, dayofweek, startmin")
+    .select("a_id, teacherid, dayofweek, startmin, date")
     .eq("a_id", slotId)
     .single();
 
@@ -144,9 +297,17 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
   if (existing.teacherid !== teacherId) throw new Error("Unauthorized: slot does not belong to this teacher");
 
   const {
-    dayofweek, startmin, endmin, slotgranularity,
+    dayofweek, date, startmin, endmin, slotgranularity,
     isfree, active, kind, type, desc, price,
   } = updates;
+  const normalizedType = normalizeSlotType(type, isfree);
+  console.debug("[updateAvailabilitySlot] incoming", {
+    uid,
+    slotId,
+    existing,
+    updates,
+    normalizedType,
+  });
 
   const payload = {};
   if (dayofweek     !== undefined) payload.dayofweek     = dayofweek;
@@ -156,16 +317,17 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
   if (isfree        !== undefined) payload.isfree        = isfree;
   if (active        !== undefined) payload.active        = active;
   if (kind          !== undefined) payload.kind          = kind;
-  if (type          !== undefined) payload.type          = type;
+  if (type          !== undefined) payload.type          = normalizedType;
   if (desc          !== undefined) payload.desc          = desc;
   if (price         !== undefined) payload.price         = price !== "" ? price : null;
+  if (date          !== undefined) payload.date          = normalizeDateInput(date, getNearestUpcomingDate(payload.dayofweek ?? existing.dayofweek, payload.startmin ?? existing.startmin));
 
   // Recalculate date if dayofweek or startmin changed
   // Fall back to existing DB values if one of them wasn't part of this update
   if (payload.dayofweek !== undefined || payload.startmin !== undefined) {
     const effectiveDay   = payload.dayofweek ?? existing.dayofweek;
     const effectiveStart = payload.startmin  ?? existing.startmin;
-    payload.date = getNearestUpcomingDate(effectiveDay, effectiveStart).toISOString();
+    payload.date = formatLocalDateOnly(getNearestUpcomingDate(effectiveDay, effectiveStart));
   }
 
   if (payload.startmin != null && payload.endmin != null && payload.endmin <= payload.startmin) {
@@ -181,6 +343,19 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
 
   if (!error) console.log("updated slot: ", data);
   if (error) throw new Error(`Failed to update slot: ${error.message}`);
+  try {
+    await syncTimeslotsForAvailability(data);
+  } catch (timeslotError) {
+    console.error("[updateAvailabilitySlot] timeslot sync failed:", timeslotError.message);
+  }
+  console.debug("[updateAvailabilitySlot] saved", {
+    a_id: data.a_id,
+    dayofweek: data.dayofweek,
+    date: data.date,
+    startmin: data.startmin,
+    endmin: data.endmin,
+    type: data.type,
+  });
   return data;
 }
 
@@ -241,20 +416,27 @@ export async function deleteAvailabilitySlot(uid, slotId) {
  */
 export async function bulkSaveAvailability(uid, slots) {
   const teacherId = await getTeacherIdByUid(uid);
+  console.debug("[bulkSaveAvailability] start", {
+    uid,
+    teacherId,
+    totalSlots: slots?.length || 0,
+    existing: (slots || []).filter((s) => s.a_id).length,
+    newSlots: (slots || []).filter((s) => !s.a_id).length,
+  });
  
   const toInsert = slots
     .filter((s) => !s.a_id)
     .map((s) => ({
       teacherid: teacherId,
       dayofweek: s.dayofweek,
-      date: getNearestUpcomingDate(s.dayofweek, s.startmin).toISOString(),
+      date: normalizeDateInput(s.date, getNearestUpcomingDate(s.dayofweek, s.startmin)),
       startmin: s.startmin,
       endmin: s.endmin,
       slotgranularity: s.slotgranularity ?? 60,
       isfree: s.isfree ?? false,
       active: s.active ?? true,
       kind: s.kind || null,
-      type: s.type || "plan",
+      type: normalizeSlotType(s.type, s.isfree),
       desc: s.desc || null,
       price: s.price !== "" ? s.price : null,
     }));
@@ -264,22 +446,43 @@ export async function bulkSaveAvailability(uid, slots) {
   const results = { inserted: [], updated: [], errors: [] };
  
   if (toInsert.length > 0) {
+    console.debug("[bulkSaveAvailability] inserting", { count: toInsert.length, sample: toInsert[0] });
     const { data, error } = await supabase
       .from("availability")
       .insert(toInsert)
       .select();
-    if (error) results.errors.push(`Insert failed: ${error.message}`);
-    else results.inserted = data;
+    if (error) {
+      console.error("[bulkSaveAvailability] insert failed", error);
+      results.errors.push(`Insert failed: ${error.message}`);
+    }
+    else {
+      results.inserted = data;
+      for (const row of data || []) {
+        try {
+          await syncTimeslotsForAvailability(row);
+        } catch (timeslotError) {
+          console.error("[bulkSaveAvailability] timeslot sync failed", {
+            a_id: row.a_id,
+            error: timeslotError,
+          });
+          results.errors.push(`Timeslot sync failed for a_id ${row.a_id}: ${timeslotError.message}`);
+        }
+      }
+    }
   }
  
   for (const slot of toUpdate) {
     try {
+      console.debug("[bulkSaveAvailability] updating", { a_id: slot.a_id, slot });
       const updated = await updateAvailabilitySlot(uid, slot.a_id, slot);
       results.updated.push(updated);
     } catch (err) {
+      console.error("[bulkSaveAvailability] update failed", { a_id: slot.a_id, err });
       results.errors.push(`Update failed for a_id ${slot.a_id}: ${err.message}`);
     }
   }
+
+  console.debug("[bulkSaveAvailability] result", results);
  
   return results;
 }

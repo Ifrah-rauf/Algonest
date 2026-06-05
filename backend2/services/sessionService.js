@@ -1,5 +1,24 @@
 import { supabase } from "../lib/supabase.js";
 
+function getSessionState(session) {
+  const status = String(session?.status || "").toUpperCase();
+  const now = new Date();
+  const startTime = session?.start_time ? new Date(session.start_time) : null;
+  const endTime = session?.end_time ? new Date(session.end_time) : null;
+
+  if (status === "COMPLETED") return "COMPLETED";
+  if (status === "FAILED") return "FAILED";
+  if (status === "PROCESSING") return "PROCESSING";
+  if (status === "UPLOAD_RECEIVED") return "UPLOAD_RECEIVED";
+  if (status === "ENDED_PENDING_UPLOAD") return "PENDING_UPLOAD";
+
+  if (startTime && now < startTime) return "UPCOMING";
+  if (startTime && (!endTime || now <= endTime)) return "ACTIVE";
+  if (endTime && now > endTime) return "EXPIRED";
+
+  return "INACTIVE";
+}
+
 async function getStudentIdByUid(uid) {
   const { data: studentData, error: studentError } = await supabase
     .from("student")
@@ -62,12 +81,11 @@ export async function checkSessionData(uid) {
     return { exists: false };
   }
 
-  // 2️⃣ Fetch latest VALID session for this student
+  // 2️⃣ Fetch latest session for this student
   const { data: sessionData, error: sessionError } = await supabase
     .from("session")
     .select("*")
     .in("booking_id", bookingIds)
-    .eq("status", "VALID")
     .order("start_time", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -80,19 +98,9 @@ export async function checkSessionData(uid) {
     return { exists: false };
   }
 
-    const now = new Date();
-    const startTime = new Date(sessionData.start_time);
+    const state = getSessionState(sessionData);
     const endTime = sessionData.end_time ? new Date(sessionData.end_time) : null;
     console.log("END TIME: "+endTime);
-    let state = "INACTIVE";
-
-    if (startTime <= now && (!endTime || endTime >= now)) {
-    state = "ACTIVE";
-    } else if (startTime > now) {
-    state = "UPCOMING";
-    } else if (endTime && endTime < now) {
-    state = "EXPIRED";
-    }
     console.log("sessionData: ",sessionData," state: ",state);
     return {
         exists: true,
@@ -116,12 +124,11 @@ export async function checkTSessionData(uid) {
 
   const t_id = teacherData.t_id;
 
-  // 2️⃣ Fetch latest VALID session for this student
+  // 2️⃣ Fetch latest session for this teacher
   const { data: sessionData, error: sessionError } = await supabase
     .from("session")
     .select("*")
     .eq("t_id", t_id)
-    .eq("status", "VALID")
     .order("start_time", { ascending: true })
     .limit(1)
     .maybeSingle(); // safer than single()
@@ -134,19 +141,7 @@ export async function checkTSessionData(uid) {
     return { exists: false };
   }
 
-    const now = new Date();
-    const startTime = new Date(sessionData.start_time);
-    const endTime = sessionData.end_time ? new Date(sessionData.end_time) : null;
-
-    let state = "INACTIVE";
-
-    if (startTime <= now && (!endTime || endTime >= now)) {
-    state = "ACTIVE";
-    } else if (startTime > now) {
-    state = "UPCOMING";
-    } else if (endTime && endTime < now) {
-    state = "EXPIRED";
-    }
+    const state = getSessionState(sessionData);
     console.log("sessionData: ",sessionData);
     return {
         exists: true,
@@ -162,7 +157,7 @@ export async function sessionHistory(uid){
         return { session: [] };
     }
 
-    // 2️⃣ Fetch latest VALID session for this student
+    // 2️⃣ Fetch latest session history for this student
     const { data: sessionData, error: sessionError } = await supabase
         .from("session")
         .select("*")
@@ -175,4 +170,54 @@ export async function sessionHistory(uid){
     return {
         session: sessionData
     };
+}
+export async function completeSessionData({ sessionId, feedbackText = null }) {
+  if (!sessionId) {
+    throw new Error("sessionId is required");
+  }
+
+  const { data: session, error: sessionError } = await supabase
+    .from("session")
+    .select("session_id, booking_id")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (sessionError) {
+    throw new Error(`Failed to fetch session: ${sessionError.message}`);
+  }
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const { data: booking, error: bookingError } = await supabase
+    .from("booking")
+    .select("s_id")
+    .eq("booking_id", session.booking_id)
+    .maybeSingle();
+
+  if (bookingError) {
+    throw new Error(`Failed to fetch session booking: ${bookingError.message}`);
+  }
+  if (!booking?.s_id) {
+    throw new Error("Student not found for session");
+  }
+
+  const { data, error } = await supabase
+    .from("session")
+    .update({
+      marked_by_teacher: true,
+      feedback: feedbackText?.trim() || null,
+    })
+    .eq("session_id", sessionId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to complete session: ${error.message}`);
+  }
+
+  return {
+    ...data,
+    s_id: booking.s_id,
+  };
 }

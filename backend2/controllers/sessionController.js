@@ -1,5 +1,11 @@
-import { getSessionPreparationData,checkSessionData,sessionHistory } from "../services/sessionService.js";
-
+import { getSessionPreparationData,
+  checkSessionData,
+  sessionHistory,
+  checkTSessionData,
+  completeSessionData,
+  // saveMentorFeedback
+} from "../services/sessionService.js";
+import { saveMentorFeedback } from "../services/rag/index.js";
 export async function prepareSessionData(req, res) {
   try {
     const { slotId } = req.body;
@@ -60,6 +66,61 @@ export async function getSessionHistory(req, res) {
     return res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+}
+
+export async function checkTSession(req, res) {
+  try {
+    const { uid } = req.body;
+    const data = await checkTSessionData(uid);
+
+    return res.status(200).json({
+      success: true,
+      message: "success",
+      data,
+    });
+  } catch (error) {
+    console.error("No teacher session found:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+//RAG+ROADMAP COMMIT
+export async function completeSession(req, res) {
+  try {
+    const { id } = req.params;
+    const { feedbackText, supportId } = req.body || {};
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "session id is required",
+      });
+    }
+
+    const data = await completeSessionData({
+      sessionId: Number(id),
+      feedbackText,
+    });
+
+    if (feedbackText?.trim()) {
+      await saveMentorFeedback(data.s_id, supportId || data.session_id, feedbackText);
+      console.log("[RAG] Mentor feedback embedded for sId", data.s_id);
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("completeSession error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 }

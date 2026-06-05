@@ -18,6 +18,7 @@ import review from "../static/review.png"
 import StudentDashboard from "../components/s_dashboard2.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
 import Comparison from "../components/comparison.jsx";
+import ExecutionTimeline from "../components/Executiontimeline.jsx"
 const C = {
   purple: "#6b46c1",
   purpleDark: "#4c1d95",
@@ -286,17 +287,18 @@ function JourneyPathSection() {
           <div>
             <SectionLabel dark>Path to Opportunity</SectionLabel>
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-              Build the route. Defend the route. Place with evidence.
+              Think like an engineer. Observe a unique real-world problem <br/>
+              Build it structurally under personal mentor
             </h2>
-            <p className="text-white/60 text-lg leading-8 max-w-2xl">
-              The timeline above sets the order. This visual shows the same system in action:
-              a project route, an AI companion that challenges your thinking, and the checkpoint trail that proves the work.
+            <p className="text-white text-lg leading-8 max-w-2xl">
+             Choose a roadmap, feed your project - now your AI helper and your mentor are ready to build with you!
+             Receive verdict, proof of work and certification
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {[
-                "Project first",
-                "CS second",
-                "Grill last",
+                "Roadmap + built in AI",
+                "1:1 Live Mentor sessions",
+                "Interview preparedness",
               ].map((pill) => (
                 <span
                   key={pill}
@@ -421,17 +423,16 @@ useEffect(() => {
             </motion.div>
 
             {/* Headline */}
-            <motion.h1
+            <motion.h2
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-4xl lg:text-5xl font-bold leading-tight pt-[3%]"
-            >
-              Get job-ready results with
+              className="text-[40px] md:text-[50px] font-bold leading-none">
+
+              Learn like a<span className="text-[#f6c90e]"> premium engineer</span> with
               <br />
               <span className="text-[#6b46c1]">
-                 expert, clear milestones, and guaranteed outcomes.</span><br />
-              {/* <span className="text-[#f6c90e] text-shadow-lg">sharper</span> */}
-            </motion.h1>
+                Roadmaps and personal mentorship</span><br />
+            </motion.h2>
 
             {/* Subline */}
             <motion.p
@@ -439,29 +440,10 @@ useEffect(() => {
               transition={{ duration: 0.7, delay: 0.25 }}
               className="mt-8 text-lg text-gray-800 max-w-2xl mx-auto leading-relaxed"
             >
-              <span className="text-[#f6c90e]">Ditch the hype, build real skills.</span>
-              <br />Take ownership of the work. Prepare the fundamentals, build the proof,
-              and walk into the room with someone who can vouch for you at the end.
+              <br />We are all over with bootcamps and recordings, Let's build something real, of your own in this era of 
+              Shallow learning
+              <span className="text-[#6b46c1] font-semibold"><br/>Ditch the hype, build real skills.</span>
             </motion.p>
-
-            {/* Product strong points — pill grid */}
-            {/* <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.38 }}
-              className="mt-8 flex flex-wrap justify-center gap-2.5"
-            >
-              {[
-                ["• Build your own idea on structured path"],
-                ["• Mentors who guide you on your idea and tech stack"],
-                ["• Interview Preparation of the same idea"],
-                ["• Deploy and showcase publicly"],
-                ["• Unlock Job Opportunities"],
-              ].map(([icon, label]) => (
-                <span key={label} className="inline-flex items-center gap-1.5 bg-white/80 border border-purple-100 rounded-full px-4 py-2 text-sm font-medium text-[#4a3080] shadow-sm backdrop-blur-sm">
-                  <span>{icon}</span> {label}
-                </span>
-              ))}
-            </motion.div> */}
 
             {/* CTAs */}
             <motion.div
@@ -515,11 +497,11 @@ useEffect(() => {
                 { v: "80%",    l: "Engineers struggle to defend project decisions" },
                 { v: "~5%",    l: "People finish passive online programs" },
                 { v: "₹9,999", l: "Full assessment system. No hidden fees." },
-                { v: "1+4",     l: "Live mentor checkpoint reviews" },
+                { v: "1+3",     l: "Live mentor checkpoint reviews" },
               ].map((s, i) => (
                 <motion.div key={i} variants={itemVariants}>
                   <div className="text-4xl font-extrabold text-[#f6c90e] mb-2">{s.v}</div>
-                  <div className="text-white/65 text-sm leading-relaxed">{s.l}</div>
+                  <div className="text-white text-lg leading-relaxed">{s.l}</div>
                 </motion.div>
               ))}
             </motion.div>
@@ -560,13 +542,13 @@ useEffect(() => {
 
                 <div className="relative z-10 mt-8 space-y-3">
                   {[
-                    "You can list three projects on your resume but cannot explain why you made the decisions in any",
-                    "You have watched DSA videos for six months but you freeze when someone asks you to explain",
-                    "You don't know which companies you can actually crack now and which ones need four more weeks of specific work.",
+                    "You can projects but can't explain",
+                    "You have watched videos, but you still freeze",
+                    "Don't know for which companies are you ready",
                   ].map((t) => (
                     <div
                       key={t}
-                      className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-[0_10px_28px_rgba(33,21,63,0.04)]"
+                      className="flex items-start gap-3 rounded-2xl px-4 py-4 shadow-[0_10px_28px_rgba(33,21,63,0.04)]"
                     >
                       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6c90e]/20 text-xs font-bold text-[#b7791f]">
                         •
@@ -672,7 +654,7 @@ useEffect(() => {
                         <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "#b91c1c" }}>
                           Biggest gap
                         </div>
-                        <p className="mt-2 text-sm leading-7 text-gray-700">
+                        <p className="mt-2 text-sm leading-7 text-white">
                           Cannot explain auth flow decisions under pressure.
                         </p>
                       </div>
@@ -683,7 +665,7 @@ useEffect(() => {
                         <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: C.purple }}>
                           Mentor note
                         </div>
-                        <p className="mt-3 text-sm leading-7 text-gray-700">
+                        <p className="mt-3 text-sm leading-7 text-white">
                           “You know the solution. Now make the reasoning impossible to shake.”
                         </p>
                       </div>
@@ -701,7 +683,7 @@ useEffect(() => {
                             viewport={{ once: true, amount: 0.4 }}
                           />
                         </div>
-                        <div className="mt-2 text-xs font-medium text-gray-600">Gap narrowed by session feedback</div>
+                        <div className="mt-2 text-xs font-medium text-white">Gap narrowed by session feedback</div>
                       </div>
                     </div>
                   </div>
@@ -710,10 +692,11 @@ useEffect(() => {
             </div>
           </div>
         </section>
-        <ExecutionTimelineSection />
+        <ExecutionTimeline />
         <div id="journey">
           <JourneyPathSection />
         </div>
+        
 
         {/* ══════════════════════════════════════════
             CS FUNDAMENTALS
@@ -819,7 +802,7 @@ useEffect(() => {
                   <h3 className="mt-2 text-2xl font-bold text-white">
                     Readiness verdict - 2 weeks away
                   </h3>
-                  <p className="mt-2 text-sm leading-7 text-white/65">
+                  <p className="mt-2 text-sm leading-7 text-white">
                     Clear, honest feedback. No softening.
                   </p>
                 </div>
@@ -895,7 +878,7 @@ useEffect(() => {
                         viewport={{ once: true, amount: 0.3 }}
                       />
                     </div>
-                    <div className="mt-2 text-xs text-white/65">Gap narrowed by session feedback</div>
+                    <div className="mt-2 text-xs text-white">Gap narrowed by session feedback</div>
                   </div>
                 </div>
               </div>
@@ -920,9 +903,9 @@ useEffect(() => {
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#2a0f4a] to-[#0f0020] border border-white/10 shadow-2xl p-6">
               {/* Profile header */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6b46c1] to-[#f6c90e] flex items-center justify-center text-white font-bold text-lg">IR</div>
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6b46c1] to-[#f6c90e] flex items-center justify-center text-white font-bold text-lg">RS</div>
                 <div>
-                  <p className="text-white font-bold">Ifrah Rauf</p>
+                  <p className="text-white font-bold">Riya Sharma</p>
                   <p className="text-white/50 text-sm">Backend Developer · AlgoNest Verified</p>
                 </div>
                 <div className="ml-auto">
@@ -962,23 +945,20 @@ useEffect(() => {
         {/* ══════════════════════════════════════════
             FREE vs PAID — TABS
         ══════════════════════════════════════════ */}
-        <section id="pricing" className="bg-[#1a0533] py-16">
-  <div className="max-w-7xl mx-auto px-6">
-    {/* Header */}
-    <div className="text-center mb-10">
+        {/* <section id="pricing" className="max-w-6xl bg-[#1a0533] py-12 m-auto">
+  <div className="max-w-5xl mx-auto">
+    <div className="text-center">
       <SectionLabel dark>Two Ways In</SectionLabel>
-      <h2 className="text-3xl font-bold text-white mb-2">
+      <h2 className="text-3xl font-bold text-white">
         Start free. Upgrade when serious.
       </h2>
-      <p className="text-white/50 text-sm">
+      <p className="text-white/30 text-sm">
         No credit card. No catch. Just execution.
       </p>
     </div>
 
-    {/* SIDE BY SIDE */}
     <div className="grid md:grid-cols-2 gap-6 items-stretch">
 
-      {/* LEFT — FREE */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
         <div>
           <span className="inline-block bg-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full mb-4">
@@ -1013,7 +993,6 @@ useEffect(() => {
         </Link>
       </div>
 
-      {/* RIGHT — PAID (DOMINANT) */}
       <div className="bg-gradient-to-br from-[#f6c90e]/20 to-[#6b46c1]/20 border border-[#f6c90e]/30 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
         <div>
           <div className="flex items-baseline gap-2 mb-4">
@@ -1054,7 +1033,7 @@ useEffect(() => {
       </div>
     </div>
   </div>
-</section>
+</section> */}
 
         {/* ══════════════════════════════════════════
             HOW IT WORKS

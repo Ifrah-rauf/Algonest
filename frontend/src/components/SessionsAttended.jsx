@@ -2,6 +2,20 @@ import { Video, Calendar, User } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
 
+function formatDbDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-IN", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function SessionsAttended() {
   const [sessionHistory, setSessionHistory] = useState([]);
   const [historyStatus, setHistoryStatus] = useState("LOADING"); 
@@ -64,14 +78,26 @@ const sessions = sessionHistory;
 
     {sessions?.map((session) => {
 
-      const formattedDate = new Date(session.start_time).toLocaleString();
+      const formattedDate = formatDbDateTime(session.start_time);
       const durationText = session.duration
         ? `${session.duration} mins`
         : "—";
 
       const statusColor =
-        session.status === "VALID"
+        session.status === "BOOKED"
+          ? "bg-blue-100 text-blue-700"
+          : session.status === "LIVE"
           ? "bg-green-100 text-green-700"
+          : session.status === "ENDED_PENDING_UPLOAD"
+          ? "bg-amber-100 text-amber-700"
+          : session.status === "UPLOAD_RECEIVED"
+          ? "bg-purple-100 text-purple-700"
+          : session.status === "PROCESSING"
+          ? "bg-indigo-100 text-indigo-700"
+          : session.status === "COMPLETED"
+          ? "bg-emerald-100 text-emerald-700"
+          : session.status === "FAILED"
+          ? "bg-red-100 text-red-700"
           : "bg-gray-100 text-gray-600";
 
       return (

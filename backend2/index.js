@@ -18,8 +18,10 @@ import teacherDashboardRoutes from "./routes/teacherDashboardRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
-import { startSessionReminderScheduler } from "./services/sessionReminderScheduler.js";
+import { startSessionLifecycleScheduler, startSessionReminderScheduler } from "./services/sessionReminderScheduler.js";
 import studentRoutes from "./routes/studentRoutes.js";
+import meetingRoutes from "./routes/geminiAudioRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 const app = express();
 const PORT = 5000;
 
@@ -56,7 +58,13 @@ app.use("/api/support", supportRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/admin", adminRoutes);
+app.use(
+    "/api/meetings",
+    meetingRoutes
+);
 startSessionReminderScheduler();
+startSessionLifecycleScheduler();
 
 app.listen(PORT, '0.0.0.0', () => { 
   console.log(`Backend running at http://localhost:${PORT}`);

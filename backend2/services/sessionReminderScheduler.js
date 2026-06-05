@@ -1,10 +1,13 @@
 import { supabase } from "../lib/supabase.js";
 import { sendDueSessionReminders } from "./sessionReminderService.js";
+import { syncSessionLifecycleStatuses } from "./sessionLifecycleService.js";
 
 let reminderTimer = null;
 let isRunning = false;
 let reminderSchemaChecked = false;
 let reminderSchemaReady = false;
+let lifecycleTimer = null;
+let lifecycleRunning = false;
 
 async function hasReminderColumns() {
   const { data, error } = await supabase
@@ -44,6 +47,24 @@ export function runSessionReminderJob() {
     });
 }
 
+export function runSessionLifecycleJob() {
+  if (lifecycleRunning) return;
+
+  lifecycleRunning = true;
+  syncSessionLifecycleStatuses()
+    .then((result) => {
+      if (result?.updated) {
+        console.log(`[session-lifecycle] synced ${result.updated} session(s)`);
+      }
+    })
+    .catch((error) => {
+      console.error("[session-lifecycle] job failed:", error?.message || error);
+    })
+    .finally(() => {
+      lifecycleRunning = false;
+    });
+}
+
 export function startSessionReminderScheduler() {
   if (reminderTimer) return reminderTimer;
 
@@ -73,9 +94,27 @@ export function startSessionReminderScheduler() {
   return reminderTimer;
 }
 
+export function startSessionLifecycleScheduler() {
+  if (lifecycleTimer) return lifecycleTimer;
+
+  runSessionLifecycleJob();
+  lifecycleTimer = setInterval(() => {
+    runSessionLifecycleJob();
+  }, 5 * 60 * 1000);
+
+  return lifecycleTimer;
+}
+
 export function stopSessionReminderScheduler() {
   if (!reminderTimer) return;
   clearInterval(reminderTimer);
   reminderTimer = null;
   isRunning = false;
+}
+
+export function stopSessionLifecycleScheduler() {
+  if (!lifecycleTimer) return;
+  clearInterval(lifecycleTimer);
+  lifecycleTimer = null;
+  lifecycleRunning = false;
 }

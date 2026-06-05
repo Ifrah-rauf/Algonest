@@ -51,6 +51,74 @@ async function getBookingIdsByStudentId(studentId) {
   return (bookings || []).map((booking) => booking.booking_id).filter(Boolean);
 }
 
+async function resolveActiveCheckpointIdForStudent({ studentId, courseId }) {
+  if (!studentId || !courseId) return null;
+
+  const lessons = await dbFetch({
+    query: supabase
+      .from("lessons")
+      .select("lesson_id, checkpoint_id, order_index")
+      .eq("course_id", courseId)
+      .order("order_index", { ascending: true }),
+    label: "resolveCheckpoint/lessons",
+  });
+
+  if (!lessons?.length) return null;
+
+  const lessonIds = lessons.map((lesson) => lesson.lesson_id).filter(Boolean);
+  const progressRows = await dbFetch({
+    query: supabase
+      .from("lesson_progress")
+      .select("lesson_id, completed, completed_at")
+      .eq("s_id", studentId)
+      .in("lesson_id", lessonIds),
+    label: "resolveCheckpoint/progress",
+  });
+
+  const progressMap = Object.fromEntries((progressRows || []).map((row) => [row.lesson_id, row]));
+  const checkpointIdsFromLessons = [...new Set(lessons.map((lesson) => lesson.checkpoint_id).filter(Boolean))];
+  const checkpoints = checkpointIdsFromLessons.length
+    ? await dbFetch({
+        query: supabase
+          .from("checkpoints")
+          .select("checkpoint_id, course_id, title, requires_teacher")
+          .eq("course_id", courseId),
+        label: "resolveCheckpoint/checkpoints",
+      })
+    : [];
+
+  const lessonsByOrder = [...lessons].sort((a, b) => Number(a.order_index || 0) - Number(b.order_index || 0));
+  const latestCompletedIndex = lessonsByOrder.reduce((maxIndex, lesson) => {
+    const isCompleted = progressMap[lesson.lesson_id]?.completed === true;
+    return isCompleted ? Math.max(maxIndex, Number(lesson.order_index || 0)) : maxIndex;
+  }, 0);
+
+  const nextLesson = lessonsByOrder.find(
+    (lesson) => Number(lesson.order_index || 0) === latestCompletedIndex + 1
+  ) || null;
+
+  const nextCheckpointId = nextLesson?.checkpoint_id ? Number(nextLesson.checkpoint_id) : null;
+  if (nextCheckpointId) {
+    return nextCheckpointId;
+  }
+
+  const allLessonsCompleted =
+    lessonsByOrder.length > 0 &&
+    lessonsByOrder.every((lesson) => progressMap[lesson.lesson_id]?.completed === true);
+
+  if (!allLessonsCompleted) {
+    return null;
+  }
+
+  const checkpointIdSet = new Set(checkpointIdsFromLessons.map((id) => Number(id)));
+  const terminalCheckpoint = (checkpoints || [])
+    .filter((checkpoint) => !checkpointIdSet.has(Number(checkpoint.checkpoint_id)))
+    .sort((a, b) => Number(a.checkpoint_id) - Number(b.checkpoint_id))
+    .at(-1) || null;
+
+  return terminalCheckpoint?.checkpoint_id ? Number(terminalCheckpoint.checkpoint_id) : null;
+}
+
 export async function getStudentCheckpointBookingGuard({ userId = null, studentId = null, checkpointId = null }) {
   let resolvedStudentId = studentId;
 
@@ -259,7 +327,6 @@ export async function getStudentInterviewBookingGuard({ userId = null, studentId
         )
       `)
       .in("booking_id", bookingIds)
-      .eq("session_type", "interview")
       .order("created_at", { ascending: false }),
     label: "interviewGuard/sessions",
   });
@@ -272,24 +339,6 @@ export async function getStudentInterviewBookingGuard({ userId = null, studentId
       interviewId: interviewId || null,
       sessionId: null,
       cooldownEndsAt: null,
-    };
-  }
-
-  const now = new Date();
-  const latestAny = rows[0];
-  const activePending = rows.find((row) => {
-    const endTime = row.end_time ? new Date(row.end_time) : null;
-    return row.marked_by_teacher !== true && endTime && endTime > now;
-  });
-
-  if (activePending) {
-    return {
-      canBook: false,
-      status: "AWAITING_COMPLETION",
-      message: "You already have an interview session pending completion.",
-      interviewId: interviewId || null,
-      sessionId: activePending.session_id,
-      cooldownEndsAt: activePending.end_time || null,
     };
   }
 
@@ -311,6 +360,25 @@ export async function getStudentInterviewBookingGuard({ userId = null, studentId
       .in("session_id", rows.map((row) => row.session_id)),
     label: "interviewGuard/interviewSessions",
   });
+
+  const now = new Date();
+  const interviewSessionIds = new Set((interviewRows || []).map((row) => row.session_id));
+  const interviewSessions = rows.filter((row) => interviewSessionIds.has(row.session_id));
+  const activePending = interviewSessions.find((row) => {
+    const endTime = row.end_time ? new Date(row.end_time) : null;
+    return row.marked_by_teacher !== true && endTime && endTime > now;
+  });
+
+  if (activePending) {
+    return {
+      canBook: false,
+      status: "AWAITING_COMPLETION",
+      message: "You already have an interview session pending completion.",
+      interviewId: interviewId || null,
+      sessionId: activePending.session_id,
+      cooldownEndsAt: activePending.end_time || null,
+    };
+  }
 
   const latestRelevant = interviewId
     ? interviewRows.find((row) => Number(row.interview_id) === Number(interviewId)) || null
@@ -436,6 +504,17 @@ export async function bookingMailService({ studentId, slot }) {
   });
   if (!teacher) throw new Error("Teacher not found");
 
+  // Fetch teacher's auth record for email
+  const teacherAuth = await dbFetch({
+    query: supabase
+      .from("auth")
+      .select("*")
+      .eq("uid", teacher.uid)
+      .maybeSingle(),
+    label: "bookingMailService/teacherAuth",
+  });
+  if (!teacherAuth) throw new Error("Teacher auth record not found");
+
   const booking = await dbFetch({
     query: supabase
       .from("booking")
@@ -476,29 +555,62 @@ export async function bookingMailService({ studentId, slot }) {
     minute: "2-digit",
   });
 
+  // Email content for student
+  const studentEmailHtml = `
+    <h2 style="color:#6b46c1">Session Confirmed 🎉</h2>
+    <p>Hi ${student.name}, your mentorship session has been booked.</p>
+    <p><strong>Mentor:</strong> ${teacher.name}</p>
+    <p><strong>Date:</strong> ${date}</p>
+    <p><strong>Time:</strong> ${startTime} – ${endTime}</p>
+    <p><strong>Duration:</strong> ${slotData.durationmin} mins</p>
+    ${
+      slotData.availability.isfree
+        ? "<p>✓ Free Session</p>"
+        : `<p>Payment: ₹${slotData.availability.price}</p>`
+    }
+    ${
+      session?.join_url
+        ? `<p><a href="${session.join_url}" style="color:#6b46c1;font-weight:bold;">Join Meeting</a></p>`
+        : ""
+    }
+    <p style="color:gray;font-size:12px;">If you have any questions, contact us at support@algonest.in</p>
+  `;
+
+  // Email content for teacher
+  const teacherEmailHtml = `
+    <h2 style="color:#6b46c1">New Session Booked 📅</h2>
+    <p>Hi ${teacher.name}, a student has booked a session with you.</p>
+    <p><strong>Student:</strong> ${student.name}</p>
+    <p><strong>Date:</strong> ${date}</p>
+    <p><strong>Time:</strong> ${startTime} – ${endTime}</p>
+    <p><strong>Duration:</strong> ${slotData.durationmin} mins</p>
+    ${
+      slotData.availability.isfree
+        ? "<p>✓ Free Session</p>"
+        : `<p>Payment: ₹${slotData.availability.price}</p>`
+    }
+    ${
+      session?.join_url
+        ? `<p><a href="${session.join_url}" style="color:#6b46c1;font-weight:bold;">Join Meeting</a></p>`
+        : ""
+    }
+    <p style="color:gray;font-size:12px;">If you have any questions, contact us at support@algonest.in</p>
+  `;
+
+  // Send email to student
   await transporter.sendMail({
     from: `"AlgoNest" <${senderMail}>`,
     to: auth.email,
     subject: "Your AlgoNest Session is Booked! 🎉",
-    html: `
-      <h2 style="color:#6b46c1">Session Confirmed 🎉</h2>
-      <p>Hi ${student.name}, your mentorship session has been booked.</p>
-      <p><strong>Mentor:</strong> ${teacher.name}</p>
-      <p><strong>Date:</strong> ${date}</p>
-      <p><strong>Time:</strong> ${startTime} – ${endTime}</p>
-      <p><strong>Duration:</strong> ${slotData.durationmin} mins</p>
-      ${
-        slotData.availability.isfree
-          ? "<p>✓ Free Session</p>"
-          : `<p>Payment: ₹${slotData.availability.price}</p>`
-      }
-      ${
-        session?.join_url
-          ? `<p><a href="${session.join_url}" style="color:#6b46c1;font-weight:bold;">Join Meeting</a></p>`
-          : ""
-      }
-      <p style="color:gray;font-size:12px;">If you have any questions, contact us at support@algonest.in</p>
-    `,
+    html: studentEmailHtml,
+  });
+
+  // Send email to teacher
+  await transporter.sendMail({
+    from: `"AlgoNest" <${senderMail}>`,
+    to: teacherAuth.email,
+    subject: "New Session Booked with You! 📅",
+    html: teacherEmailHtml,
   });
 
   return { student, teacher, slotData };
@@ -586,7 +698,8 @@ export async function getPlanService({ userId, teacherId, slot }) {
     };
   }
 
-  const slotType = slot?.availability?.type;
+  const slotTypeRaw = String(slot?.availability?.type || "").trim().toLowerCase();
+  const slotType = slotTypeRaw === "free" ? "session" : slotTypeRaw;
 
   // Open session — available to anyone with a valid plan
   if (slotType === "session") {
@@ -761,6 +874,29 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
     };
   }
 
+  const resolvedCheckpointId = await resolveActiveCheckpointIdForStudent({
+    studentId,
+    courseId: bookingData.course_id || null,
+  });
+  const finalCheckpointId = resolvedCheckpointId || checkpointId || null;
+
+  if (finalCheckpointId) {
+    const checkpointStatus = await getStudentCheckpointBookingGuard({
+      studentId,
+      checkpointId: finalCheckpointId,
+    });
+
+    if (!checkpointStatus.canBook) {
+      return {
+        success: false,
+        code: CODE.CHECKPOINT_BLOCKED,
+        message: checkpointStatus.message || "Checkpoint booking is currently blocked.",
+        checkpointStatus,
+        checkpointId: finalCheckpointId,
+      };
+    }
+  }
+
   // Fetch availability FIRST — check payment before touching any data
   const availability = await dbFetch({
     query: supabase
@@ -840,6 +976,7 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
     success: true,
     booking_id: bookingData.booking_id,
     sb_id: slotBookingData.sb_id,
+    checkpointId: finalCheckpointId,
   };
 }
 
@@ -848,18 +985,25 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
    - Inserts the session row after Zoom meeting is created
    - Called by the controller after bookPlanCore succeeds
 ============================================================ */
-export async function createSessionRecord({ bookingId, slot, meeting, sb_id, sessionType = "session" }) {
+export async function createSessionRecord({ bookingId, slot, meeting, sb_id, sessionType = "independent_paid", checkpointId = null }) {
+  const dbSessionType =
+    sessionType === "checkpoint"
+      ? "checkpoint"
+      : sessionType === "independent_free"
+      ? "independent_free"
+      : "independent_paid";
   const { data, error } = await supabase
     .from("session")
     .insert([{
       booking_id: bookingId,
       t_id: slot.teacherid,
+      checkpoint_id: checkpointId || null,
       zoom_meeting_id: meeting.id,
       start_time: slot.startat,
       end_time: slot.endat,
       duration: slot.durationmin,
       feedback: null,
-      status: "VALID",
+      status: "BOOKED",
       title: sessionType === "interview"
         ? "AlgoNest Interview"
         : sessionType === "checkpoint"
@@ -868,7 +1012,7 @@ export async function createSessionRecord({ bookingId, slot, meeting, sb_id, ses
       join_url: meeting.join_url,
       start_url: meeting.start_url,
       session_link: meeting.join_url,
-      session_type: sessionType,
+      session_type: dbSessionType,
       sb_id,
     }])
     .select()

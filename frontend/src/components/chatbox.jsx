@@ -217,8 +217,8 @@ export default function ChatBox({
           </div>
           <div style={{
             marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
-            fontSize: 10, fontFamily: "monospace", color: "#059669",
-            background: "#d1fae5", border: "1px solid #a7f3d0",
+            fontSize: 10, fontFamily: "monospace", color: "#00412c",
+            background: "#ffffff", border: "1px solid #ffffff",
             borderRadius: 20, padding: "3px 10px",
           }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />

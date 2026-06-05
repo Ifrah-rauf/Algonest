@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation  } from "react-router-dom";
-import { useEffect, useContext } from "react";
+import { useEffect } from "react";
 import Home from "./pages/Main";
 import Sign from "./pages/Signup";
 import Login from "./pages/Login";
@@ -11,7 +11,6 @@ import Test from "./pages/test";
 import CourseOutline from "./pages/CourseOutline"
 import RoadmapExpress from "./pages/roadmap_express";
 import ScrollToHash from "./components/ScrollToHash";
-import Roadmaps from "./components/roadmaps";
 import Howitworks from "./components/howitworks";
 import MyRoadmaps from "./pages/ExploreRoadmaps";
 import BookingPage from "./pages/BookingPage";
@@ -38,6 +37,8 @@ function Landing() {
     return <Dashboard />;
   } else if (role === 'TEACHER') {
     return <Dashboard />;
+  } else if (role === 'ADMIN') {
+    return <Dashboard />;
   } else {
     return <Home />;
   }
@@ -52,6 +53,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Sign />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin-dashboard" element={<Dashboard />} />
         <Route path="/teachers" element={<Teachers />} />
         <Route path="/teachersProfile/:id" element={<TeachersProfile />} />
         <Route path="/course1" element={<CourseOne />} />

@@ -1,14 +1,14 @@
 import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext.jsx";
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 // import StudentDashboard from "../components/s_dashboard.jsx"
 // import StudentDashboard from "../components/s_dashboard3.jsx"
 import StudentDashboard from "../components/student-dashboard/StudentDashboard.jsx"
 import TeacherDashboard from "../components/t_dashboard.jsx"
+import AdminDashboard from "../components/admin-dashboard/AdminDashboard.jsx"
 export default function Dashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [role, setRole] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,10 @@ if (!user) return <Navigate to="/login" />;
 
         {role === "TEACHER" && (
           <TeacherDashboard data={dashboardData} />
+        )}
+
+        {role === "ADMIN" && (
+          <AdminDashboard data={dashboardData} />
         )}
 
         {!role && (

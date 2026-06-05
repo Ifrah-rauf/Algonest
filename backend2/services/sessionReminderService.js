@@ -71,7 +71,7 @@ async function sendReminderEmail({ recipientEmail, recipientLabel, teacherName, 
   });
 
   await transporter.sendMail({
-    from: `"AlgoNest" <${process.env.SENDER_MAIL || "ifrahraufddps@gmail.com"}>`,
+    from: `"AlgoNest" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
     to: recipientEmail,
     subject: email.subject,
     text: email.text,
@@ -115,7 +115,7 @@ export async function sendDueSessionReminders() {
       reminder_teacher_30m_sent,
       reminder_student_30m_sent
     `)
-    .eq("status", "VALID")
+    .in("status", ["BOOKED", "LIVE"])
     .gte("start_time", toIso(windowStart))
     .lt("start_time", toIso(windowEnd))
     .or("reminder_teacher_30m_sent.is.false,reminder_student_30m_sent.is.false");

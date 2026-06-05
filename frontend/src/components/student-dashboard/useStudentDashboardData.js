@@ -1,6 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE } from "./constants";
 
+function firstTruthy(values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function resolveCourseIds(data) {
+  const activeCourse = data?.activeCourse || {};
+  const selectedCourse = data?.selectedCourse || {};
+  const roadmapContext = data?.roadmapContext || {};
+
+  return [
+    firstTruthy([
+      activeCourse.courseId,
+      activeCourse.course_id,
+      activeCourse.plan_id,
+      roadmapContext.roadmapCourseId,
+    ]),
+    firstTruthy([
+      selectedCourse.courseId,
+      selectedCourse.course_id,
+      selectedCourse.plan_id,
+    ]),
+  ].filter(Boolean);
+}
+
+function resolveDomain(data) {
+  return firstTruthy([
+    data?.domain,
+    data?.profile?.domain,
+    data?.roadmapContext?.domain,
+    data?.activeCourse?.domain,
+    data?.selectedCourse?.domain,
+  ]);
+}
+
 export default function useStudentDashboardData({ propData, user }) {
   const [dashboardData, setDashboardData] = useState(propData || null);
   const [sessionInfo, setSessionInfo] = useState({ status: "NONE", session: null });
@@ -116,28 +150,38 @@ export default function useStudentDashboardData({ propData, user }) {
 
   useEffect(() => {
     async function loadMentors() {
-      const domain =
-        dashboardData?.domain ||
-        dashboardData?.profile?.domain ||
-        dashboardData?.activeCourse?.domain ||
-        dashboardData?.selectedCourse?.domain ||
-        null;
+      const courseIds = resolveCourseIds(dashboardData);
+      const domain = resolveDomain(dashboardData);
 
-      if (!domain) {
+      if (!courseIds.length && !domain) {
         setMentorSuggestions([]);
         return;
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/teachers/getMentorsByDomain`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ domain }),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let payload = null;
 
-        const payload = await res.json();
-        setMentorSuggestions(payload.mentors || []);
+        if (courseIds.length) {
+          const res = await fetch(`${API_BASE}/api/teachers/getMentors`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseIds }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          payload = await res.json();
+        }
+
+        if (!payload?.mentors?.length && domain) {
+          const res = await fetch(`${API_BASE}/api/teachers/getMentorsByDomain`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ domain }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          payload = await res.json();
+        }
+
+        setMentorSuggestions(Array.isArray(payload?.mentors) ? payload.mentors : []);
 
       } catch (err) {
         console.error("Mentor suggestion load failed:", err);
@@ -146,7 +190,7 @@ export default function useStudentDashboardData({ propData, user }) {
     }
 
     loadMentors();
-  }, [dashboardData?.domain, dashboardData?.profile?.domain, dashboardData?.activeCourse?.domain, dashboardData?.selectedCourse?.domain]);
+  }, [dashboardData]);
 
   const handleProfileSave = (updates) => {
     setDashboardData((prev) => ({

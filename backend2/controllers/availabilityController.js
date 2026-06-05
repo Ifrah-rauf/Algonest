@@ -128,10 +128,23 @@ export async function bulkSave(req, res) {
     if (!uid) return res.status(401).json({ success: false, message: "Unauthorized: uid missing" });
     if (!Array.isArray(slots)) return res.status(400).json({ success: false, message: "slots must be an array" });
 
+    console.debug("[bulkSave controller] incoming", {
+      uid,
+      slotCount: slots.length,
+      newSlots: slots.filter((s) => !s.a_id).length,
+      existingSlots: slots.filter((s) => s.a_id).length,
+    });
+
     const result = await bulkSaveAvailability(uid, slots);
 
     // Return partial success info if some slots had errors
     const status = result.errors.length > 0 ? 207 : 200;
+    console.debug("[bulkSave controller] outgoing", {
+      status,
+      inserted: result.inserted?.length || 0,
+      updated: result.updated?.length || 0,
+      errors: result.errors,
+    });
     return res.status(status).json({ success: true, data: result });
   } catch (error) {
     console.error("[bulkSave]", error.message);

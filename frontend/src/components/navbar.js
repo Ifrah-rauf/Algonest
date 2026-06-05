@@ -336,7 +336,7 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
                   {querySending ? "Sending..." : "Send"}
                 </button>
                 <span className="text-xs text-gray-500">
-                  Sent to ifrahraufddps@gmail.com
+                  Sent to {process.env.REACT_APP_SENDER_MAIL || "algonest.edtech@gmail.com"}
                 </span>
               </div>
             </div>

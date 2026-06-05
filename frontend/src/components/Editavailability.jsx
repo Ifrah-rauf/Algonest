@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Clock, Plus, Trash2, ChevronDown, Calendar, ToggleLeft, ToggleRight, Info, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,7 +8,7 @@ const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 
 const SLOT_TYPES = [
   { value: "plan", label: "Plan Session" },
-  { value: "free", label: "Free Consult" },
+  { value: "session", label: "Free Consult" },
 ];
 
 const GRANULARITIES = [
@@ -73,12 +73,7 @@ export function EditAvailability() {
   const [fetchError, setFetchError] = useState(null);
 
   // ── Fetch on mount ────────────────────────────────────────
-  useEffect(() => {
-    if (!uid) return;
-    fetchSlots();
-  }, [uid]);
-
-  async function fetchSlots() {
+  const fetchSlots = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     try {
@@ -101,7 +96,12 @@ export function EditAvailability() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [uid]);
+
+  useEffect(() => {
+    if (!uid) return;
+    fetchSlots();
+  }, [uid, fetchSlots]);
 
   // ── Add unsaved slot ──────────────────────────────────────
   function addSlot(dayofweek = 1) {
@@ -174,12 +174,24 @@ export function EditAvailability() {
     setSaving(true);
     setSaveStatus(null);
     try {
+      console.debug("[EditAvailability] save request", {
+        uid,
+        slotCount: slots.length,
+        newSlots: slots.filter((s) => !s.a_id).length,
+        existingSlots: slots.filter((s) => s.a_id).length,
+        slots,
+      });
       const res = await fetch(`${BASE_URL}/bulk-save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, slots }),
       });
       const json = await res.json();
+      console.debug("[EditAvailability] save response", {
+        status: res.status,
+        ok: res.ok,
+        body: json,
+      });
       if (!json.success) throw new Error(json.message);
 
       const { inserted, updated, errors } = json.data;
@@ -209,6 +221,9 @@ export function EditAvailability() {
         return remaining;
       });
 
+      if (errors.length > 0) {
+        console.warn("[EditAvailability] partial save errors", errors);
+      }
       setSaveStatus(errors.length > 0 ? "partial" : "success");
     } catch (err) {
       console.error("[bulkSave]", err.message);
@@ -428,11 +443,11 @@ function SlotCard({ slot, expanded, onToggleExpand, onUpdate, onRemove, onToggle
 
           {/* Type badge */}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-            slot.type === "free"
+            slot.type === "session" || slot.type === "free"
               ? "bg-green-100 text-green-700"
               : "bg-yellow-100 text-yellow-700"
           }`}>
-            {slot.type === "free" ? "Free Consult" : "Plan Session"}
+            {slot.type === "session" || slot.type === "free" ? "Free Consult" : "Plan Session"}
           </span>
 
           {/* Session count */}
@@ -565,7 +580,7 @@ function SlotCard({ slot, expanded, onToggleExpand, onUpdate, onRemove, onToggle
                     key={t.value}
                     onClick={() => {
                       onUpdate(key, "type", t.value);
-                      onUpdate(key, "isfree", t.value === "free");
+                      onUpdate(key, "isfree", t.value === "session");
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                       slot.type === t.value

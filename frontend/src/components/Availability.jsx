@@ -50,6 +50,42 @@ export default function AvailabilityDisplay({
   const activeFlowKind = activeFlow?.kind || (activeFlow?.interviewId ? "interview" : activeFlow?.checkpointId ? "checkpoint" : null);
   const [gateStatus, setGateStatus] = useState(null);
 
+  function getDateGroupKey(slot) {
+    const raw = slot?.availability?.date || slot?.startat || "";
+    const value = String(raw).trim();
+    if (!value) return "";
+
+    // Preserve calendar days exactly when the backend already gives a date-only value.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    // Supabase timestamps are often ISO-like strings; keep the date component stable.
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.slice(0, 10);
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+  }
+
+  function parseCalendarDate(dateValue) {
+    if (!dateValue) return null;
+    const raw = String(dateValue).trim();
+    if (!raw) return null;
+
+    // Preserve date-only values without timezone shifting.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const [year, month, day] = raw.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    }
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   useEffect(() => {
     async function loadGateStatus() {
       if (!user?.uid) {
@@ -89,13 +125,16 @@ export default function AvailabilityDisplay({
 
   // ── group slots by calendar day (memoised — not recalculated on every render)
   const grouped = useMemo(() => {
-    const map = {};
+    const map = new Map();
+
     timeSlots.forEach((s) => {
-      const key = new Date(s.startat).toDateString();
-      if (!map[key]) map[key] = [];
-      map[key].push(s);
+      const key = getDateGroupKey(s);
+      if (!key) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(s);
     });
-    return map;
+
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [timeSlots]);
 
   // ── format helpers ────────────────────────────────────────
@@ -106,11 +145,11 @@ export default function AvailabilityDisplay({
     });
 
   const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("en-IN", {
+    parseCalendarDate(dateString)?.toLocaleDateString("en-IN", {
       weekday: "short",
       day: "numeric",
       month: "short",
-    });
+    }) || "";
 
   // ─────────────────────────────────────────────────────────
   // PAST SLOT CHECK — true if slot start time is in the past
@@ -422,7 +461,7 @@ export default function AvailabilityDisplay({
 
       {/* ── week grid ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(grouped)
+        {grouped
           .slice(0, 7)
           .map(([dateKey, slots]) => (
             <div
@@ -431,7 +470,7 @@ export default function AvailabilityDisplay({
             >
               {/* day header */}
               <h4 className="text-sm font-bold text-center text-[var(--algo-purple)] mb-4">
-                {formatDate(slots[0].startat)}
+                {formatDate(dateKey)}
               </h4>
 
               {/* slots */}
@@ -442,7 +481,7 @@ export default function AvailabilityDisplay({
                     const desc     = slot.availability?.desc;
                     const isFree   = slot.availability?.isfree;
                     const type     = slot.availability?.type?.toLowerCase?.();
-                    const isOneOff = type === "session";
+                    const isOneOff = type === "session" || type === "free";
 
                     // normalise booked flag across possible key names
                     const booked = Boolean(

@@ -1,6 +1,7 @@
 // controllers/zoomController.js
 import { getZoomAccessToken, createSessionWithZoom } from "../services/zoomService.js";
 import crypto from "crypto";
+import { ensurePendingProcessingJobFromZoomEvent } from "../services/sessionProcessingService.js";
 
 export async function getToken(req, res) {
   try {
@@ -54,6 +55,14 @@ export async function zoomWebhookHandler(req, res) {
     // 🔹 Real events after validation
     console.log("Zoom Event:", event);
     console.log("Payload:", req.body.payload);
+
+    if (event === "meeting.ended" || event === "recording.completed") {
+      try {
+        await ensurePendingProcessingJobFromZoomEvent(req.body);
+      } catch (processingError) {
+        console.error("[zoomWebhook] failed to create pending processing job:", processingError.message);
+      }
+    }
 
     res.status(200).json({ received: true });
   } catch (error) {

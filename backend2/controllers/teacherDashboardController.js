@@ -1,4 +1,4 @@
-import { getStudentsForTeacherByUid } from "../services/teacherSessionService.js";
+import { getStudentsForTeacherByUid, getAllSessionsForTeacherByUid } from "../services/teacherSessionService.js";
 import {
   getTeacherEarningsByUid,
   getTeacherCoursesByUid,
@@ -12,10 +12,12 @@ import {
 export async function getTeacherStudents(req, res) {
   try {
     const uid = req.body?.uid || req.query?.uid || req.params?.uid;
+    const mode = req.body?.mode || req.query?.mode || "unique"; // "unique" or "all"
     console.debug("teacherDashboardController.getTeacherStudents: incoming uid sources -> body,query,params", {
       body: req.body,
       query: req.query,
-      params: req.params
+      params: req.params,
+      mode
     });
 
     if (!uid) {
@@ -23,10 +25,12 @@ export async function getTeacherStudents(req, res) {
       return res.status(400).json({ success: false, error: "teacher uid required" });
     }
 
-    console.debug("teacherDashboardController.getTeacherStudents: resolving students for uid=", uid);
-    const students = await getStudentsForTeacherByUid(uid);
-    console.debug("teacherDashboardController.getTeacherStudents: fetched students count=", (students || []).length);
-    return res.json({ success: true, data: students });
+    console.debug("teacherDashboardController.getTeacherStudents: resolving students for uid=", uid, "mode=", mode);
+    const data = mode === "all" 
+      ? await getAllSessionsForTeacherByUid(uid)
+      : await getStudentsForTeacherByUid(uid);
+    console.debug("teacherDashboardController.getTeacherStudents: fetched data count=", (data || []).length);
+    return res.json({ success: true, data });
   } catch (err) {
     console.error("teacherDashboardController.getTeacherStudents error:", err?.message || err, err?.stack);
     return res.status(500).json({ success: false, error: err.message || "Server error" });

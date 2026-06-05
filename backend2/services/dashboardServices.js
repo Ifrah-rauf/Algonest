@@ -39,29 +39,30 @@ export async function getInterviewSessions(uid) {
     .from("session")
     .select("session_id, title, start_time, end_time, status, t_id, booking_id")
     .in("booking_id", bookingIds)
-    .eq("session_type", "interview")
     .order("start_time", { ascending: true });
 
   if (sessionError || !studentSessions?.length) return [];
 
   const sessionIds = studentSessions.map((session) => session.session_id);
-  const teacherIds = [
-    ...new Set(studentSessions.map((session) => session.t_id).filter(Boolean)),
-  ];
 
   const [{ data: interviewRows }, { data: teacherRows }] = await Promise.all([
     supabase
       .from("interview_sessions")
       .select("interview_id, session_id, notes, created_at")
       .in("session_id", sessionIds),
-    teacherIds.length
+    studentSessions.some((session) => session.t_id)
       ? supabase
           .from("teacher")
           .select("t_id, name")
-          .in("t_id", teacherIds)
+          .in(
+            "t_id",
+            [...new Set(studentSessions.map((session) => session.t_id).filter(Boolean))]
+          )
       : Promise.resolve({ data: [] }),
   ]);
 
+  const interviewSessionIds = new Set((interviewRows || []).map((row) => row.session_id));
+  const interviewSessions = studentSessions.filter((session) => interviewSessionIds.has(session.session_id));
   const interviewMetaBySession = Object.fromEntries(
     (interviewRows || []).map((row) => [row.session_id, row])
   );
@@ -69,7 +70,7 @@ export async function getInterviewSessions(uid) {
     (teacherRows || []).map((teacher) => [teacher.t_id, teacher.name])
   );
 
-  return studentSessions.slice(0, 2).map((session, index) => {
+  return interviewSessions.slice(0, 2).map((session, index) => {
     const meta = interviewMetaBySession[session.session_id] || {};
 
     return {
@@ -221,6 +222,18 @@ export async function getDashboardfunc(uid) {
     return {
       role: "TEACHER",
       data: teacher,
+    };
+  } else if (user.role === "ADMIN") {
+    return {
+      role: "ADMIN",
+      data: {
+        auth: {
+          uid: user.uid,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
     };
   } else {
     const roadmapContext = await resolveStudentRoadmapContext({ uid });

@@ -275,7 +275,12 @@ export async function bookPlan(req, res) {
       bookingId: coreResult.booking_id,
       slot,
       meeting,
-      sessionType: interviewId ? "interview" : checkpointId ? "checkpoint" : "session",
+      sessionType: coreResult.checkpointId
+        ? "checkpoint"
+        : slot.availability?.isfree
+        ? "independent_free"
+        : "independent_paid",
+      checkpointId: coreResult.checkpointId || null,
       sb_id: coreResult.sb_id,
     });
   } catch (err) {
@@ -289,10 +294,10 @@ export async function bookPlan(req, res) {
     });
   }
 
-  if (checkpointId && finalResult?.session?.session_id) {
+  if ((coreResult.checkpointId || checkpointId) && finalResult?.session?.session_id) {
     try {
       const checkpoint = await attachSessionToCheckpoint({
-        checkpointId,
+        checkpointId: coreResult.checkpointId || checkpointId,
         studentId,
         sessionId: finalResult.session.session_id,
       });

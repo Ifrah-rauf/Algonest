@@ -2,6 +2,20 @@ import { TrendingUp, Award, Target, Zap } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
 
+function formatDbDateTime(value) {
+  if (!value) return "No scheduled session";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No scheduled session";
+  return date.toLocaleString("en-IN", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function ProgressOverview() {
   const [sessionInfo, setSessionInfo] = useState({
     status: "LOADING",
@@ -74,6 +88,16 @@ async function checkSession() {
           ? "Live Now"
           : state === "UPCOMING"
           ? "Upcoming Session"
+          : state === "PENDING_UPLOAD"
+          ? "Awaiting Upload"
+          : state === "UPLOAD_RECEIVED"
+          ? "Upload Received"
+          : state === "PROCESSING"
+          ? "Processing"
+          : state === "COMPLETED"
+          ? "Completed"
+          : state === "FAILED"
+          ? "Processing Failed"
           : "Session Ended"
     });
 
@@ -99,13 +123,21 @@ async function checkSession() {
         <div className={`p-3 rounded-lg 
           ${sessionInfo.status === "ACTIVE" ? "bg-green-100" :
             sessionInfo.status === "UPCOMING" ? "bg-blue-100" :
-            sessionInfo.status === "EXPIRED" ? "bg-gray-100" :
+            sessionInfo.status === "PENDING_UPLOAD" ? "bg-amber-100" :
+            sessionInfo.status === "UPLOAD_RECEIVED" ? "bg-purple-100" :
+            sessionInfo.status === "PROCESSING" ? "bg-indigo-100" :
+            sessionInfo.status === "COMPLETED" ? "bg-emerald-100" :
+            sessionInfo.status === "FAILED" ? "bg-red-100" :
             "bg-gray-100"}`}>
           
           <div className={`w-3 h-3 rounded-full 
             ${sessionInfo.status === "ACTIVE" ? "bg-green-500 animate-pulse" :
               sessionInfo.status === "UPCOMING" ? "bg-blue-500" :
-              sessionInfo.status === "EXPIRED" ? "bg-gray-400" :
+              sessionInfo.status === "PENDING_UPLOAD" ? "bg-amber-500" :
+              sessionInfo.status === "UPLOAD_RECEIVED" ? "bg-purple-500" :
+              sessionInfo.status === "PROCESSING" ? "bg-indigo-500 animate-pulse" :
+              sessionInfo.status === "COMPLETED" ? "bg-emerald-500" :
+              sessionInfo.status === "FAILED" ? "bg-red-500" :
               "bg-gray-300"}`}>
           </div>
         </div>
@@ -114,7 +146,11 @@ async function checkSession() {
         <span className={`text-xs font-medium px-2 py-1 rounded-full
           ${sessionInfo.status === "ACTIVE" ? "bg-green-100 text-green-700" :
             sessionInfo.status === "UPCOMING" ? "bg-blue-100 text-blue-700" :
-            sessionInfo.status === "EXPIRED" ? "bg-gray-200 text-gray-600" :
+            sessionInfo.status === "PENDING_UPLOAD" ? "bg-amber-100 text-amber-700" :
+            sessionInfo.status === "UPLOAD_RECEIVED" ? "bg-purple-100 text-purple-700" :
+            sessionInfo.status === "PROCESSING" ? "bg-indigo-100 text-indigo-700" :
+            sessionInfo.status === "COMPLETED" ? "bg-emerald-100 text-emerald-700" :
+            sessionInfo.status === "FAILED" ? "bg-red-100 text-red-700" :
             "bg-gray-200 text-gray-600"}`}>
           {sessionInfo.label || "No Session"}
         </span>
@@ -129,7 +165,7 @@ async function checkSession() {
       {/* Time */}
       <p className="text-sm text-gray-600 mb-4">
         {sessionInfo.session?.start_time
-          ? new Date(sessionInfo.session.start_time).toLocaleString()
+          ? formatDbDateTime(sessionInfo.session.start_time)
           : "No scheduled session"}
       </p>
 
@@ -150,8 +186,16 @@ async function checkSession() {
           ? "Join Class"
           : sessionInfo.status === "UPCOMING"
           ? "Session Not Started"
-          : sessionInfo.status === "EXPIRED"
-          ? "Session Ended"
+          : sessionInfo.status === "PENDING_UPLOAD"
+          ? "Awaiting Upload"
+          : sessionInfo.status === "UPLOAD_RECEIVED"
+          ? "Upload Received"
+          : sessionInfo.status === "PROCESSING"
+          ? "Processing"
+          : sessionInfo.status === "COMPLETED"
+          ? "Completed"
+          : sessionInfo.status === "FAILED"
+          ? "Processing Failed"
           : "No Session Available"}
       </button>
 
