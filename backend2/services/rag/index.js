@@ -9,8 +9,8 @@
 //     saveMessage,
 //     saveMentorFeedback,
 //     maybeSummarize,
-//     markTopicComplete,
-//     maybeCompleteLesson,
+//     markCheckpointComplete,
+//     markSessionCheckpointComplete,
 //   } from '../rag/index.js';
 //
 // That's the entire surface area. Nothing else is exposed.
@@ -24,5 +24,7 @@ export const saveMessage = saveConvMessage;
 // expose the embedding-backed message saver under a clear name
 export { saveEmbeddingMessage, saveMentorFeedback };
 export { maybeSummarize }                      from './memoryService.js';
-export { markTopicComplete,
-         maybeCompleteLesson }                 from './studentDataLayer.js';
+export {
+  markCheckpointComplete,
+  markSessionCheckpointComplete,
+} from './studentDataLayer.js';

@@ -108,7 +108,10 @@ export async function completeSession(req, res) {
     });
 
     if (feedbackText?.trim()) {
-      await saveMentorFeedback(data.s_id, supportId || data.session_id, feedbackText);
+      await saveMentorFeedback(data.s_id, supportId || null, feedbackText, {
+        sessionId: data.session_id,
+        source: 'manual_feedback',
+      });
       console.log("[RAG] Mentor feedback embedded for sId", data.s_id);
     }
 

@@ -33,16 +33,18 @@ export async function saveMessage(sId, role, content, lessonId = null, topicId =
 // Embeds the feedback text so the AI can find it via semantic search later.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function saveMentorFeedback(sId, supportId, feedbackText) {
+export async function saveMentorFeedback(sId, supportId, feedbackText, options = {}) {
   if (!feedbackText?.trim()) return;
 
   const embedding = await getEmbedding(feedbackText);
 
   const { error } = await supabase.from('mentor_feedback_embeddings').insert({
     s_id:          sId,
-    support_id:    supportId,
+    support_id:    supportId || null,
+    session_id:    options.sessionId || null,
     feedback_text: feedbackText,
     embedding,
+    source:        options.source || 'manual_feedback',
   });
 
   if (error) {

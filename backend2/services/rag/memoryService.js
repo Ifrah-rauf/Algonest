@@ -9,7 +9,7 @@ import {
   upsertStudentMemory,
 } from './studentDataLayer.js';
 
-const SUMMARIZE_EVERY = 20; // run at message 20, 40, 60, 80...
+const SUMMARIZE_EVERY = 5;  // run at message 5, 10, 15, 20...
 const KEEP_RECENT     = 6;  // never summarize the last 6 (they stay as live context)
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ const KEEP_RECENT     = 6;  // never summarize the last 6 (they stay as live con
 export async function maybeSummarize(sId, provider) {
   const total = await getMessageCount(sId);
 
-  // Only runs at exact multiples of 20
+  // Only runs at exact multiples of SUMMARIZE_EVERY
   if (total === 0 || total % SUMMARIZE_EVERY !== 0) return;
 
   const olderMessages = await getOlderMessages(sId, KEEP_RECENT);
@@ -50,15 +50,17 @@ Known strong topics: ${prevStrong.join(', ') || 'none'}
 NEW CONVERSATION TO ANALYZE:
 ${conversationText}
 
-Look for:
+Look for durable facts that should be remembered across future chats:
+- Student experience, background, projects, tools, tech stack, goals, and preferences
 - Topics they asked about repeatedly or struggled to understand (weak)
 - Topics they grasped quickly or answered correctly (strong)
 - How they prefer to learn (examples? step by step? quick answers?)
-- Any frustration or confusion signals in their messages
+- Mentor feedback themes, checkpoint/project context, and action items mentioned in chat
+- Any frustration, confidence, confusion, deadlines, or constraints
 
 Return ONLY valid JSON. No markdown. No explanation. No code fences:
 {
-  "summary": "3-5 sentences: what they studied, what they struggled with, what clicked, how they learn",
+  "summary": "4-7 sentences preserving important durable student facts, experience, projects, goals, progress, struggles, and learning style",
   "weak_topics": ["specific topic name"],
   "strong_topics": ["specific topic name"],
   "learning_style": "one sentence describing how they prefer to engage"

@@ -13,9 +13,11 @@
 
 import { supabase } from '../../lib/supabase.js';
 import {
-  getStudentMemory,
   getCurrentLesson,
-  getLessonTopicsWithProgress,
+  getLessonProgress,
+  getCheckpointProgress,
+  getRecentMentorFeedbackEmbeddings,
+  getStudentMemory,
   getStudentCourse,
   searchRelevantMessages,
   searchRelevantFeedback,
@@ -26,17 +28,39 @@ function compact(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
-function buildSystemPromptSections({ student, memory, selectedCourse, currentLesson, currentTopics, feedbackText }) {
-  const sections = [];
+function formatLessonProgress(rows) {
+  if (!rows?.length) return '';
 
-  if (student) {
-    sections.push([
-      'Student profile:',
-      `Name: ${compact(student.name) || 'unknown'}`,
-      `Bio: ${compact(student.bio) || 'not provided'}`,
-      `Education: ${compact(student.education) || 'not provided'}`,
-    ].join('\n'));
-  }
+  return rows.map((row, index) => {
+    const lesson = row.lessons || {};
+    const title = compact(lesson.title) || `Lesson #${row.lesson_id}`;
+    const status = row.completed ? 'completed' : 'not completed';
+    const quiz = row.quiz_attempt
+      ? `, quiz: ${row.quiz_passed ? 'passed' : 'not passed'}${row.quiz_marks == null ? '' : ` (${row.quiz_marks})`}`
+      : '';
+    return `${index + 1}. ${title}: ${status}${quiz}`;
+  }).join('\n');
+}
+
+function formatCheckpointProgress(rows) {
+  if (!rows?.length) return '';
+
+  return rows.map((row, index) => {
+    const checkpoint = row.checkpoints || {};
+    const title = compact(checkpoint.title) || `Checkpoint #${row.checkpoint_id}`;
+    const status = compact(row.status) || (row.completed ? 'COMPLETED' : 'BOOKED');
+    return `${index + 1}. ${title}: ${status}, completed=${row.completed ? 'true' : 'false'}, session=${row.session_id || 'none'}`;
+  }).join('\n');
+}
+
+function buildSystemPromptSections({ selectedCourse, currentLesson, lessonProgress, checkpointProgress, memory, feedbackText }) {
+  const sections = [
+    [
+      'RAG instruction:',
+      'Use the current RAG context below as authoritative for mentor feedback, checkpoints, and lesson progress.',
+      'If older chat history conflicts with this context, ignore the older assistant message.',
+    ].join('\n'),
+  ];
 
   if (selectedCourse) {
     sections.push([
@@ -46,30 +70,69 @@ function buildSystemPromptSections({ student, memory, selectedCourse, currentLes
     ].join('\n'));
   }
 
-  if (currentLesson) {
-    const topicLines = (currentTopics || []).length
-      ? currentTopics.map((topic, index) => {
-          const status = topic.completed ? 'completed' : 'not completed';
-          return `${index + 1}. ${compact(topic.title)} (${status})`;
-        }).join('\n')
-      : 'No current lesson topics found.';
-
+  const lessonLines = formatLessonProgress(lessonProgress);
+  if (currentLesson || lessonLines) {
     sections.push([
       'Lesson progress:',
-      `Current lesson: ${compact(currentLesson.title) || `Lesson #${currentLesson.lesson_id}`}`,
-      `Topics:\n${topicLines}`,
+      currentLesson
+        ? `Current lesson: ${compact(currentLesson.title) || `Lesson #${currentLesson.lesson_id}`}`
+        : 'Current lesson: not found',
+      lessonLines ? `Lessons:\n${lessonLines}` : '',
+    ].filter(Boolean).join('\n'));
+  }
+
+  const checkpointLines = formatCheckpointProgress(checkpointProgress);
+  if (checkpointLines) {
+    sections.push([
+      'Checkpoint progress:',
+      checkpointLines,
     ].join('\n'));
   }
 
-  if (memory?.summary) {
-    sections.push(`Student memory summary:\n${memory.summary}`);
+  if (memory?.summary && memory.summary !== 'No durable student memory summarized yet.') {
+    sections.push([
+      'Student long-term memory:',
+      memory.summary,
+      memory.strong_topics?.length ? `Strong topics: ${memory.strong_topics.join(', ')}` : '',
+      memory.weak_topics?.length ? `Weak topics: ${memory.weak_topics.join(', ')}` : '',
+      memory.learning_style ? `Learning style: ${memory.learning_style}` : '',
+    ].filter(Boolean).join('\n'));
   }
 
   if (feedbackText) {
-    sections.push(`Relevant mentor feedback:\n${feedbackText}`);
+    sections.push(`Relevant mentor feedback and checkpoint embeddings:\n${feedbackText}`);
   }
 
   return sections.join('\n\n');
+}
+
+function mergeFeedbackRows(...groups) {
+  const seen = new Set();
+  const rows = [];
+
+  for (const group of groups) {
+    for (const row of group || []) {
+      const key = row.feedback_embed_id
+        ? `id:${row.feedback_embed_id}`
+        : `${row.source || ''}:${row.session_id || ''}:${row.feedback_text || row.summary || ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+    }
+  }
+
+  return rows;
+}
+
+function formatFeedbackRows(rows) {
+  return (rows || [])
+    .map((f, i) => {
+      const source = f.source || 'mentor_feedback';
+      const text = f.feedback_text || f.summary || f.content || f.text || '';
+      return text ? `${i + 1}. (${source}) ${text}` : '';
+    })
+    .filter(Boolean)
+    .join('\n');
 }
 
 function shouldLogRagPrompt() {
@@ -107,7 +170,10 @@ export async function buildContext(uid, message = '') {
     history: [],
     relevantFeedback: [],
     currentLesson: null,
-    currentTopics: [],
+    lessonProgress: [],
+    checkpointProgress: [],
+    recentFeedback: [],
+    memory: null,
     nextTopic: null,
     selectedCourse: null,
   };
@@ -116,21 +182,24 @@ export async function buildContext(uid, message = '') {
   const recentHistory = await fetchRecentHistory(sId, 15);
 
   try {
-    const [memory, currentLesson] = await Promise.all([
-      getStudentMemory(sId),
+    const [currentLesson, lessonProgress, checkpointProgress, recentFeedback, memory, selectedCourse] = await Promise.all([
       getCurrentLesson(sId),
+      getLessonProgress(sId),
+      getCheckpointProgress(sId),
+      getRecentMentorFeedbackEmbeddings(sId),
+      getStudentMemory(sId),
+      getStudentCourse(sId),
     ]);
 
     ragContext.currentLesson = currentLesson || null;
-    ragContext.selectedCourse = await getStudentCourse(sId);
-
-    // topics for current lesson (if any)
-    if (currentLesson?.lesson_id) {
-      ragContext.currentTopics = await getLessonTopicsWithProgress(sId, currentLesson.lesson_id);
-    }
+    ragContext.lessonProgress = lessonProgress || [];
+    ragContext.checkpointProgress = checkpointProgress || [];
+    ragContext.recentFeedback = recentFeedback || [];
+    ragContext.memory = memory || null;
+    ragContext.selectedCourse = selectedCourse || null;
 
     // Semantic search: embed the incoming message and search similar messages
-    let feedbackText = '';
+    let semanticFeedback = [];
     if (message && message.trim()) {
       try {
         const qEmbedding = await getEmbedding(message);
@@ -140,24 +209,22 @@ export async function buildContext(uid, message = '') {
         ]);
         // sem items expected to have content and role
         ragContext.history = (sem || []).map((m) => ({ role: m.role || 'assistant', content: m.content || m.text || '' }));
-        ragContext.relevantFeedback = feedback || [];
+        semanticFeedback = feedback || [];
 
-        feedbackText = (feedback || [])
-          .map((f) => f.feedback_text || f.content || f.text || '')
-          .filter(Boolean)
-          .map((text, index) => `${index + 1}. ${text}`)
-          .join('\n');
       } catch (err) {
         console.error('contextBuilder.semantic search error:', err?.message || err);
       }
     }
 
+    ragContext.relevantFeedback = mergeFeedbackRows(semanticFeedback, ragContext.recentFeedback);
+    const feedbackText = formatFeedbackRows(ragContext.relevantFeedback);
+
     ragContext.systemPrompt = buildSystemPromptSections({
-      student,
-      memory,
       selectedCourse: ragContext.selectedCourse,
       currentLesson: ragContext.currentLesson,
-      currentTopics: ragContext.currentTopics,
+      lessonProgress: ragContext.lessonProgress,
+      checkpointProgress: ragContext.checkpointProgress,
+      memory: ragContext.memory,
       feedbackText,
     });
   } catch (err) {
@@ -172,6 +239,8 @@ export async function buildContext(uid, message = '') {
       sId,
       hasStudentProfile: Boolean(student),
       hasLessonProgress: Boolean(ragContext.currentLesson),
+      lessonProgressRows: ragContext.lessonProgress.length,
+      checkpointProgressRows: ragContext.checkpointProgress.length,
       relevantChatMessages: ragContext.history.length,
       relevantMentorFeedback: ragContext.relevantFeedback.length,
       systemPrompt: ragContext.systemPrompt,
@@ -185,7 +254,8 @@ export async function buildContext(uid, message = '') {
     systemPrompt: ragContext?.systemPrompt || "",
     history:      ragContext?.history || [],
     currentLesson:  ragContext?.currentLesson || null,
-    currentTopics:  ragContext?.currentTopics || [],
+    lessonProgress: ragContext?.lessonProgress || [],
+    checkpointProgress: ragContext?.checkpointProgress || [],
     nextTopic:      ragContext?.nextTopic || null,
     selectedCourse: ragContext?.selectedCourse || null,
     domain:         ragContext?.selectedCourse?.domain || null,

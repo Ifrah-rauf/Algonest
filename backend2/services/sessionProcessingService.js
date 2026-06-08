@@ -2,6 +2,8 @@ import path from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from "../lib/supabase.js";
 import { getEmbedding } from "./rag/embeddingService.js";
+import { markSessionCheckpointComplete } from "./rag/studentDataLayer.js";
+import { saveFeedbackFromSessionJob } from "./rag/saveFeedback.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const RECORDINGS_BUCKET = "session_recordings";
@@ -202,12 +204,15 @@ async function upsertMentorFeedbackEmbedding({
     weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses.join(" | ") : null,
     status: parsed.session_result || "processed",
     embedding: summaryEmbedding,
+    source: "session_job",
   };
 
   const { data: existing, error: lookupError } = await supabase
     .from("mentor_feedback_embeddings")
     .select("feedback_embed_id")
     .eq("session_id", session.session_id)
+    .eq("s_id", session.s_id)
+    .eq("source", "session_job")
     .maybeSingle();
 
   if (lookupError) {
@@ -524,11 +529,15 @@ export async function processSessionRecordingJob(jobId) {
       })
       .eq("session_id", job.session_id);
 
+    await markSessionCheckpointComplete(job.session_id, resolvedStudentId);
+
     await finalizeProcessingJob({
       jobId,
       parsed,
       summaryEmbedding,
     });
+
+    await saveFeedbackFromSessionJob(jobId);
 
     return {
       job_id: jobId,
