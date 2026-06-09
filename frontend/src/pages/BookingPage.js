@@ -90,7 +90,7 @@ export default function BookingPage() {
           expiryDays: course.expiryDays,
           projectId: null,
           paymentMethod,
-          paymentStatus: "PAID",
+          paymentStatus: "PENDING",
           dummy: true,
         }),
       });
@@ -103,8 +103,8 @@ export default function BookingPage() {
 
       await Swal.fire({
         icon: "success",
-        title: "Payment received",
-        text: "Your booking has been created successfully.",
+        title: "Thank you",
+        text: "An agent will reach you soon to complete the payment.",
         confirmButtonColor: course.accent,
       });
 

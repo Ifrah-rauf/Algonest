@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase.js";
+import { saveCheckpointEmbedding } from "./rag/saveFeedback.js";
 
 async function getLessonIdsByCourseId(courseId) {
   if (!courseId) return [];
@@ -398,30 +399,30 @@ export async function checkUnlock(studentId, lessonId) {
   if (aiTotal > 0) {
     const { data, error } = await supabase
       .from("lesson_ai_questions")
-      .select("question_key, completed")
-      .eq("user_id", studentId)
+      .select("question_text, completed")
+      .eq("s_id", studentId)
       .eq("lesson_id", numericLessonId)
-      .in("question_key", aiQuestionKeys);
+      .in("question_text", aiQuestionKeys);
 
     if (error) throw error;
-    aiCompleted = new Set((data || []).filter((row) => row.completed === true).map((row) => row.question_key)).size;
+    aiCompleted = new Set((data || []).filter((row) => row.completed === true).map((row) => row.question_text)).size;
   } else {
     const { data, error } = await supabase
       .from("lesson_ai_questions")
-      .select("question_key, completed")
-      .eq("user_id", studentId)
+      .select("question_text, completed")
+      .eq("s_id", studentId)
       .eq("lesson_id", numericLessonId);
 
     if (error) throw error;
-    aiTotal = new Set((data || []).map((row) => row.question_key || row.id)).size;
-    aiCompleted = new Set((data || []).filter((row) => row.completed === true).map((row) => row.question_key || row.id)).size;
+    aiTotal = new Set((data || []).map((row) => row.question_text || row.id)).size;
+    aiCompleted = new Set((data || []).filter((row) => row.completed === true).map((row) => row.question_text || row.id)).size;
   }
 
   if (assetTotal > 0) {
     const { data, error } = await supabase
       .from("lesson_asset_progress")
       .select("asset_key, answered")
-      .eq("user_id", studentId)
+      .eq("s_id", studentId)
       .eq("lesson_id", numericLessonId)
       .in("asset_key", assetKeys);
 
@@ -431,7 +432,7 @@ export async function checkUnlock(studentId, lessonId) {
     const { data, error } = await supabase
       .from("lesson_asset_progress")
       .select("asset_key, answered")
-      .eq("user_id", studentId)
+      .eq("s_id", studentId)
       .eq("lesson_id", numericLessonId);
 
     if (error) throw error;
@@ -443,7 +444,7 @@ export async function checkUnlock(studentId, lessonId) {
     const { data, error } = await supabase
       .from("lesson_commit_proofs")
       .select("id")
-      .eq("user_id", studentId)
+      .eq("s_id", studentId)
       .eq("lesson_id", numericLessonId)
       .eq("verified", true)
       .limit(1);
@@ -833,25 +834,24 @@ export async function saveLessonAIQuestion({
 }) {
   const studentId = await resolveStudentId(userId);
   const lessonContext = await getLessonInsertContext(lessonId);
+  const cleanedQuestionText = String(questionText || questionKey || "").trim();
   if (!studentId) throw new Error("Valid student userId is required");
-  if (!questionKey?.trim()) throw new Error("questionKey is required");
-  if (!questionText?.trim()) throw new Error("questionText is required");
+  if (!cleanedQuestionText) throw new Error("questionText is required");
 
   const payload = {
-    user_id: studentId,
+    s_id: studentId,
     lesson_id: lessonContext.lessonId,
     course_id: lessonContext.courseId,
-    question_key: questionKey.trim(),
-    question_text: questionText.trim(),
+    question_text: cleanedQuestionText,
     completed: completed !== false,
   };
 
   const { data: existing, error: existingError } = await supabase
     .from("lesson_ai_questions")
     .select("id")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .eq("lesson_id", lessonContext.lessonId)
-    .eq("question_key", questionKey.trim())
+    .eq("question_text", cleanedQuestionText)
     .order("clicked_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -892,7 +892,7 @@ export async function saveLessonAssetProgress({
   if (!cleanedAssetKey) throw new Error("assetKey is required");
 
   const payload = {
-    user_id: studentId,
+    s_id: studentId,
     lesson_id: lessonContext.lessonId,
     course_id: lessonContext.courseId,
     asset_key: cleanedAssetKey,
@@ -903,7 +903,7 @@ export async function saveLessonAssetProgress({
   const { data: existing, error: existingError } = await supabase
     .from("lesson_asset_progress")
     .select("id")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .eq("lesson_id", lessonContext.lessonId)
     .eq("asset_key", cleanedAssetKey)
     .order("answered_at", { ascending: false })
@@ -937,7 +937,7 @@ export async function fetchLessonAssetProgressByUid(uid, courseId = null, lesson
   let query = supabase
     .from("lesson_asset_progress")
     .select("*")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .order("answered_at", { ascending: false });
 
   if (courseId) query = query.eq("course_id", Number(courseId));
@@ -955,7 +955,7 @@ export async function fetchLessonCommitProofsByUid(uid, courseId = null, lessonI
   let query = supabase
     .from("lesson_commit_proofs")
     .select("*")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .order("submitted_at", { ascending: false });
 
   if (courseId) query = query.eq("course_id", Number(courseId));
@@ -973,7 +973,7 @@ export async function fetchLessonAIQuestionsByUid(uid, courseId = null, lessonId
   let query = supabase
     .from("lesson_ai_questions")
     .select("*")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .order("clicked_at", { ascending: false });
 
   if (courseId) query = query.eq("course_id", Number(courseId));
@@ -1006,7 +1006,7 @@ export async function saveLessonCommitProof({
     /^[a-f0-9]{7,40}$/i.test(cleanedCommitSha);
 
   const payload = {
-    user_id: studentId,
+    s_id: studentId,
     lesson_id: lessonContext.lessonId,
     course_id: lessonContext.courseId,
     repo_url: cleanedRepoUrl,
@@ -1019,7 +1019,7 @@ export async function saveLessonCommitProof({
   let existingQuery = supabase
     .from("lesson_commit_proofs")
     .select("id")
-    .eq("user_id", studentId)
+    .eq("s_id", studentId)
     .eq("lesson_id", lessonContext.lessonId)
     .order("submitted_at", { ascending: false })
     .limit(1);
@@ -1148,6 +1148,7 @@ export async function attachSessionToCheckpoint({ checkpointId, studentId, sessi
       .single();
 
     if (error) throw error;
+    await saveCheckpointEmbedding(data);
     return data;
   }
 
@@ -1158,6 +1159,7 @@ export async function attachSessionToCheckpoint({ checkpointId, studentId, sessi
     .single();
 
   if (error) throw error;
+  await saveCheckpointEmbedding(data);
   return data;
 }
 

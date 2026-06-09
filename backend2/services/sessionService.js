@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase.js";
+import { markSessionCheckpointComplete } from "./rag/studentDataLayer.js";
 
 function getSessionState(session) {
   const status = String(session?.status || "").toUpperCase();
@@ -215,6 +216,8 @@ export async function completeSessionData({ sessionId, feedbackText = null }) {
   if (error) {
     throw new Error(`Failed to complete session: ${error.message}`);
   }
+
+  await markSessionCheckpointComplete(sessionId, booking.s_id);
 
   return {
     ...data,
