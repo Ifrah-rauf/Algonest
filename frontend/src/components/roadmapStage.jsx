@@ -118,17 +118,13 @@ const nodeTypes = { box: BoxNode };
 export default function RoadmapStage({ nodes, edges }) {
   return (
     <div
-      className="relative bg-white border rounded-xl shadow-lg"
-      style={{
-        width: "1400px",
-        height: "700px",
-        borderColor: theme.primary,
-      }}
+      className="relative w-full max-w-full h-[700px] bg-white border rounded-xl shadow-lg"
+      style={{ borderColor: theme.primary }}
     >
       {/* Scroll container */}
       <div className="w-full h-full scrollbar-hide">
         {/* Canvas */}
-        <div className="w-full h-full overflow-hidden">
+        <div className="w-full h-full overflow-auto">
           <ReactFlow
             nodes={nodes}
             edges={edges}
