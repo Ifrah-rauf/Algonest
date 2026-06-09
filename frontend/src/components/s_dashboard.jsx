@@ -6,7 +6,7 @@ import { SessionsAttended } from '../components/SessionsAttended';
 import { NotesAttached } from '../components/NotesAttached';
 import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext.jsx";
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
 function ExecutionTimelineStrip() {
@@ -16,18 +16,21 @@ function ExecutionTimelineStrip() {
       title: "Project Roadmaps",
       text: "Build the project first so the rest of the system has something real to defend.",
       color: "#0ea5e9",
+      link: "/roadmaps",
     },
     {
       step: "02",
       title: "CS Fundamentals",
       text: "Lock the core subjects so your explanation stays steady under pressure.",
       color: "#7c3aed",
+      link: "/cscore",
     },
     {
       step: "03",
       title: "Grill Sessions",
       text: "Pressure-test the work with a professional who asks like an interviewer.",
       color: "#f59e0b",
+      link: "/grill",
     },
   ];
 
@@ -76,7 +79,9 @@ function ExecutionTimelineStrip() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: step.color }}>
                   {step.step}
                 </div>
-                <div className="text-lg font-bold text-gray-900">{step.title}</div>
+                <Link to={step.link} className="text-lg font-bold text-gray-900 hover:text-purple-600 transition-colors">
+                  {step.title}
+                </Link>
               </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-gray-600">{step.text}</p>

@@ -202,7 +202,7 @@ export default function useAlgoNestRoadmapController() {
     const key = `ai_inputs:${user.uid}`;
     const stored = parseInt(localStorage.getItem(key) || "0", 10) || 0;
     setAiInputCount(stored);
-    setAiLockedByUsage(stored >= 15);
+    setAiLockedByUsage(stored >= 10);
   }, [user?.uid]);
 
   function handleUserAIMessage() {
@@ -214,7 +214,7 @@ export default function useAlgoNestRoadmapController() {
     const next = aiInputCount + 1;
     localStorage.setItem(key, String(next));
     setAiInputCount(next);
-    if (next >= 15) setAiLockedByUsage(true);
+    if (next >= 10) setAiLockedByUsage(true);
   }
 
   useEffect(() => {
@@ -429,6 +429,7 @@ export default function useAlgoNestRoadmapController() {
   // Determine AI/chat availability based on resolved domain + booking state
   const isAuthenticated = Boolean(user?.uid);
   const hasDomain = Boolean(resolvedDomain);
+  const hasProjectTitle = Boolean(dashboardData?.profile?.project_title);
   let canUseAI = false;
   let chatLockReason = null; // e.g., "other_roadmap"
 
@@ -436,6 +437,9 @@ export default function useAlgoNestRoadmapController() {
     if (!hasDomain) {
       canUseAI = false;
       chatLockReason = "no_domain";
+    } else if (!hasProjectTitle) {
+      canUseAI = false;
+      chatLockReason = "no_project";
     } else if (hasActiveBooking) {
       // Active booking for this roadmap: full AI access
       canUseAI = true;
@@ -444,7 +448,7 @@ export default function useAlgoNestRoadmapController() {
       canUseAI = false;
       chatLockReason = "other_roadmap";
     } else {
-      // No bookings at all — allow AI preview up to 15 messages
+      // No bookings at all — allow AI preview up to 10 messages
       canUseAI = !aiLockedByUsage;
     }
   } else {
@@ -459,11 +463,15 @@ export default function useAlgoNestRoadmapController() {
 
   if (aiLockedByUsage) {
     chatLockedTitle = "Create your study plan";
-    chatLockedDescription = "You have used the AI preview 15 times. Create a study plan to continue using the companion.";
+    chatLockedDescription = "You have used the AI preview 10 times. Create a study plan to continue using the companion.";
     chatLockedCta = "/#pricing";
   } else if (chatLockReason === "no_domain") {
     chatLockedTitle = "Select a domain first";
     chatLockedDescription = "AI depends on your selected domain. Choose a roadmap or booking that sets your domain before using the companion.";
+    chatLockedCta = "/dashboard";
+  } else if (chatLockReason === "no_project") {
+    chatLockedTitle = "Feed project title first";
+    chatLockedDescription = "AI Companion needs your project context. Please go to your Profile and feed your 'Featured Project Title' first.";
     chatLockedCta = "/dashboard";
   } else if (chatLockReason === "other_roadmap") {
     chatLockedTitle = "you have other roadmap in continuation";
@@ -471,7 +479,7 @@ export default function useAlgoNestRoadmapController() {
     chatLockedCta = "/dashboard";
   } else if (isAuthenticated) {
     chatLockedTitle = "AI Build Companion unlocks with a plan";
-    chatLockedDescription = "You can preview milestone 1, but AI guidance, later milestones, and project creation unlock once your plan is active.";
+    chatLockedDescription = `You can preview milestone 1 and send up to 10 prompts (${aiInputCount}/10 used). Full AI guidance, all milestones, and mentor reviews unlock once your plan is active.`;
     chatLockedCta = "/#pricing";
   } else {
     chatLockedTitle = "Sign up to unlock your AI Build Companion";

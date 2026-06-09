@@ -170,7 +170,7 @@ export default function RoadmapExperience({
                 Your Learning Roadmap
               </h1>
               <p style={{ fontSize: 12, color: "#7b70a0", margin: "6px 0 0", fontFamily: "monospace" }}>
-                Project: <strong style={{ color: "#6b46c1" }}>Course #{courseId}</strong> · Complete lessons in order. Click a lesson to see topics.
+                Project: <strong style={{ color: "#6b46c1" }}>{dashboardData?.profile?.project_title || `Course #${courseId}`}</strong> · Complete lessons in order. Click a lesson to see topics.
               </p>
 
               <div style={{
@@ -218,6 +218,7 @@ export default function RoadmapExperience({
               lesson={lesson}
               idx={idx}
               lessons={lessons}
+              isLast={idx === lessons.length - 1}
               progressMap={progressMap}
               checkpointMap={checkpointMap}
               checkpointProgressMap={checkpointProgressMap}
@@ -242,12 +243,8 @@ export default function RoadmapExperience({
           ))}
 
           <InterviewMilestones
-            terminalCheckpoint={terminalCheckpoint}
             interviewOne={interviewOne}
             interviewTwo={interviewTwo}
-            finalCheckpointStatus={finalCheckpointStatus}
-            terminalCheckpointProgress={terminalCheckpointProgress}
-            allLessonsCompleted={allLessonsCompleted}
             goToTeacherSelection={goToTeacherSelection}
             interviewOneStatus={interviewOneStatus}
             interviewOneProgress={interviewOneProgress}
@@ -261,8 +258,12 @@ export default function RoadmapExperience({
         {/* ── RIGHT: AI COMPANION 40% ── */}
         <ChatBox
           systemPrompt={COMPANION_SYSTEM}
-          contextTags={["Job Tracker API", "Node.js + Express", "Supabase"]}
-          initialMessage="Hey — I'm your Build Companion. I'm here while you work through the roadmap. What are you trying to figure out right now?"
+          contextTags={[
+            dashboardData?.profile?.project_title || "My Project",
+            resolvedDomain || "Tech Stack",
+            "AlgoNest"
+          ]}
+          initialMessage={`Hey — I'm your Build Companion. I see you're working on "${dashboardData?.profile?.project_title || 'your project'}". What are you trying to figure out right now?`}
           pendingMessage={pendingMessage}
           onPendingConsumed={() => setPendingMessage("")}
           lessonId={activeLessonId}

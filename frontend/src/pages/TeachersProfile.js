@@ -232,119 +232,133 @@ const TeacherProfile = () => {
         )}
 
         {/* ── Hero card ── */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 relative">
+<div style={{ background: "#534AB7", borderRadius: 24, overflow: "hidden", marginBottom: 24, position: "relative" }}>
 
-          {/* Dot grid deco */}
-          <div className="absolute top-0 right-0 w-48 h-48 opacity-30 pointer-events-none">
-            <svg viewBox="0 0 160 160" className="w-full h-full" fill="none">
-              {Array.from({ length: 6 }).map((_, r) =>
-                Array.from({ length: 6 }).map((_, c) => (
-                  <circle key={`${r}-${c}`} cx={c * 28 + 10} cy={r * 28 + 10}
-                    r="1.5" fill="#7C3AED" opacity={0.1 + ((r + c) % 3) * 0.1} />
-                ))
-              )}
+  {/* Decorative circles */}
+  <div style={{ position: "absolute", top: -70, left: -70, width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+  {/* <div style={{ position: "absolute", top: 20, left: 200, width: 120, height: 120, borderRadius: "50%", background: "rgba(246,201,14,0.09)", pointerEvents: "none" }} /> */}
+  {/* <div style={{ position: "absolute", bottom: -50, left: "40%", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} /> */}
+  <div style={{ position: "absolute", top: -30, right: 80, width: 180, height: 180, borderRadius: "50%", background: "rgba(246,201,14,0.07)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", bottom: -40, right: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", top: "40%", right: 220, width: 70, height: 70, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+
+  {/* Main content */}
+  <div style={{ padding: "32px 36px 28px", display: "flex", flexDirection: "row", gap: 28, alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+
+    {/* Avatar col */}
+    <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <div style={{ position: "relative" }}>
+        <img
+          src={teacher.pfp}
+          alt={teacher.name}
+          style={{ width: 128, height: 128, borderRadius: 18, objectFit: "cover", border: "3px solid rgba(255,255,255,0.25)", display: "block" }}
+        />
+        {teacher.verified && (
+          <div style={{ position: "absolute", bottom: -8, right: -8, width: 28, height: 28, borderRadius: "50%", background: "#f6c90e", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #534AB7" }}>
+            <svg viewBox="0 0 20 20" style={{ width: 13, height: 13 }} fill="#0a0a0a">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
           </div>
+        )}
+      </div>
+      {teacher.verified && (
+        <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.18)", letterSpacing: 0.3 }}>
+          ✓ Verified Mentor
+        </span>
+      )}
+    </div>
 
-          {/* Bottom-left orb */}
-          <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.07), transparent)", transform: "translate(-30%, 30%)" }} />
-
-          <div className="p-7 md:p-9 flex flex-col md:flex-row gap-7 relative z-10">
-
-            {/* Avatar */}
-            <div className="flex-shrink-0 flex flex-col items-center gap-3">
-              <div className="relative">
-                <img src={teacher.pfp} alt={teacher.name}
-                  className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-md border-4 border-white" />
-                {teacher.verified && (
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-md"
-                    style={{ background: "#7C3AED" }}>
-                    <svg viewBox="0 0 20 20" className="w-4 h-4 text-white" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              {teacher.verified && (
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: "#F3EEFF", color: "#7C3AED", border: "1px solid #DDD6FE" }}>
-                  ✓ Verified Mentor
-                </span>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-                    {teacher.name}
-                  </h1>
-                  {teacher.experience && (
-                    <p className="text-gray-500 text-sm mt-0.5">{teacher.experience}</p>
-                  )}
-                </div>
-
-                {isOwner && (
-                  <button onClick={() => setEditAvailability(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 shadow-sm flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, #7C3AED, #4C1D95)" }}>
-                    <svg viewBox="0 0 20 20" className="w-4 h-4" fill="currentColor">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                    Edit Availability
-                  </button>
-                )}
-              </div>
-
-              {/* Rating + meta row */}
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                {teacher.rating && (
-                  <div className="flex items-center gap-2">
-                    <Stars rating={teacher.rating} />
-                    <span className="text-sm font-bold text-gray-700">{teacher.rating}</span>
-                  </div>
-                )}
-                {teacher.timezone && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <span></span> {teacher.timezone}
-                  </span>
-                )}
-              </div>
-
-              {/* Specialisations */}
-              {specialisations.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {specialisations.map((s) => <Tag key={s} variant="purple">{s}</Tag>)}
-                </div>
-              )}
-
-              {/* Languages + frameworks */}
-              <div className="flex flex-wrap gap-2">
-                {languages.map((l) => <Tag key={l} variant="gray">🌐 {l}</Tag>)}
-                {frameworks.map((f) => <Tag key={f} variant="yellow">⚙️ {f}</Tag>)}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Tab bar ── */}
-          <div className="border-t border-gray-100 px-7 md:px-9">
-            <div className="flex gap-0">
-              {TABS.map((tab) => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className="relative px-5 py-4 capitalize text-sm font-semibold transition-all"
-                  style={{ color: activeTab === tab ? "#7C3AED" : "#9CA3AF" }}>
-                  {tab}
-                  {activeTab === tab && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                      style={{ background: "linear-gradient(90deg, #7C3AED, #FCD34D)" }} />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+    {/* Info col */}
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: -0.8, marginBottom: 4 }}>
+            {teacher.name}
+          </h1>
+          {teacher.experience && (
+            <p style={{ color: "rgba(255,255,255,0.60)", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{teacher.experience}</p>
+          )}
         </div>
+
+        {isOwner && (
+          <button
+            onClick={() => setEditAvailability(true)}
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "#0a0a0a", background: "#f6c90e", border: "none", cursor: "pointer", flexShrink: 0 }}
+          >
+            <svg viewBox="0 0 20 20" style={{ width: 14, height: 14 }} fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            Edit Availability
+          </button>
+        )}
+      </div>
+
+      {/* Rating + timezone */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginBottom: 16 }}>
+        {teacher.rating && (
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <Stars rating={teacher.rating} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{teacher.rating}</span>
+          </div>
+        )}
+        {teacher.timezone && (
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", fontFamily: "'DM Sans', sans-serif" }}>
+            🕐 {teacher.timezone}
+          </span>
+        )}
+      </div>
+
+      {/* Specialisations */}
+      {specialisations.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+          {specialisations.map((s) => (
+            <span key={s} style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.18)", padding: "4px 11px", borderRadius: 999 }}>{s}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Languages + frameworks — unified neutral style */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {languages.map((l) => (
+          <span key={l} style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.70)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", padding: "4px 11px", borderRadius: 999 }}>🌐 {l}</span>
+        ))}
+        {frameworks.map((f) => (
+          <span key={f} style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.70)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", padding: "4px 11px", borderRadius: 999 }}>⚙️ {f}</span>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  {/* ── Tab bar ── */}
+  <div style={{ borderTop: "1px solid rgba(255,255,255,0.10)", padding: "0 36px", background: "rgba(0,0,0,0.12)" }}>
+    <div style={{ display: "flex", gap: 0 }}>
+      {TABS.map((tab) => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          style={{
+            position: "relative",
+            padding: "14px 20px",
+            textTransform: "capitalize",
+            fontSize: 13,
+            fontWeight: 600,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === tab ? "#fff" : "rgba(255,255,255,0.45)",
+            letterSpacing: 0.1,
+            transition: "color 0.15s",
+          }}
+        >
+          {tab}
+          {activeTab === tab && (
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, borderRadius: 2, background: "#f6c90e" }} />
+          )}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* ── Tab content ── */}
         <div>

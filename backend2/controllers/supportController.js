@@ -51,3 +51,13 @@ export async function sendAccountDeletionRequest(req, res) {
     return res.status(400).json({ success: false, error: err.message });
   }
 }
+
+export async function sendBookingRequest(req, res) {
+  try {
+    const { uid, courseId, stackName, paymentMethod } = req.body || {};
+    const data = await supportService.sendBookingRequestMail({ uid, courseId, stackName, paymentMethod });
+    return res.json({ success: true, data });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+}

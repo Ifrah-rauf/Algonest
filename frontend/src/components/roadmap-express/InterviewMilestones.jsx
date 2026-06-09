@@ -1,21 +1,17 @@
 import RoadmapGateCard from "./RoadmapGateCard";
 
 export default function InterviewMilestones({
-  terminalCheckpoint,
   interviewOne,
   interviewTwo,
-  finalCheckpointStatus,
-  terminalCheckpointProgress,
-  allLessonsCompleted,
-  goToTeacherSelection,
   interviewOneStatus,
   interviewOneProgress,
   interviewOneUnlocked,
   interviewTwoStatus,
   interviewTwoProgress,
   interviewTwoUnlocked,
+  goToTeacherSelection,
 }) {
-  if (!(terminalCheckpoint || interviewOne || interviewTwo)) return null;
+  if (!(interviewOne || interviewTwo)) return null;
 
   return (            <div style={{
               marginTop: 8,
@@ -25,34 +21,6 @@ export default function InterviewMilestones({
               flexDirection: "column",
               gap: 12,
             }}>
-              {terminalCheckpoint && (
-                <div>
-                  <div style={{
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    color: "#9991b8",
-                    letterSpacing: 2,
-                    textTransform: "uppercase",
-                    marginBottom: 8,
-                  }}>
-                    Final Checkpoint
-                  </div>
-                  <RoadmapGateCard
-                    kind="checkpoint"
-                    indexLabel="Checkpoint · 5/5"
-                    title={terminalCheckpoint.title || "Final Mentor Checkpoint"}
-                    description={terminalCheckpoint.description || "This is the last mentor checkpoint before your interview milestones begin."}
-                    status={finalCheckpointStatus}
-                    sessionId={terminalCheckpointProgress?.session_id || null}
-                    lockedHint={allLessonsCompleted
-                      ? "Book this final checkpoint with a mentor to unlock interviews."
-                      : "Complete every lesson to unlock the final checkpoint."}
-                    onBook={finalCheckpointStatus === "ready" ? () => goToTeacherSelection({ kind: "checkpoint", id: terminalCheckpoint.checkpoint_id, title: terminalCheckpoint.title || "Final Mentor Checkpoint" }) : null}
-                    bookLabel="Select Teacher"
-                  />
-                </div>
-              )}
-
               {(interviewOne || interviewTwo) && (
                 <div>
                   <div style={{
@@ -76,7 +44,7 @@ export default function InterviewMilestones({
                         sessionId={interviewOneProgress?.session_id || null}
                         lockedHint={interviewOneUnlocked
                           ? "Book this mock interview to move into the final interview round."
-                          : "Complete the final checkpoint to unlock this interview."}
+                          : "Complete the final roadmap step to unlock this interview."}
                         onBook={interviewOneStatus === "ready" ? () => goToTeacherSelection({ kind: "interview", id: interviewOne.interview_id, title: interviewOne.title || "Mock Interview I" }) : null}
                         bookLabel="Select Teacher"
                       />

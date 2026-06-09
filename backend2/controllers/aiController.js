@@ -1,6 +1,7 @@
 import { generateAIResponse } from "../services/ai/aiOrchestrator.js";
 import { fetchHistoryForClient } from "../services/context/contextBuilder.js";
 import { resolveStudentRoadmapContext } from "../services/roadmapContext.js";
+import { supabase } from "../lib/supabase.js";
 
 export async function handleAIMessage(req, res) {
   try {
@@ -14,6 +15,7 @@ export async function handleAIMessage(req, res) {
     }
 
     const roadmapContext = await resolveStudentRoadmapContext({ uid });
+    const student = roadmapContext?.student;
     const selectedCourseId = roadmapContext?.roadmapCourseId || null;
     const resolvedDomain = roadmapContext?.domain || roadmapContext?.selectedCourse?.domain || roadmapContext?.activeCourse?.domain || null;
     const requestedCourseId = Number(courseId);
@@ -21,6 +23,13 @@ export async function handleAIMessage(req, res) {
     if (!resolvedDomain) {
       return res.status(403).json({
         error: "Select a domain in your profile before using AI.",
+      });
+    }
+
+    // requirement: project title must be fed
+    if (!student?.project_title) {
+      return res.status(403).json({
+        error: "Please feed your project title in your profile to enable AI Companion.",
       });
     }
 
@@ -32,6 +41,23 @@ export async function handleAIMessage(req, res) {
       return res.status(403).json({
         error: "AI is only enabled for your selected roadmap.",
       });
+    }
+
+    // requirement: 10 prompts limit if no booking
+    if (roadmapContext.source !== "booking") {
+      const { count, error: countError } = await supabase
+        .from("conv_history")
+        .select("*", { count: "exact", head: true })
+        .eq("student_id", student.s_id)
+        .eq("role", "user");
+
+      if (countError) {
+        console.error("Error counting prompts:", countError);
+      } else if (count >= 10) {
+        return res.status(403).json({
+          error: "You have reached the 10-prompt limit for free users. Please book a plan to continue using AI Companion.",
+        });
+      }
     }
 
     const reply = await generateAIResponse({

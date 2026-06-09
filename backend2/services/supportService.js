@@ -124,45 +124,46 @@ export async function sendGithubReviewMail({ uid, githubUrl }) {
   };
 }
 
-export async function sendAccountDeletionRequestMail({ uid }) {
-  if (!uid) {
-    throw new Error("uid is required");
+export async function sendBookingRequestMail({ uid, courseId, stackName, paymentMethod }) {
+  if (!uid || !courseId || !stackName) {
+    throw new Error("uid, courseId and stackName are required");
   }
 
   const { data: authRow, error: authError } = await supabase
     .from("auth")
-    .select("uid, name, email, role")
+    .select("uid, name, email")
     .eq("uid", uid)
     .maybeSingle();
 
   if (authError) throw authError;
-  if (!authRow) throw new Error("Account not found");
+  if (!authRow) throw new Error("User account not found");
 
-  const cleanedName = escapeHtml(authRow.name || "AlgoNest User");
-  const cleanedEmail = escapeHtml(authRow.email || "");
-  const cleanedRole = escapeHtml(authRow.role || "STUDENT");
+  const cleanedName = escapeHtml(authRow.name || "AlgoNest Student");
+  const cleanedEmail = escapeHtml(authRow.email || "No email");
+  const cleanedStack = escapeHtml(stackName);
+  const cleanedPayment = escapeHtml(paymentMethod || "Not specified");
 
   await transporter.sendMail({
-    from: `"AlgoNest Account Requests" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
-    to: ACCOUNT_DELETION_RECIPIENT,
+    from: `"AlgoNest Booking Request" <${process.env.SENDER_MAIL || "algonest.edtech@gmail.com"}>`,
+    to: "algonest.edtech@gmail.com",
     replyTo: authRow.email || undefined,
-    subject: `[Account Deletion Request] ${authRow.name || authRow.email || authRow.uid}`,
-    text: `Account deletion requested by ${authRow.name || "User"} (${authRow.email || "no email"}) [${authRow.role || "STUDENT"}]. UID: ${authRow.uid}`,
+    subject: `[Booking Request] ${cleanedName} - ${cleanedStack}`,
+    text: `Student: ${cleanedName}\nEmail: ${cleanedEmail}\nCourse ID: ${courseId}\nStack: ${cleanedStack}\nPayment Method: ${cleanedPayment}`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
-        <h2 style="margin:0 0 12px;color:#dc2626">Account Deletion Request</h2>
-        <p><strong>Name:</strong> ${cleanedName}</p>
+        <h2 style="margin:0 0 12px;color:#534AB7">New Booking Request</h2>
+        <p><strong>Student:</strong> ${cleanedName}</p>
         <p><strong>Email:</strong> ${cleanedEmail}</p>
-        <p><strong>Role:</strong> ${cleanedRole}</p>
-        <p><strong>UID:</strong> ${escapeHtml(authRow.uid)}</p>
-        <p>This request came from the AlgoNest dashboard and must be approved before deletion.</p>
+        <p><strong>Course ID:</strong> ${courseId}</p>
+        <p><strong>Stack:</strong> ${cleanedStack}</p>
+        <p><strong>Payment Method:</strong> ${cleanedPayment}</p>
+        <p>The student has requested to book through mail. Please reach out to them for payment processing.</p>
       </div>
     `,
   });
 
   return {
     sent: true,
-    recipient: ACCOUNT_DELETION_RECIPIENT,
-    userEmail: authRow.email || null,
+    studentEmail: authRow.email,
   };
 }

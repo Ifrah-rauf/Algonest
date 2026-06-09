@@ -1,10 +1,10 @@
-editable to students-> their profile.
+✅ editable to students-> their profile.
 roadmaps->
     simple roadmaps all accessible, count number of prompts (15 allowed)
     advanced/fang roadmaps current logic.
-    apply three options: At the top of your page, before the roadmap categories, add a row of three 
+    ✅ apply three options: At the top of your page, before the roadmap categories, add a row of three 
     intent cards. Not tabs — cards with a clear label and one-line description.
-        "I need to build a project" → leads to your current roadmap section. "I need to master CS fundamentals" → leads to the Fundamentals track. "I have interviews coming" → leads to the Grill package.
+     ✅ "I need to build a project" → leads to your current roadmap section. "I need to master CS fundamentals" → leads to the Fundamentals track. "I have interviews coming" → leads to the Grill package.
         This makes the page read like a conversation: what are you here for? — rather than forcing everyone through the same funnel.
 
 teachers->
@@ -32,10 +32,8 @@ general (important)
         gateway
 
 can be done later on-
-    zoom summarisation
-    mentor feedbacks/remarks
+    ✅ zoom summarisation
+    ✅ mentor feedbacks/remarks
 
 bugs->
 even on errors, booking is created. (check now)
-
-27,28 - 

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import ComingSoon from "../components/comingsoon.jsx";
 const C = {
   purple: "#6b46c1",
   purpleDark: "#4c1d95",
@@ -19,17 +19,16 @@ export default function CSCore() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  if (!user) return <Navigate to="/login" />;
-
   return (
-    <>
+    <div>
       <Navbar />
-      <div className="min-h-screen" style={{ background: C.bg }}>
+      <ComingSoon />
+
+      {/* <div className="min-h-screen" style={{ background: C.bg }}>
         <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
-          {/* Header with Back Button */}
           <div className="flex items-center gap-3 mb-6">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(user ? "/dashboard" : "/")}
               className="p-2 rounded-lg transition hover:bg-gray-100"
               style={{ color: C.purple }}
             >
@@ -45,9 +44,7 @@ export default function CSCore() {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Featured Section */}
             <div
               className="lg:col-span-3 rounded-2xl border p-6 md:p-8"
               style={{
@@ -71,7 +68,6 @@ export default function CSCore() {
               </div>
             </div>
 
-            {/* Courses Grid */}
             {[
               {
                 title: "Data Structures",
@@ -129,7 +125,6 @@ export default function CSCore() {
             ))}
           </div>
 
-          {/* Info Banner */}
           <div
             className="mt-8 rounded-2xl border p-6"
             style={{
@@ -145,7 +140,7 @@ export default function CSCore() {
             </p>
           </div>
         </div>
+      </div> */}
       </div>
-    </>
   );
 }

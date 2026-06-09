@@ -8,6 +8,7 @@ export default function LessonCard({
   lesson,
   idx,
   lessons,
+  isLast = false,
   progressMap,
   checkpointMap,
   checkpointProgressMap,
@@ -61,28 +62,46 @@ export default function LessonCard({
             const checkpointReady = Boolean(cpAfterNext && isDone && !checkpointProgress);
 
   return (
-              <div key={lesson.lesson_id}>
+              <div key={lesson.lesson_id} style={isLast ? { marginTop: 24, marginBottom: 24 } : {}}>
+                {isLast && (
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: "#6b46c1",
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    marginBottom: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8
+                  }}>
+                    <span style={{ width: 20, height: 1, background: "#ddd6fe" }} />
+                    The Grand Finale
+                    <span style={{ width: 20, height: 1, background: "#ddd6fe" }} />
+                  </div>
+                )}
 
                 {/* ── Outer card — NOT clickable ── */}
                 <div style={{
-                  background: isLocked ? "#faf8fd" : "#fff",
-                  border: isDone
-                    ? "1.5px solid #f9f9f9"
-                    : isActive
-                    ? "1.5px solid #6b46c1"
-                    : "1.5px solid #e8e4f0",
-                  borderRadius: 10, overflow: "hidden",
+                  background: isLast ? "#fff" : (isLocked ? "#faf8fd" : "#fff"),
+                  border: isLast 
+                    ? (isDone ? "2.5px solid #059669" : "2.5px solid #6b46c1")
+                    : (isDone ? "1.5px solid #f9f9f9" : (isActive ? "1.5px solid #6b46c1" : "1.5px solid #e8e4f0")),
+                  borderRadius: isLast ? 16 : 10, 
+                  overflow: "hidden",
                   opacity: isLocked ? 0.55 : 1,
-                  boxShadow: isActive
-                    ? "0 0 0 3px rgba(107,70,193,0.06), 0 10px 24px rgba(107,70,193,0.08)"
-                    : "0 1px 10px rgba(26,16,53,0.04)",
-                  transition: "all 0.2s",
+                  boxShadow: isLast
+                    ? "0 20px 40px rgba(107,70,193,0.15)"
+                    : (isActive ? "0 0 0 3px rgba(107,70,193,0.06), 0 10px 24px rgba(107,70,193,0.08)" : "0 1px 10px rgba(26,16,53,0.04)"),
+                  transform: isLast ? "scale(1.02)" : "none",
+                  transition: "all 0.3s ease",
+                  width:"98%", margin:"0 auto",
                 }}>
 
                   {/* Row: lesson info + Ask AI — full horizontal flex */}
                   <div style={{
                     display: "flex", alignItems: "center",
-                    padding: "14px 16px", gap: 12,
+                    padding: isLast ? "20px 24px" : "14px 16px", gap: 12,
                   }}>
 
                     {/* Left: badge + text — clickable zone for toolbox */}
@@ -96,16 +115,16 @@ export default function LessonCard({
                     >
                       {/* Order badge */}
                       <div style={{
-                        width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                        width: isLast ? 54 : 40, height: isLast ? 54 : 40, borderRadius: isLast ? 14 : 10, flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         background: isDone
-                          ? "#fdfdfd"
-                          : isActive
+                          ? (isLast ? "linear-gradient(135deg, #059669, #10b981)" : "#fdfdfd")
+                          : (isActive || isLast
                           ? "linear-gradient(135deg, #6b46c1, #8b5cf6)"
-                          : "#f0ecfc",
-                        color:      isDone ? "#1f1f1f" : isActive ? "#fff" : "#c4b5fd",
-                        fontWeight: 800, fontSize: isDone ? 16 : 14, fontFamily: "monospace",
-                        boxShadow: isActive ? "0 2px 8px rgba(107,70,193,0.3)" : "none",
+                          : "#f0ecfc"),
+                        color:      isDone ? (isLast ? "#fff" : "#1f1f1f") : (isActive || isLast ? "#fff" : "#c4b5fd"),
+                        fontWeight: 800, fontSize: isLast ? 22 : (isDone ? 16 : 14), fontFamily: "monospace",
+                        boxShadow: (isActive || isLast) ? "0 4px 12px rgba(107,70,193,0.3)" : "none",
                       }}>
                         {isDone ? "✓" : isLocked ? "🔒" : lesson.order_index}
                       </div>
@@ -113,7 +132,7 @@ export default function LessonCard({
                       {/* Title + meta */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: isLocked ? "#aaa" : "#1a1035" }}>
+                          <span style={{ fontSize: isLast ? 18 : 14, fontWeight: 800, color: isLocked ? "#aaa" : "#1a1035" }}>
                             {lesson.title}
                           </span>
                           {isDone && (
@@ -132,8 +151,8 @@ export default function LessonCard({
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", lineHeight: 1.5 }}>
-                          Lesson {lesson.order_index} · {topicCount} topics
+                        <div style={{ fontSize: isLast ? 12 : 10, fontFamily: "monospace", color: "#9991b8", lineHeight: 1.5 }}>
+                          {isLast ? "The Final Milestone" : `Lesson ${lesson.order_index}`} · {topicCount} topics
                           {isDone && progress?.quiz_marks != null && ` · score ${progress.quiz_marks}/6`}
                           {/* no locked notice for users without an active booking; roadmap is accessible per Rule 2 */}
                           {lesson.prerequisite_id && !isDone && ` · Unlocks after Lesson ${lesson.prerequisite_id}`}

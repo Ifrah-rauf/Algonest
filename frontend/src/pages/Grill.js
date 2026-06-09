@@ -2,7 +2,7 @@ import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Flame, ArrowLeft, Star, Clock, Users } from "lucide-react";
-
+import ComingSoon from "../components/comingsoon.jsx";
 const C = {
   purple: "#6b46c1",
   purpleDark: "#4c1d95",
@@ -20,17 +20,17 @@ export default function Grill() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  if (!user) return <Navigate to="/login" />;
-
   return (
     <>
+    <div>
       <Navbar />
-      <div className="min-h-screen" style={{ background: C.bg }}>
-        <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
-          {/* Header with Back Button */}
+      <ComingSoon /> 
+      {/*<div className="min-h-screen" style={{ background: C.bg }}>
+        
+         <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
           <div className="flex items-center gap-3 mb-6">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(user ? "/dashboard" : "/")}
               className="p-2 rounded-lg transition hover:bg-gray-100"
               style={{ color: C.orange }}
             >
@@ -46,7 +46,6 @@ export default function Grill() {
             </div>
           </div>
 
-          {/* Featured Section */}
           <div
             className="rounded-2xl border p-6 md:p-8 mb-8"
             style={{
@@ -70,9 +69,7 @@ export default function Grill() {
             </div>
           </div>
 
-          {/* Grid Layout */}
           <div className="grid gap-6 lg:grid-cols-2 mb-8">
-            {/* Available Grill Types */}
             <div className="space-y-4">
               <h3 className="text-xl font-bold" style={{ color: C.ink }}>
                 Available Session Types
@@ -143,7 +140,6 @@ export default function Grill() {
               ))}
             </div>
 
-            {/* Why Grill Sessions */}
             <div className="space-y-4">
               <h3 className="text-xl font-bold" style={{ color: C.ink }}>
                 Why Grill Sessions?
@@ -202,7 +198,6 @@ export default function Grill() {
             </div>
           </div>
 
-          {/* CTA Banner */}
           <div
             className="rounded-2xl border p-6 md:p-8 text-center"
             style={{
@@ -225,7 +220,7 @@ export default function Grill() {
               Book Your First Grill
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

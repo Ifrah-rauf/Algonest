@@ -25,3 +25,18 @@ export async function updateResume(req, res) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
+
+import { saveProjectDetails } from "../services/studentService.js";
+
+export async function updateProjectDetails(req, res) {
+  try {
+    const { studentId, projectTitle } = req.body;
+    if (!projectTitle) {
+      return res.status(400).json({ success: false, message: "Project title is required" });
+    }
+    const result = await saveProjectDetails(studentId, projectTitle);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}

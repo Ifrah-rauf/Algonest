@@ -17,7 +17,12 @@ function normalizeCourse(courseRow) {
 async function getStudentRow({ uid = null, sId = null } = {}) {
   let query = supabase
     .from("student")
-    .select("s_id, uid, name, bio, education, pfp, total_bookings, active_booking_id, course_id");
+    .select(`
+      s_id, uid, name, bio, education, pfp, total_bookings, active_booking_id, course_id,
+      student_project (
+        custom_title
+      )
+    `);
 
   if (uid) {
     query = query.eq("uid", uid).maybeSingle();
@@ -29,6 +34,14 @@ async function getStudentRow({ uid = null, sId = null } = {}) {
 
   const { data, error } = await query;
   if (error) throw error;
+  
+  if (data) {
+    // Flatten the joined data for backward compatibility in the app
+    const proj = data.student_project?.[0] || {};
+    data.project_title = proj.custom_title || null;
+    data.project_details = null; // Removed as it doesn't exist in schema
+  }
+
   return data || null;
 }
 

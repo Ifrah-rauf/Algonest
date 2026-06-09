@@ -35,6 +35,8 @@ function buildSystemPromptSections({ student, memory, selectedCourse, currentLes
       `Name: ${compact(student.name) || 'unknown'}`,
       `Bio: ${compact(student.bio) || 'not provided'}`,
       `Education: ${compact(student.education) || 'not provided'}`,
+      `Project Title: ${compact(student.project_title) || 'not set'}`,
+      `Project Features/Details: ${compact(student.project_details) || 'not set'}`,
     ].join('\n'));
   }
 
@@ -200,7 +202,12 @@ export async function buildContext(uid, message = '') {
 async function fetchStudent(uid) {
   const { data, error } = await supabase
     .from('student')
-    .select('s_id, name, bio, education, course_id')
+    .select(`
+      s_id, name, bio, education, course_id,
+      student_project (
+        custom_title
+      )
+    `)
     .eq('uid', uid)
     .single();
 
@@ -208,6 +215,13 @@ async function fetchStudent(uid) {
     console.error('contextBuilder.fetchStudent error:', error.message);
     return null;
   }
+
+  if (data) {
+    const proj = data.student_project?.[0] || {};
+    data.project_title = proj.custom_title || null;
+    data.project_details = null;
+  }
+
   return data;
 }
 

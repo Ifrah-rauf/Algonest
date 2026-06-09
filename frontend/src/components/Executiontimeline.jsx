@@ -1,5 +1,5 @@
 // ExecutionTimeline.jsx — v3 (compact text, fixed-height cards, prominent cursor)
-
+import { Link } from "react-router-dom";
 function CursorIcon({ style = {} }) {
   return (
     <svg
@@ -48,6 +48,7 @@ function RoadmapMockup() {
   return (
     <div className="relative w-full h-[168px] bg-violet-50/60 border border-violet-100 rounded-xl overflow-hidden flex-shrink-0">
       <MockBar />
+
       <div className="p-2">
         <p className="text-[7px] font-semibold uppercase tracking-widest text-violet-400 mb-[5px]">My Projects</p>
         {items.map(({ pct, label, color }) => (
@@ -67,6 +68,7 @@ function RoadmapMockup() {
           <div className="bg-violet-600 rounded px-1.5 py-0.5 text-[7px] text-white">+ Add</div>
         </div>
       </div>
+
       <CursorIcon style={{ bottom: 16, right: 14 }} />
     </div>
   );
@@ -167,7 +169,7 @@ function Connector() {
 }
 
 /* ── Step ── */
-function Step({ num, label, accent = "#7c3aed", children }) {
+function Step({ num, label, accent = "#7c3aed", children, link }) {
   return (
     <div className="flex-1 flex flex-col items-center min-w-0">
       <div style={{
@@ -175,7 +177,10 @@ function Step({ num, label, accent = "#7c3aed", children }) {
         color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
         fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:700, marginBottom:7, flexShrink:0
       }}>{num}</div>
-      <p style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:700,color:"#1a1028",marginBottom:8,textAlign:"center",lineHeight:1.3}}>{label}</p>
+      <Link to={link} style={{color: '#fff', textDecoration: 'none' , backgroundColor:'#7c3aed', padding: '10px 12px 2px', borderRadius: 12, marginBottom: 12,boxShadow:"0 4px 6px rgba(124,58,237,0.3)"}}
+       className={"hover:bg-white"}>
+        <p style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:700,marginBottom:8,textAlign:"center",lineHeight:1.3, cursor: "pointer"}}>{label}</p>
+      </Link>
       <div style={{width:"100%"}}>{children}</div>
     </div>
   );
@@ -196,11 +201,11 @@ export default function ExecutionTimeline() {
       </div>
 
       <div style={{ display:"flex", alignItems:"flex-start", gap:0 }}>
-        <Step num="1" label="Project Roadmaps" accent="#7c3aed"><RoadmapMockup /></Step>
+        <Step num="1" label="Project Roadmaps" accent="#7c3aed" link="/roadmaps"><RoadmapMockup/></Step>
         <Connector />
-        <Step num="2" label="CS Fundamentals" accent="#6d28d9"><FundamentalsMockup /></Step>
+        <Step num="2" label="CS Fundamentals" accent="#6d28d9" link="/cscore"><FundamentalsMockup /></Step>
         <Connector />
-        <Step num="3" label="Grill Sessions" accent="#4f46e5"><GrillMockup /></Step>
+        <Step num="3" label="Grill Sessions" accent="#4f46e5" link="/grill"><GrillMockup /></Step>
       </div>
     </div>
   );

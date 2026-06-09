@@ -41,10 +41,12 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
     null;
 
   const [githubLink, setGithubLink] = useState(initialGithub);
+  const [projectTitle, setProjectTitle] = useState(profile.project_title || "");
   const [resumeLink, setResumeLink] = useState(initialResume);
   const [resumeFileName, setResumeFileName] = useState("");
   const [resumePreview, setResumePreview] = useState(initialResume);
   const [savingGithub, setSavingGithub] = useState(false);
+  const [savingProject, setSavingProject] = useState(false);
   const [savingResume, setSavingResume] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -55,9 +57,10 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
 
   useEffect(() => {
     setGithubLink(initialGithub);
+    setProjectTitle(profile.project_title || "");
     setResumeLink(initialResume);
     setResumePreview(initialResume);
-  }, [initialGithub, initialResume]);
+  }, [initialGithub, initialResume, profile.project_title]);
 
   const validateGithub = (url) => {
     if (!String(url || "").trim()) {
@@ -117,6 +120,38 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
     }
   }
 
+  async function handleProjectSave() {
+    if (!projectTitle.trim()) {
+      showToast("Project title is required");
+      return;
+    }
+
+    if (!studentId) {
+      showToast("Student profile is not loaded yet. Please refresh and try again.");
+      return;
+    }
+
+    setSavingProject(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/student/project-details`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, projectTitle }),
+      });
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Failed to save project title");
+      }
+
+      onProfileSave?.({ project_title: projectTitle });
+      showToast(result.message || "Project title saved successfully", "success");
+    } catch (err) {
+      showToast(err.message || "Failed to save project title");
+    } finally {
+      setSavingProject(false);
+    }
+  }
 
   const handleResumeFile = (event) => {
     const file = event.target.files?.[0];
@@ -274,6 +309,37 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
           <p className="text-sm" style={{ color: C.muted }}>
             Add your GitHub link so your projects and repositories are visible to mentors.
           </p>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Project Details (AI Context)">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" style={{ color: C.ink }}>
+              Featured Project Title
+            </label>
+            <input
+              type="text"
+              value={projectTitle}
+              onChange={(e) => setProjectTitle(e.target.value)}
+              placeholder="e.g. Job Tracker API"
+              className="w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-[var(--dash-purple)]"
+              style={{ borderColor: C.border, background: C.white, color: C.ink }}
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={handleProjectSave}
+              className="w-full rounded-full bg-[var(--dash-purple)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
+              disabled={savingProject}
+            >
+              {savingProject ? "Saving..." : "Save Project Title"}
+            </button>
+            <p className="text-xs italic" style={{ color: C.muted }}>
+              *Required to enable AI Companion
+            </p>
+          </div>
         </div>
       </SectionCard>
 

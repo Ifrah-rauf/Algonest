@@ -162,6 +162,7 @@ function ExecutionTimelineSection() {
       tone: "#0ea5e9",
       glow: "rgba(14,165,233,0.16)",
       text: "Build the project first. Prove you can ship, document, and explain the decisions behind the work.",
+      link: "/roadmaps"
     },
     {
       step: "02",
@@ -169,6 +170,8 @@ function ExecutionTimelineSection() {
       tone: "#7c3aed",
       glow: "rgba(124,58,237,0.16)",
       text: "Lock down DSA, OOP, DBMS, OS, and DCCN so the interview room cannot shake the foundation.",
+      link: "/cscore"
+
     },
     {
       step: "03",
@@ -176,6 +179,8 @@ function ExecutionTimelineSection() {
       tone: "#f59e0b",
       glow: "rgba(245,158,11,0.16)",
       text: "Pressure-test the story with a placed professional who reviews your resume, choices, and depth like an interviewer.",
+      link: "/grill"
+
     },
   ];
 
@@ -240,7 +245,10 @@ function ExecutionTimelineSection() {
                       {step.step}
                     </div>
                     <h4 className="mt-1 text-2xl font-bold" style={{ color: C.ink }}>
-                      {step.title}
+                      <Link className="ml-2 text-blue-500 hover:text-blue-700"
+                      to={step.link}>
+                        {step.title}
+                      </Link>
                     </h4>
                   </div>
                 </div>

@@ -66,24 +66,24 @@ export default function RoadmapBookingOverview({
   const roadmapDuration = "4 month roadmap";
 
   const reviews = [
-    {
-      name: "Aman Verma",
-      role: "GenAI Backend Engineer",
-      review:
-        "The roadmap structure felt extremely practical. Building real-time streaming LLM responses and setting up pgvector workflows gave me a massive edge in interviews.",
-    },
-    {
-      name: "Sakshi Jain",
-      role: "AI Platform Engineer",
-      review:
-        "The mentor checkpoints were the best part. Handling rate limiting for external LLM APIs and prompt caching strategies are production issues you don't find in casual tutorials.",
-    },
-    {
-      name: "Rohit Gupta",
-      role: "Node.js + LLM Developer",
-      review:
-        "Incredibly execution-focused. Went from a standard pure backend engineer to orchestrating LangChain agent architectures in a few weeks.",
-    },
+    // {
+    //   name: "Aman Verma",
+    //   role: "GenAI Backend Engineer",
+    //   review:
+    //     "The roadmap structure felt extremely practical. Building real-time streaming LLM responses and setting up pgvector workflows gave me a massive edge in interviews.",
+    // },
+    // {
+    //   name: "Sakshi Jain",
+    //   role: "AI Platform Engineer",
+    //   review:
+    //     "The mentor checkpoints were the best part. Handling rate limiting for external LLM APIs and prompt caching strategies are production issues you don't find in casual tutorials.",
+    // },
+    // {
+    //   name: "Rohit Gupta",
+    //   role: "Node.js + LLM Developer",
+    //   review:
+    //     "Incredibly execution-focused. Went from a standard pure backend engineer to orchestrating LangChain agent architectures in a few weeks.",
+    // },
   ];
 
   const roadmapHighlights = [
@@ -495,7 +495,7 @@ export default function RoadmapBookingOverview({
             type="button"
             className="mt-6 rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
-            Show all alumni evaluations
+            {/* Show all alumni evaluations */}
           </button>
         </section>
         
