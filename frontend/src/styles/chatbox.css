@@ -1,0 +1,146 @@
+.chatbox {
+  --chat-purple: #6b46c1;
+  --chat-purple-strong: #8b5cf6;
+  --chat-purple-soft: #f0ecfc;
+  --chat-ink: #1a1035;
+  --chat-muted: #9991b8;
+  --chat-border: #e8e4f0;
+  --chat-panel: #faf9ff;
+  --chat-yellow: #f6c90e;
+  --chat-amber-soft: #fffbeb;
+  --chat-amber-border: #fde68a;
+  --chat-amber-text: #78350f;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid var(--chat-border);
+}
+
+.chatbox-gradient {
+  background: linear-gradient(135deg, var(--chat-purple), var(--chat-purple-strong));
+}
+
+.chatbox-ai-avatar-shell {
+  background: #050505;
+  color: #fff;
+  overflow: hidden;
+  padding: 0;
+}
+
+.chatbox-ai-avatar-shell-lg {
+  align-items: center;
+  border-radius: 10px;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.chatbox-ai-avatar {
+  align-items: center;
+  background: #050505;
+  border-radius: 8px;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  overflow: hidden;
+  width: 28px;
+}
+
+.chatbox-ai-avatar-lg {
+  border-radius: 10px;
+  height: 36px;
+  width: 36px;
+}
+
+.chatbox-ai-avatar-img {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .chatbox-ai-avatar,
+  .chatbox-ai-avatar-shell {
+    border-radius: 7px;
+    height: 22px;
+    min-height: 22px;
+    min-width: 22px;
+    width: 22px;
+  }
+
+  .chatbox-ai-avatar-lg,
+  .chatbox-ai-avatar-shell-lg {
+    border-radius: 9px;
+    height: 30px;
+    min-height: 30px;
+    min-width: 30px;
+    width: 30px;
+  }
+}
+
+.chatbox-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d8d0f0 transparent;
+}
+
+.chatbox-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.chatbox-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatbox-scroll::-webkit-scrollbar-thumb {
+  background: #e0d8f0;
+  border-radius: 10px;
+}
+
+.chatbox-line + .chatbox-line {
+  margin-top: 6px;
+}
+
+.chatbox-line-bullet {
+  position: relative;
+  padding-left: 14px;
+}
+
+.chatbox-line-bullet::before {
+  content: "-";
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.chatbox-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--chat-muted);
+  animation: chatbox-pulse 1.2s infinite;
+}
+
+.chatbox-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chatbox-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes chatbox-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}

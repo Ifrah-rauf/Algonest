@@ -1,3 +1,10 @@
+const sidebarStats = [
+  { key: "lessons", label: "Lessons", colorClass: "text-violet-300" },
+  { key: "checkpoints", label: "Checkpoints", colorClass: "text-[var(--road-yellow)]" },
+  { key: "leaderboard", label: "Leaderboard", colorClass: "text-violet-300" },
+  { key: "score", label: "Avg. Score", colorClass: "text-emerald-300" },
+];
+
 export default function RoadmapSidebar({
   sidebarOpen,
   setSidebarOpen,
@@ -5,59 +12,65 @@ export default function RoadmapSidebar({
   completedCount,
   totalLessons,
 }) {
+  const values = {
+    lessons: `${completedCount}/${totalLessons}`,
+    checkpoints: "0/2",
+    leaderboard: "#7",
+    score: "79",
+  };
+
   return (
     <>
-      <div style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, width: 280,
-        background: "#1e1145", color: "#fff",
-        transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
-        transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
-        zIndex: 90, overflowY: "auto", display: "flex", flexDirection: "column",
-        boxShadow: sidebarOpen ? "4px 0 24px rgba(0,0,0,0.18)" : "none",
-      }}>
-        <div style={{ padding: "20px 18px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#8b7bb8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>
+      <aside
+        className={`road-sidebar road-scrollbar absolute bottom-0 left-0 top-0 z-[90] flex w-[280px] flex-col overflow-y-auto text-white transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="border-b border-white/10 px-4 pb-4 pt-5">
+          <div className="mb-3.5 font-mono text-[10px] uppercase tracking-[0.2em] text-[#8b7bb8]">
             Your Dashboard
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: "linear-gradient(135deg, #6b46c1, #f6c90e)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 13, fontWeight: 700, color: "#fff",
-            }}>
+
+          <div className="mb-4 flex min-w-0 items-center gap-2.5">
+            <div className="road-gradient grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold text-white">
               {user?.username?.slice(0, 2).toUpperCase() || "IR"}
             </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{user?.username || "Student"}</div>
-              <div style={{ fontSize: 10, color: "#8b7bb8", fontFamily: "monospace" }}>Backend Dev Path · Active</div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold text-white">
+                {user?.username || "Student"}
+              </div>
+              <div className="truncate font-mono text-[10px] text-[#8b7bb8]">
+                Backend Dev Path - Active
+              </div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {[
-              { val: `${completedCount}/${totalLessons}`, label: "Lessons",     color: "#a78bfa" },
-              { val: "0/2",                               label: "Checkpoints", color: "#f6c90e" },
-              { val: "#7",                                label: "Leaderboard", color: "#a78bfa" },
-              { val: "79",                                label: "Avg. Score",  color: "#34d399" },
-            ].map(({ val, label, color }) => (
-              <div key={label} style={{
-                background: "rgba(255,255,255,0.06)", borderRadius: 10,
-                padding: "10px 12px", border: "1px solid rgba(255,255,255,0.08)",
-              }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{val}</div>
-                <div style={{ fontSize: 10, color: "#8b7bb8", fontFamily: "monospace", marginTop: 3 }}>{label}</div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {sidebarStats.map((stat) => (
+              <div
+                key={stat.key}
+                className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2.5"
+              >
+                <div className={`text-xl font-extrabold leading-none ${stat.colorClass}`}>
+                  {values[stat.key]}
+                </div>
+                <div className="mt-1 font-mono text-[10px] text-[#8b7bb8]">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </aside>
 
-      {sidebarOpen && (
-        <div
+      {sidebarOpen ? (
+        <button
+          type="button"
+          className="absolute inset-0 z-[80] bg-black/20"
+          aria-label="Close roadmap sidebar"
           onClick={() => setSidebarOpen(false)}
-          style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)", zIndex: 80 }}
         />
-      )}
+      ) : null}
     </>
   );
 }

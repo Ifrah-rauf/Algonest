@@ -1,0 +1,242 @@
+.roadmap-express {
+  --road-purple: #6b46c1;
+  --road-purple-dark: #4c1d95;
+  --road-purple-soft: #f0ecfc;
+  --road-purple-tint: #faf9ff;
+  --road-yellow: #f6c90e;
+  --road-ink: #1a1035;
+  --road-muted: #7b70a0;
+  --road-subtle: #9991b8;
+  --road-border: #e8e4f0;
+  --road-bg-start: #f8f6f2;
+  --road-bg-end: #f4f0ea;
+  --road-green: #059669;
+  --road-green-dark: #065f46;
+  --road-amber: #b45309;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--road-bg-start) 0%, var(--road-bg-end) 100%);
+  color: var(--road-ink);
+  font-family: "Trebuchet MS", sans-serif;
+}
+
+.road-card {
+  border: 1px solid var(--road-border);
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(26, 16, 53, 0.05);
+}
+
+.road-card-soft {
+  border: 1px solid #ece7fb;
+  background: var(--road-purple-tint);
+}
+
+.road-gradient {
+  background: linear-gradient(135deg, var(--road-purple), #8b5cf6);
+}
+
+.road-topbar {
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--road-border);
+  box-shadow: 0 1px 14px rgba(107, 70, 193, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+.road-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d8d0f0 transparent;
+}
+
+.road-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.road-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.road-scrollbar::-webkit-scrollbar-thumb {
+  background: #e0d8f0;
+  border-radius: 10px;
+}
+
+.road-sidebar {
+  background: #1e1145;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+
+.road-confetti-piece {
+  position: absolute;
+  top: 56%;
+  width: 12px;
+  height: 4px;
+  border-radius: 999px;
+  opacity: 0.9;
+  transform: rotate(18deg);
+  animation: checkpoint-confetti 1.2s ease-out infinite;
+}
+
+.road-confetti-piece:nth-child(3n + 1) {
+  width: 8px;
+}
+
+.road-confetti-piece:nth-child(6n + 1) { left: 8%; animation-delay: 0s; }
+.road-confetti-piece:nth-child(6n + 2) { left: 23%; animation-delay: 0.08s; }
+.road-confetti-piece:nth-child(6n + 3) { left: 38%; animation-delay: 0.16s; }
+.road-confetti-piece:nth-child(6n + 4) { left: 53%; animation-delay: 0.24s; }
+.road-confetti-piece:nth-child(6n + 5) { left: 68%; animation-delay: 0.32s; }
+.road-confetti-piece:nth-child(6n) { left: 83%; animation-delay: 0.4s; }
+
+.road-confetti-piece:nth-child(4n + 1) { background: #6b46c1; }
+.road-confetti-piece:nth-child(4n + 2) { background: #f6c90e; }
+.road-confetti-piece:nth-child(4n + 3) { background: #34d399; }
+.road-confetti-piece:nth-child(4n) { background: #fb7185; }
+
+.roadmap-express progress {
+  appearance: none;
+  background: #e0d8f8;
+}
+
+.roadmap-express progress::-webkit-progress-bar {
+  background: #e0d8f8;
+  border-radius: 999px;
+}
+
+.roadmap-express progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--road-purple), var(--road-yellow));
+  border-radius: 999px;
+}
+
+.roadmap-express progress::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--road-purple), var(--road-yellow));
+  border-radius: 999px;
+}
+
+.roadmap-chat-panel > * {
+  width: 100% !important;
+  max-width: none;
+}
+
+.roadmap-chat-panel {
+  height: min(72vh, 640px);
+  min-height: 460px;
+}
+
+.roadmap-chat-panel .chatbox {
+  border: 1px solid var(--road-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 34px rgba(26, 16, 53, 0.08);
+  overflow: hidden;
+}
+
+.road-lesson-card {
+  max-width: 100%;
+}
+
+.road-lesson-actions,
+.road-lesson-toolbox-actions {
+  min-width: 0;
+}
+
+.road-lesson-action-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .roadmap-chat-panel {
+    height: min(68vh, 560px);
+    min-height: 420px;
+  }
+
+  .road-lesson-shell {
+    width: 100%;
+  }
+
+  .road-lesson-card {
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  .road-lesson-row {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .road-lesson-main {
+    align-items: flex-start !important;
+    width: 100%;
+  }
+
+  .road-lesson-actions,
+  .road-lesson-toolbox-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    width: 100%;
+    gap: 8px !important;
+  }
+
+  .road-lesson-toolbox-actions {
+    grid-template-columns: 1fr;
+    padding: 12px !important;
+  }
+
+  .road-lesson-action-btn {
+    align-items: center;
+    display: inline-flex !important;
+    justify-content: center;
+    min-height: 36px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 8px 10px !important;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
+
+  .road-lesson-chevron {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 36px;
+  }
+
+  .road-checkpoint-banner {
+    margin: 8px 0 !important;
+  }
+
+  .road-checkpoint-content {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .roadmap-chat-panel {
+    height: auto;
+    min-height: 0;
+  }
+
+  .roadmap-chat-panel .chatbox {
+    border-bottom: 0;
+    border-left: 1px solid var(--road-border);
+    border-radius: 0;
+    border-right: 0;
+    border-top: 0;
+    box-shadow: none;
+  }
+}
+
+@keyframes checkpoint-confetti {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(15deg) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -120px, 0) rotate(320deg) scale(1.05);
+    opacity: 0;
+  }
+}

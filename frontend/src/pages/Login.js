@@ -104,18 +104,30 @@ export default function Login() {
         </p>
 
         <div className="mt-6 space-y-3">
+          <label className="sr-only" htmlFor="login-email">
+            Email address
+          </label>
           <input
+            id="login-email"
+            name="email"
             type="email"
             placeholder="Email address"
             value={mail}
+            autoComplete="email"
             onChange={(e) => setMail(e.target.value)}
             className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
           />
 
+          <label className="sr-only" htmlFor="login-password">
+            Password
+          </label>
           <input
+            id="login-password"
+            name="password"
             type="password"
             placeholder="Password"
             value={password}
+            autoComplete="current-password"
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
           />

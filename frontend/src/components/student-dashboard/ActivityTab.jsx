@@ -1,19 +1,17 @@
 import { Calendar, Star } from "lucide-react";
-import { C } from "./constants";
 import { capitalizeWords, formatDateTimeLabel } from "./formatters";
 import { EmptyPanel, SectionCard } from "./ui";
 
 function MissingRoadmapAlert({ onChooseRoadmap }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-      <div className="text-sm font-semibold" style={{ color: C.ink }}>
+      <div className="text-sm font-semibold text-[var(--dash-ink)]">
         No roadmap selected yet
       </div>
       <button
         type="button"
         onClick={onChooseRoadmap}
-        className="rounded-full px-4 py-2 text-xs font-semibold text-white"
-        style={{ backgroundColor: C.purple }}
+        className="dash-button-primary px-4 py-2 text-xs"
       >
         Choose a roadmap
       </button>
@@ -23,14 +21,11 @@ function MissingRoadmapAlert({ onChooseRoadmap }) {
 
 function PrepModulesBand() {
   return (
-    <div
-      className="rounded-2xl border p-5"
-      style={{ borderColor: C.border, background: C.purpleTint }}
-    >
-      <div className="text-sm font-semibold" style={{ color: C.ink }}>
-        📚 Prep modules are coming soon
+    <div className="rounded-2xl border border-[var(--dash-border)] bg-[var(--dash-purple-tint)] p-5">
+      <div className="text-sm font-semibold text-[var(--dash-ink)]">
+        Prep modules are coming soon
       </div>
-      <div className="mt-2 text-xs leading-5" style={{ color: C.muted }}>
+      <div className="mt-2 text-xs leading-5 text-[var(--dash-muted)]">
         We're preparing interactive prep modules for DSA, system design, and behavioral prep. Stay tuned!
       </div>
     </div>
@@ -50,7 +45,7 @@ export default function ActivityTab({
     <div className="space-y-6">
       {/* Sessions */}
       <div>
-        <div className="mb-3 text-sm font-semibold md:text-base" style={{ color: C.ink }}>
+        <div className="mb-3 text-sm font-semibold text-[var(--dash-ink)] md:text-base">
           Your ongoing sessions!
         </div>
         <SectionCard className="p-0">
@@ -65,16 +60,13 @@ export default function ActivityTab({
 
           {sessionInfo?.status === "ACTIVE" || sessionInfo?.status === "UPCOMING" ? (
             <div className="px-5 pb-5 pt-8">
-              <div
-                className="rounded-2xl border p-6"
-                style={{ borderColor: C.border, background: C.bg }}
-              >
+              <div className="dash-card-soft rounded-2xl border p-6">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-lg font-bold md:text-xl" style={{ color: C.ink }}>
+                    <div className="text-lg font-bold text-[var(--dash-ink)] md:text-xl">
                       {sessionInfo.session?.title || "Mentorship session"}
                     </div>
-                    <div className="mt-2 text-xs md:text-sm" style={{ color: C.muted }}>
+                    <div className="mt-2 text-xs text-[var(--dash-muted)] md:text-sm">
                       {formatDateTimeLabel(
                         sessionInfo.session?.start_time,
                         "Schedule will appear once confirmed"
@@ -87,8 +79,7 @@ export default function ActivityTab({
                   <button
                     type="button"
                     onClick={() => navigate("/teachers")}
-                    className="rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110 md:text-sm"
-                    style={{ backgroundColor: C.purple }}
+                    className="dash-button-primary px-4 py-2 text-xs md:text-sm"
                   >
                     Schedule a Session
                   </button>
@@ -105,8 +96,7 @@ export default function ActivityTab({
                   <button
                     type="button"
                     onClick={() => navigate("/teachers")}
-                    className="rounded-full px-5 py-2.5 text-xs font-semibold text-white transition hover:brightness-110 md:text-sm"
-                    style={{ backgroundColor: C.purple }}
+                    className="dash-button-primary px-5 py-2.5 text-xs md:text-sm"
                   >
                     Schedule a Session
                   </button>
@@ -120,7 +110,7 @@ export default function ActivityTab({
       {/* Roadmaps */}
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <div className="text-sm font-semibold md:text-base" style={{ color: C.ink }}>
+          <div className="text-sm font-semibold text-[var(--dash-ink)] md:text-base">
             {roadmapState?.heading || "Roadmaps"}
           </div>
         </div>
@@ -133,15 +123,12 @@ export default function ActivityTab({
             roadmaps.map((roadmap) => (
               <SectionCard key={roadmap.id} className="p-0">
                 <div
-                  className="rounded-t-2xl px-5 py-4"
-                  style={{
-                    background: `linear-gradient(90deg, ${C.purpleDark}, ${C.purple})`,
-                  }}
+                  className="dash-gradient rounded-t-2xl px-5 py-4"
                 >
                   <div className="text-sm font-semibold text-white md:text-base">{roadmap.title}</div>
                 </div>
                 <div className="space-y-4 p-5">
-                  <p className="text-xs leading-6 md:text-sm" style={{ color: C.muted }}>
+                  <p className="text-xs leading-6 text-[var(--dash-muted)] md:text-sm">
                     {roadmap.description}
                   </p>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#8f4b0e] bg-[#2e2214] px-3 py-1 text-[11px] font-semibold text-[#ffb54a]">
@@ -152,7 +139,7 @@ export default function ActivityTab({
                     </div>
                     {roadmap.level}
                   </div>
-                  <div className="flex items-center gap-4 text-xs md:text-sm" style={{ color: C.muted }}>
+                  <div className="flex items-center gap-4 text-xs text-[var(--dash-muted)] md:text-sm">
                     <div className="inline-flex items-center gap-1.5">
                       <Star className="h-4 w-4 fill-[var(--dash-yellow)] text-[var(--dash-yellow)]" />
                       {roadmap.rating}
@@ -163,8 +150,7 @@ export default function ActivityTab({
                     <button
                       type="button"
                       onClick={() => navigate(`/roadmap_express?courseId=${roadmap.id}`)}
-                      className="rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110 md:text-sm"
-                      style={{ backgroundColor: C.purple }}
+                      className="dash-button-primary px-4 py-2 text-xs md:text-sm"
                     >
                       Open Roadmap
                     </button>
@@ -174,7 +160,7 @@ export default function ActivityTab({
             ))
           ) : (
             <SectionCard className="xl:col-span-2">
-              <div className="text-sm" style={{ color: C.muted }}>
+              <div className="text-sm text-[var(--dash-muted)]">
                 Your active route will show up here once a roadmap is available.
               </div>
             </SectionCard>
@@ -186,19 +172,14 @@ export default function ActivityTab({
       <div className="grid gap-4 md:grid-cols-2">
         {/* CS Core Booking */}
         <SectionCard className="p-0">
-          <div
-            className="rounded-t-2xl px-5 py-4"
-            style={{
-              background: `linear-gradient(90deg, #7c3aed, #6d28d9)`,
-            }}
-          >
+          <div className="rounded-t-2xl bg-gradient-to-r from-violet-600 to-violet-700 px-5 py-4">
             <div className="text-sm font-semibold text-white md:text-base">CS Core Fundamentals</div>
           </div>
           <div className="space-y-4 p-5">
-            <p className="text-xs leading-6 md:text-sm" style={{ color: C.muted }}>
+            <p className="text-xs leading-6 text-[var(--dash-muted)] md:text-sm">
               Master Data Structures, Algorithms, DBMS, OS, and DCCN
             </p>
-            <p className="text-xs leading-6 md:text-sm" style={{ color: "grey" }}>
+            <p className="text-xs leading-6 text-slate-500 md:text-sm">
               No current plan
             </p>
           </div>
@@ -206,19 +187,14 @@ export default function ActivityTab({
 
         {/* Grill Sessions Booking */}
         <SectionCard className="p-0">
-          <div
-            className="rounded-t-2xl px-5 py-4"
-            style={{
-              background: `linear-gradient(90deg, #f59e0b, #d97706)`,
-            }}
-          >
+          <div className="rounded-t-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-4">
             <div className="text-sm font-semibold text-white md:text-base">Grill Sessions</div>
           </div>
           <div className="space-y-4 p-5">
-            <p className="text-xs leading-6 md:text-sm" style={{ color: C.muted }}>
+            <p className="text-xs leading-6 text-[var(--dash-muted)] md:text-sm">
               Mock interviews with experienced professionals
             </p>
-            <p className="text-xs leading-6 md:text-sm" style={{ color: "grey" }}>
+            <p className="text-xs leading-6 text-slate-500 md:text-sm">
               No current plan
             </p>
           </div>
@@ -235,24 +211,23 @@ export default function ActivityTab({
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 rounded-xl border p-4"
-                  style={{ borderColor: C.border, background: C.bg }}
+                  className="dash-card-soft flex items-start gap-3 rounded-xl border p-4"
                 >
                   <div className="grid h-9 w-9 place-items-center rounded-lg bg-[rgba(107,70,193,0.16)] text-[var(--dash-purple)]">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold" style={{ color: C.ink }}>
+                    <div className="text-sm font-semibold text-[var(--dash-ink)]">
                       {item.title}
                     </div>
                     <div className="mt-1 text-xs text-[var(--dash-purple)]">
                       {item.subtitle}
                     </div>
-                    <div className="mt-2 text-sm" style={{ color: C.muted }}>
+                    <div className="mt-2 text-sm text-[var(--dash-muted)]">
                       {item.body}
                     </div>
                   </div>
-                  <div className="text-xs" style={{ color: C.muted }}>
+                  <div className="text-xs text-[var(--dash-muted)]">
                     {item.time}
                   </div>
                 </div>
@@ -260,7 +235,7 @@ export default function ActivityTab({
             })}
           </div>
         ) : (
-          <div className="text-sm" style={{ color: C.muted }}>
+          <div className="text-sm text-[var(--dash-muted)]">
             Your assessment signals will appear once your route becomes active.
           </div>
         )}

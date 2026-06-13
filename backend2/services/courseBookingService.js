@@ -32,15 +32,31 @@ async function getAuthByUid(uid) {
   });
 }
 
+async function getCourseById(courseId) {
+  const parsedCourseId = Number(courseId);
+  if (!parsedCourseId) return null;
+
+  return dbFetch({
+    query: supabase
+      .from("courses")
+      .select("course_id, title")
+      .eq("course_id", parsedCourseId)
+      .maybeSingle(),
+    label: "courseBooking/course",
+  });
+}
+
 function buildExpiryDate(expiryDays) {
   const days = Number(expiryDays) > 0 ? Number(expiryDays) : 120;
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-function buildCourseBookingEmail({ student, auth, booking }) {
+function buildCourseBookingEmail({ student, auth, booking, course }) {
   const studentName = auth?.name || student?.name || "AlgoNest Student";
+  const courseName = course?.title || `Course ${booking.course_id}`;
   const rows = [
     ["Student ID", booking.s_id],
+    ["Course", courseName],
     ["Course ID", booking.course_id],
     ["Booking ID", booking.booking_id],
     ["Plan ID", booking.plan_id ?? "Not assigned"],
@@ -51,7 +67,7 @@ function buildCourseBookingEmail({ student, auth, booking }) {
   ];
 
   return {
-    subject: `AlgoNest booking received for Course ${booking.course_id}`,
+    subject: `AlgoNest booking received for ${courseName}`,
     text: [
       `Hi ${studentName},`,
       "",
@@ -61,7 +77,7 @@ function buildCourseBookingEmail({ student, auth, booking }) {
     ].join("\n"),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;background:#faf7ff;padding:24px;border-radius:18px">
-        <h2 style="margin:0 0 12px;color:#534AB7">Booking Received</h2>
+        <h2 style="margin:0 0 12px;color:#534AB7">Booking Received for ${escapeHtml(courseName)}</h2>
         <p>Hi ${escapeHtml(studentName)}, thank you for booking with <strong>AlgoNest</strong>.</p>
         <p style="margin:0 0 16px">An agent will reach you soon to complete the payment.</p>
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px">
@@ -77,12 +93,12 @@ function buildCourseBookingEmail({ student, auth, booking }) {
   };
 }
 
-async function sendCourseBookingEmail({ student, auth, booking }) {
+async function sendCourseBookingEmail({ student, auth, booking, course }) {
   if (!auth?.email) {
     return { sent: false, reason: "Student email not found" };
   }
 
-  const email = buildCourseBookingEmail({ student, auth, booking });
+  const email = buildCourseBookingEmail({ student, auth, booking, course });
 
   await transporter.sendMail({
     from: `"AlgoNest" <${senderMail}>`,
@@ -117,6 +133,8 @@ export async function createCourseBookingService({
   }
 
   const auth = await getAuthByUid(uid);
+  const parsedCourseId = Number(courseId) > 0 ? Number(courseId) : 1;
+  const course = await getCourseById(parsedCourseId);
 
   const bookingPayload = {
     s_id: student.s_id,
@@ -124,7 +142,7 @@ export async function createCourseBookingService({
     payment_id: paymentId ?? null,
     expiry_date: buildExpiryDate(expiryDays),
     remainingsessions: Number(remainingSessions) > 0 ? Number(remainingSessions) : null,
-    course_id: Number(courseId) > 0 ? Number(courseId) : 1,
+    course_id: parsedCourseId,
     project_id: projectId ?? null,
   };
 
@@ -140,7 +158,7 @@ export async function createCourseBookingService({
 
   let email = { sent: false, reason: "Email not attempted" };
   try {
-    email = await sendCourseBookingEmail({ student, auth, booking: data });
+    email = await sendCourseBookingEmail({ student, auth, booking: data, course });
   } catch (err) {
     console.error("[courseBooking/email]", err.message);
     email = { sent: false, reason: err.message };

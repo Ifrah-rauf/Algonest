@@ -307,6 +307,8 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
 
             <div className="mt-5 space-y-4">
               <input
+                id="teacher-query-subject"
+                name="teacherQuerySubject"
                 type="text"
                 value={querySubject}
                 onChange={(e) => setQuerySubject(e.target.value)}
@@ -314,6 +316,8 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               />
               <textarea
+                id="teacher-query-message"
+                name="teacherQueryMessage"
                 value={queryBody}
                 onChange={(e) => setQueryBody(e.target.value)}
                 placeholder="Write your message..."

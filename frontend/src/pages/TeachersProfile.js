@@ -5,6 +5,7 @@ import AvailabilitySetting from "../components/AvailabilitySettings";
 import Availability from "../components/Availability";
 import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext.jsx";
+import "../styles/teacher-profile.css";
 
 const font = { fontFamily: "'Trebuchet MS', 'Lucida Grande', sans-serif" };
 
@@ -209,20 +210,20 @@ const TeacherProfile = () => {
   }
 
   return (
-    <div style={{ ...font, background: "#f8f8fb", minHeight: "100vh" }}>
+    <div className="teacher-profile-page" style={{ ...font, background: "#f8f8fb", minHeight: "100vh", overflowX: "hidden" }}>
       <Navbar />
 
       {/* ── Top accent bar ── */}
       {/* <div className="h-1 w-full"
         style={{ background: "linear-gradient(90deg, #7C3AED, #FCD34D)" }} /> */}
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+      <div className="teacher-profile-shell max-w-7xl mx-auto px-4 md:px-6 py-10">
         {gateFlow && (
-          <div className="mb-6 rounded-3xl border border-yellow-200 bg-yellow-50 px-6 py-5 shadow-sm">
+          <div className="teacher-profile-gate mb-6 rounded-3xl border border-yellow-200 bg-yellow-50 px-6 py-5 shadow-sm">
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-700">
               {gateFlow.kind === "interview" ? "Interview Booking" : "Checkpoint Booking"}
             </div>
-            <div className="mt-1 text-xl font-bold text-gray-900">
+            <div className="teacher-profile-gate-title mt-1 text-xl font-bold text-gray-900">
               Book a mentor for {gateFlow.title}
             </div>
             <p className="mt-1 text-sm text-gray-600">
@@ -232,7 +233,7 @@ const TeacherProfile = () => {
         )}
 
         {/* ── Hero card ── */}
-<div style={{ background: "#534AB7", borderRadius: 24, overflow: "hidden", marginBottom: 24, position: "relative" }}>
+<div className="teacher-profile-hero" style={{ background: "#534AB7", borderRadius: 24, overflow: "hidden", marginBottom: 24, position: "relative" }}>
 
   {/* Decorative circles */}
   <div style={{ position: "absolute", top: -70, left: -70, width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
@@ -243,7 +244,7 @@ const TeacherProfile = () => {
   <div style={{ position: "absolute", top: "40%", right: 220, width: 70, height: 70, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
 
   {/* Main content */}
-  <div style={{ padding: "32px 36px 28px", display: "flex", flexDirection: "row", gap: 28, alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+  <div className="teacher-profile-hero-main">
 
     {/* Avatar col */}
     <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
@@ -251,7 +252,8 @@ const TeacherProfile = () => {
         <img
           src={teacher.pfp}
           alt={teacher.name}
-          style={{ width: 128, height: 128, borderRadius: 18, objectFit: "cover", border: "3px solid rgba(255,255,255,0.25)", display: "block" }}
+          className="teacher-profile-avatar"
+          style={{ width: 128, height: 128, borderRadius: 18, objectFit: "cover", objectPosition: "center", border: "3px solid rgba(255,255,255,0.25)", display: "block" }}
         />
         {teacher.verified && (
           <div style={{ position: "absolute", bottom: -8, right: -8, width: 28, height: 28, borderRadius: "50%", background: "#f6c90e", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #534AB7" }}>
@@ -269,10 +271,10 @@ const TeacherProfile = () => {
     </div>
 
     {/* Info col */}
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+    <div className="teacher-profile-info" style={{ flex: 1, minWidth: 0 }}>
+      <div className="teacher-profile-heading-row" style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: -0.8, marginBottom: 4 }}>
+          <h1 className="teacher-profile-name" style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: -0.8, marginBottom: 4 }}>
             {teacher.name}
           </h1>
           {teacher.experience && (
@@ -294,7 +296,7 @@ const TeacherProfile = () => {
       </div>
 
       {/* Rating + timezone */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginBottom: 16 }}>
+      <div className="teacher-profile-meta" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginBottom: 16 }}>
         {teacher.rating && (
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <Stars rating={teacher.rating} />
@@ -310,7 +312,7 @@ const TeacherProfile = () => {
 
       {/* Specialisations */}
       {specialisations.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+        <div className="teacher-profile-tags" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
           {specialisations.map((s) => (
             <span key={s} style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.18)", padding: "4px 11px", borderRadius: 999 }}>{s}</span>
           ))}
@@ -318,7 +320,7 @@ const TeacherProfile = () => {
       )}
 
       {/* Languages + frameworks — unified neutral style */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div className="teacher-profile-tags" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {languages.map((l) => (
           <span key={l} style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.70)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", padding: "4px 11px", borderRadius: 999 }}>🌐 {l}</span>
         ))}
@@ -330,12 +332,13 @@ const TeacherProfile = () => {
   </div>
 
   {/* ── Tab bar ── */}
-  <div style={{ borderTop: "1px solid rgba(255,255,255,0.10)", padding: "0 36px", background: "rgba(0,0,0,0.12)" }}>
-    <div style={{ display: "flex", gap: 0 }}>
+  <div className="teacher-profile-tab-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.10)", padding: "0 36px", background: "rgba(0,0,0,0.12)" }}>
+    <div className="teacher-profile-tabs">
       {TABS.map((tab) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
+          className="teacher-profile-tab"
           style={{
             position: "relative",
             padding: "14px 20px",
@@ -380,7 +383,7 @@ const TeacherProfile = () => {
                     <div className="px-5 pb-5">
                       <iframe
                         src={`https://www.youtube.com/embed/${new URL(teacher.video_url).searchParams.get("v")}`}
-                        className="w-full rounded-xl"
+                        className="teacher-profile-video w-full rounded-xl"
                         style={{ height: "220px", border: "none" }}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -454,7 +457,7 @@ const TeacherProfile = () => {
                     <span className="text-base"></span>
                     <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Quick Stats</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="teacher-profile-stat-grid grid grid-cols-2 gap-3">
                     {[
                       { label: "Rating", value: teacher.rating ? `${teacher.rating} ⭐` : "New", color: "#F59E0B" },
                       { label: "Status", value: teacher.verified ? "Verified" : "Pending", color: teacher.verified ? "#7C3AED" : "#9CA3AF" },
@@ -491,14 +494,14 @@ const TeacherProfile = () => {
 
           {/* ── REVIEWS ── */}
           {activeTab === "reviews" && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+            <div className="teacher-profile-panel bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
               <ReviewsSkeleton />
             </div>
           )}
 
           {/* ── AVAILABILITY ── */}
           {activeTab === "availability" && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+            <div className="teacher-profile-panel bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
               {editAvailability && isOwner ? (
                 <AvailabilitySetting
                   avail={availability}
@@ -517,7 +520,7 @@ const TeacherProfile = () => {
 
           {/* ── CONTENT ── */}
           {activeTab === "content" && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+            <div className="teacher-profile-panel bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
               <ContentSkeleton />
             </div>
           )}

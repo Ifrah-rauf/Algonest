@@ -79,11 +79,17 @@ export function MarketplaceRoadmaps() {
 
       <div className="flex gap-4 mb-8">
         <input
+          id="marketplace-roadmap-search"
+          name="marketplaceRoadmapSearch"
           type="text"
           placeholder="Search roadmaps..."
           className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
         />
-        <select className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+        <select
+          id="marketplace-roadmap-category"
+          name="marketplaceRoadmapCategory"
+          className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+        >
           <option>All Categories</option>
           <option>Computer Science</option>
           <option>Design</option>
@@ -91,7 +97,11 @@ export function MarketplaceRoadmaps() {
           <option>Cloud</option>
           <option>Security</option>
         </select>
-        <select className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+        <select
+          id="marketplace-roadmap-sort"
+          name="marketplaceRoadmapSort"
+          className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+        >
           <option>Sort by: Popular</option>
           <option>Sort by: Price</option>
           <option>Sort by: Rating</option>

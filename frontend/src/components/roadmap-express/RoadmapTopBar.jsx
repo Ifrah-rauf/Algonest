@@ -1,5 +1,21 @@
 import Navbar from "../navbar";
 
+function TabButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-10 shrink-0 px-3 py-2 text-xs font-extrabold transition ${
+        active
+          ? "bg-[var(--road-purple-soft)] text-violet-800"
+          : "text-[var(--road-subtle)] hover:bg-white hover:text-[var(--road-purple)]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function RoadmapTopBar({
   sidebarOpen,
   setSidebarOpen,
@@ -8,94 +24,50 @@ export default function RoadmapTopBar({
   completedCount,
   totalLessons,
 }) {
+  const progress = totalLessons ? Math.round((completedCount / totalLessons) * 100) : 0;
+
   return (
     <>
       <Navbar
         sidebarOpen={sidebarOpen}
-        onSidebarToggle={() => setSidebarOpen(o => !o)}
+        onSidebarToggle={() => setSidebarOpen((open) => !open)}
       />
 
-      <header style={{
-        minHeight: 58,
-        background: "rgba(255,255,255,0.94)",
-        borderBottom: "1px solid #e8e4f0",
-        display: "flex",
-        alignItems: "center",
-        padding: "10px 22px",
-        gap: 14,
-        flexShrink: 0,
-        zIndex: 40,
-        boxShadow: "0 1px 14px rgba(107,70,193,0.06)",
-        backdropFilter: "blur(12px)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9991b8", fontFamily: "monospace" }}>
-            <span style={{ color: "#444" }}>Backend Dev</span>
-            <span style={{ color: "#d0c8f0" }}>/</span>
-            <span style={{ color: "#6b46c1", fontWeight: 600 }}>Node.js + Express</span>
+      <header className="road-topbar z-40 flex min-h-[58px] shrink-0 flex-col gap-3 px-3 py-3 sm:px-5 lg:flex-row lg:items-center lg:gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-[var(--road-subtle)]">
+            <span className="shrink-0 text-slate-700">Backend Dev</span>
+            <span className="text-[#d0c8f0]">/</span>
+            <span className="truncate font-semibold text-[var(--road-purple)]">
+              Node.js + Express
+            </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setActiveTab("roadmap")}
-              style={{
-                border: "1px solid transparent",
-                background: activeTab === "roadmap" ? "#efe7ff" : "transparent",
-                color: activeTab === "roadmap" ? "#5b21b6" : "#8b7bb8",
-                borderRadius: 0,
-                padding: "8px 12px",
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: "pointer",
-                boxShadow: "none",
-              }}
-            >
-              Tab 1 · Roadmap
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("booking")}
-              style={{
-                border: "1px solid transparent",
-                background: activeTab === "booking" ? "#efe7ff" : "transparent",
-                color: activeTab === "booking" ? "#5b21b6" : "#8b7bb8",
-                borderRadius: 0,
-                padding: "8px 12px",
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: "pointer",
-                boxShadow: "none",
-              }}
-            >
-              Tab 2 · Booking & Overview
-            </button>
+          <div className="flex max-w-full gap-1 overflow-x-auto">
+            <TabButton active={activeTab === "roadmap"} onClick={() => setActiveTab("roadmap")}>
+              Tab 1 - Roadmap
+            </TabButton>
+            <TabButton active={activeTab === "booking"} onClick={() => setActiveTab("booking")}>
+              Tab 2 - Booking & Overview
+            </TabButton>
           </div>
         </div>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#f0ecfc", borderRadius: 12,
-            padding: "5px 14px", fontSize: 11, fontFamily: "monospace",
-          }}>
-            <div style={{ width: 60, height: 4, background: "#e0d8f8", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{
-                height: "100%",
-                width: `${totalLessons ? (completedCount / totalLessons) * 100 : 0}%`,
-                background: "linear-gradient(90deg, #6b46c1, #f6c90e)",
-                borderRadius: 3, transition: "width 0.4s",
-              }} />
-            </div>
-            <span style={{ color: "#6b46c1", fontWeight: 700 }}>{completedCount}/{totalLessons} lessons</span>
+        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+          <div className="flex items-center gap-2 rounded-xl bg-[var(--road-purple-soft)] px-3 py-1.5 font-mono text-[11px]">
+            <progress
+              className="h-1.5 w-16 overflow-hidden rounded-full"
+              value={progress}
+              max="100"
+              aria-label="Roadmap completion"
+            />
+            <span className="font-bold text-[var(--road-purple)]">
+              {completedCount}/{totalLessons} lessons
+            </span>
           </div>
 
-          <div style={{
-            background: "#fff8e1", border: "1px solid #f6c90e",
-            borderRadius: 12, padding: "5px 12px",
-            fontSize: 11, fontFamily: "monospace", color: "#b45309", fontWeight: 600,
-          }}>
-            🔥 12-day streak
+          <div className="rounded-xl border border-[var(--road-yellow)] bg-amber-50 px-3 py-1.5 font-mono text-[11px] font-semibold text-[var(--road-amber)]">
+            12-day streak
           </div>
         </div>
       </header>

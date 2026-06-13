@@ -123,6 +123,8 @@ async function getStudentIdByUid(uid) {
     .from("student")
     .select("s_id")
     .eq("uid", uid)
+    .order("s_id", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (error) throw error;
@@ -471,13 +473,19 @@ export async function checkUnlock(studentId, lessonId) {
   };
 }
 
-async function getBookingIdsByStudentId(studentId) {
+async function getBookingIdsByStudentId(studentId, courseId = null) {
   if (!studentId) return [];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("booking")
     .select("booking_id")
     .eq("s_id", studentId);
+
+  if (courseId) {
+    query = query.eq("course_id", Number(courseId));
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map((booking) => booking.booking_id).filter(Boolean);
@@ -563,37 +571,41 @@ export async function fetchInterviewProgressByUid(uid, courseId = null) {
   const studentId = await getStudentIdByUid(uid);
   if (!studentId) return [];
 
-  const bookingIds = await getBookingIdsByStudentId(studentId);
+  const bookingIds = await getBookingIdsByStudentId(studentId, courseId);
   if (!bookingIds.length) return [];
 
-  const [{ data: sessions, error: sessionsError }, { data: interviewMeta, error: metaError }] =
-    await Promise.all([
-      supabase
-        .from("session")
-        .select("session_id, booking_id, title, start_time, end_time, status, t_id, marked_by_teacher, session_type")
-        .in("booking_id", bookingIds)
-        .eq("session_type", "interview")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("interview_sessions")
-        .select(`
-          interview_sessions_id,
-          created_at,
+  const [
+    { data: sessions, error: sessionsError },
+    { data: interviewMeta, error: metaError },
+  ] = await Promise.all([
+    supabase
+      .from("session")
+      .select("session_id, booking_id, title, start_time, end_time, status, t_id, marked_by_teacher")
+      .in("booking_id", bookingIds)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("interview_sessions")
+      .select(`
+        interview_sessions_id,
+        created_at,
+        session_id,
+        notes,
+        interview_id,
+        session:session_id (
           session_id,
-          notes,
-          interview_id,
-          session:session_id (
-            session_id,
-            start_time,
-            end_time,
-            status,
-            marked_by_teacher,
-            booking_id
-          )
-        `)
-        .order("created_at", { ascending: false }),
-    ]);
+          start_time,
+          end_time,
+          status,
+          marked_by_teacher,
+          booking_id
+        )
+      `)
+      .order("created_at", { ascending: false }),
+  ]);
 
+  const optionalInterviewErrorCodes = new Set(["42703", "42P01", "PGRST200", "PGRST201"]);
+  if (optionalInterviewErrorCodes.has(sessionsError?.code)) return [];
+  if (optionalInterviewErrorCodes.has(metaError?.code)) return [];
   if (sessionsError) throw sessionsError;
   if (metaError) throw metaError;
 
@@ -799,19 +811,13 @@ export async function getLessonById(lessonId) {
 export async function fetchLessonProgressByUid(uid, courseId = null) {
   if (!uid) return [];
 
-  const { data: studentRow, error: studentError } = await supabase
-    .from("student")
-    .select("s_id")
-    .eq("uid", uid)
-    .maybeSingle();
-
-  if (studentError) throw studentError;
-  if (!studentRow?.s_id) return [];
+  const studentId = await getStudentIdByUid(uid);
+  if (!studentId) return [];
 
   let query = supabase
     .from("lesson_progress")
     .select("*")
-    .eq("s_id", studentRow.s_id);
+    .eq("s_id", studentId);
 
   if (courseId) {
     const lessonIds = await getLessonIdsByCourseId(courseId);

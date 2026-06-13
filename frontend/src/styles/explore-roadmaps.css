@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+.roadmaps-page,
+.roadmaps-page * {
+  box-sizing: border-box;
+}
+
+.tab-pill {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-pill:hover {
+  opacity: 0.85;
+}
+
+.quiz-cta {
+  transition: all 0.18s;
+}
+
+.quiz-cta:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.browse-link:hover {
+  color: #534ab7 !important;
+}
+
+.roadmaps-hero-inner {
+  align-items: center;
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1160px;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.roadmaps-pillars {
+  display: grid;
+  flex: 1;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.roadmaps-section {
+  background: #fff;
+  margin-bottom: 10%;
+  margin-top: 5%;
+  padding: 44px 48px;
+}
+
+.roadmaps-horizontal-grid {
+  align-items: start;
+  display: grid;
+  gap: 0;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 24px 28px;
+}
+
+.roadmaps-horizontal-col-1 {
+  border-right: 1px solid #f0f0f0;
+  padding-right: 24px;
+}
+
+.roadmaps-horizontal-col-2 {
+  border-right: 1px solid #f0f0f0;
+  padding: 0 24px;
+}
+
+.roadmaps-horizontal-col-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 24px;
+}
+
+.roadmaps-card-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roadmaps-review-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.roadmaps-review-input input {
+  min-width: 0;
+}
+
+.roadmaps-price-pill {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.roadmaps-review-section {
+  padding: 50px 48px 44px;
+}
+
+@media (max-width: 900px) {
+  .roadmaps-hero {
+    padding: 32px 18px 30px !important;
+  }
+
+  .roadmaps-hero-inner {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .roadmaps-hero-copy {
+    max-width: none !important;
+  }
+
+  .roadmaps-pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roadmaps-section {
+    padding: 32px 16px;
+  }
+
+  .roadmaps-horizontal-grid {
+    gap: 18px;
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .roadmaps-horizontal-col-1,
+  .roadmaps-horizontal-col-2,
+  .roadmaps-horizontal-col-3 {
+    border-right: 0;
+    padding: 0;
+  }
+
+  .roadmaps-horizontal-col-1,
+  .roadmaps-horizontal-col-2 {
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 18px;
+  }
+
+  .roadmaps-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmaps-review-section {
+    padding: 36px 16px 34px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .roadmaps-pillars {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmaps-tabs {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .roadmaps-category-note {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+
+  .roadmaps-category-note span {
+    margin-left: 0 !important;
+  }
+
+  .roadmaps-stats {
+    gap: 10px;
+    grid-template-columns: 1fr !important;
+  }
+
+  .roadmaps-stat {
+    border-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .roadmaps-actions {
+    flex-direction: column;
+  }
+
+  .roadmaps-actions button,
+  .roadmaps-review-input button {
+    width: 100%;
+  }
+
+  .roadmaps-review-input {
+    flex-direction: column;
+  }
+
+  .roadmaps-trust {
+    padding: 18px 16px !important;
+  }
+
+  .roadmaps-bottom-cta {
+    padding: 48px 18px !important;
+  }
+}

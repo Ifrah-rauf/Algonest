@@ -1,18 +1,7 @@
 import { useMemo, useState } from "react";
 import { normalizeGithubUrl } from "../student-dashboard/github";
 import {
-  Star,
-  Users,
-  Clock3,
-  Briefcase,
-  TrendingUp,
-  ChevronRight,
   PlayCircle,
-  Building2,
-  IndianRupee,
-  ArrowRight,
-  Globe,
-  Clock,
   Layers,
   Sparkles,
   Zap,
@@ -387,6 +376,8 @@ export default function StructuredLessonWorkspace({
                 </div>
                 
                 <textarea
+                  id={`guided-evaluation-${item.key}`}
+                  name={`guidedEvaluation-${item.key}`}
                   value={answers[item.key] || ""}
                   onChange={(event) => setAnswers((prev) => ({ ...prev, [item.key]: event.target.value }))}
                   placeholder="Analyze the architectural pattern or code logic here..."
@@ -472,13 +463,19 @@ export default function StructuredLessonWorkspace({
 
           <div className="space-y-2">
             <input
+              id="lesson-repository-url"
+              name="repositoryUrl"
               type="url"
               value={repoUrl}
               onChange={(event) => setRepoUrl(event.target.value)}
               placeholder="https://github.com/username/repo"
+              autoComplete="url"
               className="w-full text-xs p-3 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
             />
             <input
+              id="lesson-commit-sha"
+              name="commitSha"
+              type="text"
               value={commitSha}
               onChange={(event) => setCommitSha(event.target.value)}
               placeholder="Commit SHA (e.g. a1b2c3d)"

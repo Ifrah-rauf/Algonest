@@ -65,9 +65,9 @@ export default function TeacherCard({ teacher }) {
       key={teacher.t_id}
       className="w-full overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm"
     >
-      <div className="flex flex-col md:flex-row">
+      <div className="flex flex-col md:flex-row max-md:flex-row">
         {/* Visual strip */}
-        <div className="relative flex w-full shrink-0 items-center justify-between gap-3 overflow-hidden bg-gradient-to-b from-[#4B0082] to-[#6b21a8] px-4 py-4 md:w-[108px] md:flex-col md:justify-center md:px-3 md:py-6">
+        <div className="relative flex w-full shrink-0 items-center justify-between gap-3 overflow-hidden bg-gradient-to-b from-[#4B0082] to-[#6b21a8] px-4 py-4 md:w-[108px] md:flex-col md:justify-center md:px-3 md:py-6 max-md:w-[108px] max-md:justify-center max-md:px-3">
           <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-white/8" />
           <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-white/8" />
 
@@ -104,28 +104,41 @@ export default function TeacherCard({ teacher }) {
         </div>
 
         {/* Main content */}
-        <div className="min-w-0 flex-1 px-4 py-4 md:px-5 md:py-5">
+        <div className="min-w-0 flex-1 px-4 py-4 md:px-5 md:py-5 max-md:px-3 max-md:py-3">
           <div className="mb-0.5 flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-[19px] font-bold leading-snug text-[#1a1028]">
+              <h3 className="truncate text-[19px] font-bold leading-snug text-[#1a1028] max-md:text-[15px]">
                 {teacher.name}
               </h3>
-              <p className="truncate text-[12px] font-medium text-purple-700">
+              <p className="truncate text-[12px] font-medium text-purple-700 max-md:text-[11px]">
                 {teacher.teaching_style}
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[11.5px] font-medium text-purple-800">
-              <Users size={14} />
+            <div className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[11.5px] font-medium text-purple-800 max-md:gap-1 max-md:px-2 max-md:py-0.5 max-md:text-[10px]">
+              <Users size={14} className="max-md:h-3 max-md:w-3" />
               {teacher.sessions ? `${teacher.sessions}+ Sessions` : "Multiple Sessions"}
             </div>
           </div>
 
-          <p className="mb-4 text-[12px] font-medium italic text-purple-600/90">
+          <p className="mb-4 hidden text-[12px] font-medium italic text-purple-600/90 md:block">
             "{teacher.bio || "Hands-on mentorship for project execution and interview readiness"}"
           </p>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="mt-2 flex flex-wrap gap-1.5 md:hidden">
+            {(domainTags.length ? domainTags : ["Computer Architecture", "Networking"])
+              .slice(0, 3)
+              .map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10.5px] font-medium text-purple-800"
+                >
+                  {tag}
+                </span>
+              ))}
+          </div>
+
+          <div className="hidden flex-col gap-2.5 md:flex">
             <TagRow
               label="Domains"
               tags={domainTags.length ? domainTags : ["Computer Architecture", "Networking"]}
@@ -143,9 +156,9 @@ export default function TeacherCard({ teacher }) {
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-purple-50 pt-3">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-purple-50 pt-3 max-md:mt-3 max-md:pt-2">
             <button
-              className="rounded-lg bg-[var(--algo-purple)] px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-purple-800"
+              className="rounded-lg bg-[var(--algo-purple)] px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-purple-800 max-md:py-1.5 max-md:text-[11px]"
               onClick={openProfile}
             >
               View Profile
@@ -154,7 +167,7 @@ export default function TeacherCard({ teacher }) {
         </div>
 
         {/* Slim action rail */}
-        <div className="border-t border-purple-50 px-4 py-4 md:w-[180px] md:border-l md:border-t-0 md:px-3 md:py-5">
+        <div className="border-t border-purple-50 px-4 py-4 md:w-[180px] md:border-l md:border-t-0 md:px-3 md:py-5 max-md:hidden">
           <div className="flex h-full flex-col gap-2">
             <ActionChip>GitHub + Resume Review</ActionChip>
             <ActionChip>Interview Prep</ActionChip>

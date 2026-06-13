@@ -62,7 +62,7 @@ export default function LessonCard({
             const checkpointReady = Boolean(cpAfterNext && isDone && !checkpointProgress);
 
   return (
-              <div key={lesson.lesson_id} style={isLast ? { marginTop: 24, marginBottom: 24 } : {}}>
+              <div key={lesson.lesson_id} className="road-lesson-shell" style={isLast ? { marginTop: 24, marginBottom: 24 } : {}}>
                 {isLast && (
                   <div style={{
                     fontSize: 12,
@@ -82,7 +82,7 @@ export default function LessonCard({
                 )}
 
                 {/* ── Outer card — NOT clickable ── */}
-                <div style={{
+                <div className="road-lesson-card" style={{
                   background: isLast ? "#fff" : (isLocked ? "#faf8fd" : "#fff"),
                   border: isLast 
                     ? (isDone ? "2.5px solid #059669" : "2.5px solid #6b46c1")
@@ -99,13 +99,14 @@ export default function LessonCard({
                 }}>
 
                   {/* Row: lesson info + Ask AI — full horizontal flex */}
-                  <div style={{
+                  <div className="road-lesson-row" style={{
                     display: "flex", alignItems: "center",
                     padding: isLast ? "20px 24px" : "14px 16px", gap: 12,
                   }}>
 
                     {/* Left: badge + text — clickable zone for toolbox */}
                     <div
+                      className="road-lesson-main"
                       onClick={() => !isLocked && setOpenToolbox(isOpen ? null : lesson.lesson_id)}
                       style={{
                         display: "flex", alignItems: "center", gap: 14,
@@ -162,9 +163,10 @@ export default function LessonCard({
                     </div>
 
                     {/* Right: Ask AI button + chevron — completely outside clickable zone */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <div className="road-lesson-actions" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                       {!isLocked && (
                         <button
+                          className="road-lesson-action-btn"
                           onClick={e => askAi(e, lesson)}
                           style={{
                             fontSize: 10, fontFamily: "monospace", fontWeight: 700,
@@ -186,6 +188,7 @@ export default function LessonCard({
                         user?.uid ? (
                           canUseAI ? (
                             <button
+                              className="road-lesson-action-btn"
                               onClick={e => openLessonQuiz(e, lesson.lesson_id)}
                               style={{
                                 fontSize: 10, fontFamily: "monospace", fontWeight: 700,
@@ -201,6 +204,7 @@ export default function LessonCard({
                             </button>
                           ) : (
                             <a
+                              className="road-lesson-action-btn"
                               href="/#pricing"
                               style={{
                                 fontSize: 10,
@@ -220,6 +224,7 @@ export default function LessonCard({
                           )
                         ) : (
                           <a
+                            className="road-lesson-action-btn"
                             href="/signup"
                             style={{
                               fontSize: 10,
@@ -242,6 +247,7 @@ export default function LessonCard({
                       {/* Chevron — also outside click zone, just visual */}
                       {!isLocked && (
                         <div
+                          className="road-lesson-chevron"
                           onClick={() => setOpenToolbox(isOpen ? null : lesson.lesson_id)}
                           style={{
                             cursor: "pointer", padding: "4px",
@@ -409,8 +415,9 @@ export default function LessonCard({
                       )}
 
                       {isActive && !isDone && (
-                        <div style={{ padding: "10px 18px 14px", display: "flex", gap: 8 }}>
+                        <div className="road-lesson-toolbox-actions" style={{ padding: "10px 18px 14px", display: "flex", gap: 8 }}>
                           <button
+                            className="road-lesson-action-btn"
                             onClick={e => askAi(e, lesson)}
                             style={{
                               fontSize: 11, fontFamily: "monospace", fontWeight: 600,
@@ -426,6 +433,7 @@ export default function LessonCard({
                           {user?.uid ? (
                             canUseAI ? (
                               <button
+                                className="road-lesson-action-btn"
                                 onClick={e => openLessonQuiz(e, lesson.lesson_id)}
                                 style={{
                                   fontSize: 11, fontFamily: "monospace", fontWeight: 700,
@@ -438,6 +446,7 @@ export default function LessonCard({
                               </button>
                             ) : (
                               <a
+                                className="road-lesson-action-btn"
                                 href="/#pricing"
                                 style={{
                                   fontSize: 11,
@@ -457,6 +466,7 @@ export default function LessonCard({
                             )
                           ) : (
                             <a
+                              className="road-lesson-action-btn"
                               href="/signup"
                               style={{
                                 fontSize: 11,
@@ -484,13 +494,13 @@ export default function LessonCard({
 
                 {/* Checkpoint banner */}
                 {cpAfterNext && (
-                  <div style={{
+                  <div className="road-checkpoint-banner" style={{
                     display: "flex", alignItems: "stretch",
                     margin: "8px 0", borderRadius: 10, overflow: "hidden",
                     border: "1.5px solid #fde68a", background: "#fffbeb",
                   }}>
                     <div style={{ width: 4, background: "#f6c90e", flexShrink: 0 }} />
-                    <div style={{ flex: 1, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                    <div className="road-checkpoint-content" style={{ flex: 1, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
                       <span style={{ fontSize: 20 }}>⚑</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "#78350f" }}>{cpAfterNext.title}</div>
@@ -505,6 +515,7 @@ export default function LessonCard({
                       </div>
                       {checkpointReady ? (
                         <button
+                          className="road-lesson-action-btn"
                           onClick={() => goToTeacherSelection({
                             kind: "checkpoint",
                             id: cpAfterNext.checkpoint_id,

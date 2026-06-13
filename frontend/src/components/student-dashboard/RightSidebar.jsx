@@ -1,4 +1,3 @@
-import { C } from "./constants";
 import { SectionCard } from "./ui";
 import { Link } from "react-router-dom";
 
@@ -43,21 +42,20 @@ function CourseAds({ courses, activeCourse, navigate }) {
               key={course.course_id || course.title}
               type="button"
               onClick={() => navigate("/roadmaps")}
-              className="w-full rounded-3xl border p-4 text-left transition hover:border-purple-200 hover:bg-purple-50"
-              style={{ borderColor: C.border, background: C.white }}
+              className="w-full rounded-3xl border border-[var(--dash-border)] bg-white p-4 text-left transition hover:border-purple-200 hover:bg-purple-50"
             >
               <div className="flex items-start gap-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(107,70,193,0.14)] text-sm font-bold text-[var(--dash-purple)]">
                   {(course.domain || course.title || "A").charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <div className="line-clamp-2 text-sm font-semibold" style={{ color: C.ink }}>
+                  <div className="line-clamp-2 text-sm font-semibold text-[var(--dash-ink)]">
                     {course.title || "New course"}
                   </div>
                   <div className="mt-1 text-xs font-medium text-[var(--dash-purple)]">
                     {course.domain || "AlgoNest course"}
                   </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5" style={{ color: C.muted }}>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--dash-muted)]">
                     {course.description || "Explore a new guided roadmap with mentor support and project checkpoints."}
                   </p>
                 </div>
@@ -66,7 +64,7 @@ function CourseAds({ courses, activeCourse, navigate }) {
           ))}
         </div>
       ) : (
-        <div className="text-sm" style={{ color: C.muted }}>
+        <div className="text-sm text-[var(--dash-muted)]">
           New course recommendations will appear here soon.
         </div>
       )}
@@ -86,13 +84,12 @@ function ProjectPicks({ projectSuggestions, navigate }) {
                 key={projectId || project.project_title}
                 type="button"
                 onClick={() => navigate(`/projects/${projectId}`)}
-                className="min-w-0 w-full rounded-3xl border border-transparent bg-[var(--dash-white)] p-4 text-left transition hover:border-purple-200 hover:bg-purple-50"
-                style={{ borderColor: C.border }}
+                className="w-full min-w-0 rounded-3xl border border-[var(--dash-border)] bg-[var(--dash-white)] p-4 text-left transition hover:border-purple-200 hover:bg-purple-50"
               >
-                <div className="line-clamp-2 text-sm font-semibold" style={{ color: C.ink }}>
+                <div className="line-clamp-2 text-sm font-semibold text-[var(--dash-ink)]">
                   {project.project_title}
                 </div>
-                <div className="mt-2 text-xs" style={{ color: C.muted }}>
+                <div className="mt-2 text-xs text-[var(--dash-muted)]">
                   {project.domain || "Project"} - {project.level || "Intermediate"}
                 </div>
               </button>
@@ -101,7 +98,7 @@ function ProjectPicks({ projectSuggestions, navigate }) {
           <div className="text-xs text-[var(--dash-purple)]">See more projects in the Explore tab.</div>
         </div>
       ) : (
-        <div className="text-sm" style={{ color: C.muted }}>
+        <div className="text-sm text-[var(--dash-muted)]">
           Project recommendations will appear here once your active track is loaded.
         </div>
       )}
@@ -112,7 +109,7 @@ function ProjectPicks({ projectSuggestions, navigate }) {
 function MentorList({ mentors }) {
   return (
     <div>
-      <div className="mb-3 text-2xl font-bold tracking-tight sm:text-[28px]" style={{ color: C.ink }}>
+      <div className="mb-3 text-2xl font-bold tracking-tight text-[var(--dash-ink)] sm:text-[28px]">
         Suggested Mentors
       </div>
       <div className="space-y-4">
@@ -136,28 +133,31 @@ function MentorList({ mentors }) {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="truncate text-xl font-bold tracking-tight sm:text-2xl" style={{ color: C.ink }}>
+                        <div className="truncate text-xl font-bold tracking-tight text-[var(--dash-ink)] sm:text-2xl">
                           {mentor.name}
                         </div>
-                        {mentor.verified ? <div className="h-2.5 w-2.5 rounded-full" style={{ background: C.purple }} /> : null}
+                        {mentor.verified ? <div className="h-2.5 w-2.5 rounded-full bg-[var(--dash-purple)]" /> : null}
                       </div>
-                      <div className="text-sm" style={{ color: C.muted }}>
+                      <div className="text-sm text-[var(--dash-muted)]">
                         @{(mentor.name || "mentor").replace(/\s+/g, "").toLowerCase()}
                       </div>
-                      <div className="mt-1 text-sm" style={{ color: C.purple }}>
+                      <div className="mt-1 text-sm text-[var(--dash-purple)]">
                         {mentor.experience ? `SDE ${mentor.experience}` : "Mentor"}
                       </div>
                     </div>
                   </div>
 
-                  <p className="mt-4 text-sm leading-7" style={{ color: C.muted }}>
+                  <p className="mt-4 text-sm leading-7 text-[var(--dash-muted)]">
                     {mentor.bio ||
                       "Experienced mentor available for roadmap support, accountability, and checkpoint guidance."}
                   </p>
                   {tags.length ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {tags.map((tag) => (
-                        <span key={tag} className="rounded-full border px-3 py-1 text-xs font-medium" style={{ borderColor: C.border, color: C.ink, background: C.bg }}>
+                        <span
+                          key={tag}
+                          className="rounded-full border border-[var(--dash-border)] bg-[var(--dash-bg)] px-3 py-1 text-xs font-medium text-[var(--dash-ink)]"
+                        >
                           {tag}
                         </span>
                       ))}
@@ -169,7 +169,7 @@ function MentorList({ mentors }) {
           })
         ) : (
           <SectionCard>
-            <div className="text-sm" style={{ color: C.muted }}>
+            <div className="text-sm text-[var(--dash-muted)]">
               No mentors were returned for the active plan yet.
             </div>
           </SectionCard>
@@ -185,7 +185,6 @@ export default function RightSidebar({ activeCourse, courses, mentors, projectSu
       <CourseAds courses={courses} activeCourse={activeCourse} navigate={navigate} />
       <MentorList mentors={mentors} />
       <ProjectPicks projectSuggestions={projectSuggestions} navigate={navigate} />
-      
     </div>
   );
 }

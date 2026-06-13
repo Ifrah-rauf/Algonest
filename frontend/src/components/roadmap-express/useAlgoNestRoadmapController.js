@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -71,7 +71,7 @@ export default function useAlgoNestRoadmapController() {
     }
   }
 
-  async function loadRoadmapData() {
+  const loadRoadmapData = useCallback(async function loadRoadmapData() {
     try {
       const requests = [
         fetch(`http://localhost:5000/api/lessons/lessons?courseId=${courseId}`),
@@ -185,11 +185,11 @@ export default function useAlgoNestRoadmapController() {
     } catch (err) {
       console.error("Failed to load roadmap data:", err);
     }
-  }
+  }, [courseId, user?.uid]);
 
   useEffect(() => {
     loadRoadmapData();
-  }, [user?.uid, courseId]);
+  }, [loadRoadmapData]);
 
   // track AI input count for logged-in users with no previous bookings
   useEffect(() => {

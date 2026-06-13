@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../components/student-dashboard/constants";
 import { isGithubUrl, normalizeGithubUrl } from "../components/student-dashboard/github";
+import "../styles/explore-roadmaps.css";
 
 const P = "#534AB7";
 const Y = "#f6c90e";
@@ -217,9 +218,9 @@ function StackCardHorizontal({ stack, onStart, onBook }) {
       }}
     >
       <div style={{ height: 4, background: `linear-gradient(90deg, ${P}, ${Y})` }} />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0, padding: "24px 28px", alignItems: "start" }}>
+      <div className="roadmaps-horizontal-grid">
         {/* Col 1: identity */}
-        <div style={{ paddingRight: 24, borderRight: "1px solid #f0f0f0" }}>
+        <div className="roadmaps-horizontal-col-1">
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
             <Badge bg={stack.badgeBg}>{stack.badge}</Badge>
             {stack.preview && (
@@ -244,7 +245,7 @@ function StackCardHorizontal({ stack, onStart, onBook }) {
         </div>
 
         {/* Col 2: skills + projects */}
-        <div style={{ padding: "0 24px", borderRight: "1px solid #f0f0f0" }}>
+        <div className="roadmaps-horizontal-col-2">
           <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Skills</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 16 }}>
             {stack.skills.map((sk, i) => (
@@ -260,7 +261,7 @@ function StackCardHorizontal({ stack, onStart, onBook }) {
         </div>
 
         {/* Col 3: companies + difficulty + CTA */}
-        <div style={{ paddingLeft: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="roadmaps-horizontal-col-3">
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Companies hiring this</p>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -270,7 +271,7 @@ function StackCardHorizontal({ stack, onStart, onBook }) {
             </div>
           </div>
           <DiffDots n={stack.diffN} label={stack.difficulty} />
-          <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+          <div className="roadmaps-actions" style={{ display: "flex", gap: 8, marginTop: "auto" }}>
             <button
               disabled={locked}
               onClick={() => !locked && onStart(stack)}
@@ -328,13 +329,13 @@ function StackCardVertical({ stack, onStart, onBook }) {
           <p style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.6 }}>{stack.desc}</p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", background: "#f9fafb", borderRadius: 10, padding: "12px 14px" }}>
+        <div className="roadmaps-stats" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", background: "#f9fafb", borderRadius: 10, padding: "12px 14px" }}>
           {[
             { val: stack.salary, label: "Salary", color: "#059669" },
             { val: stack.duration, label: "Duration", color: DARK },
             { val: stack.sessions, label: "Sessions", color: P },
           ].map((s, i) => (
-            <div key={i} style={{ paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? "1px solid #e5e7eb" : "none" }}>
+            <div className="roadmaps-stat" key={i} style={{ paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? "1px solid #e5e7eb" : "none" }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>{s.val}</div>
               <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 1 }}>{s.label}</div>
             </div>
@@ -370,7 +371,7 @@ function StackCardVertical({ stack, onStart, onBook }) {
 
         <DiffDots n={stack.diffN} label={stack.difficulty} />
 
-        <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
+        <div className="roadmaps-actions" style={{ marginTop: "auto", display: "flex", gap: 8 }}>
           <button
             disabled={locked}
             onClick={() => !locked && onStart(stack)}
@@ -486,22 +487,11 @@ export default function AlgoNestPage() {
   const filtered = allStacks.filter((s) => s.type === activeCat);
 
   return (
-    <div style={{ fontFamily: "'Syne', 'DM Sans', sans-serif", background: "#fff", color: DARK, minHeight: "100vh" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; }
-        .tab-pill { transition: all 0.15s; cursor: pointer; }
-        .tab-pill:hover { opacity: 0.85; }
-        .quiz-cta:hover { opacity: 0.88; transform: translateY(-1px); }
-        .quiz-cta { transition: all 0.18s; }
-        .browse-link:hover { color: ${P} !important; }
-      `}</style>
-
+    <div className="roadmaps-page" style={{ fontFamily: "'Syne', 'DM Sans', sans-serif", background: "#fff", color: DARK, minHeight: "100vh", overflowX: "hidden" }}>
       <Navbar />
 
       {/* ─── HERO: compressed, punchy ─── */}
-      <section style={{ background: P, position: "relative", overflow: "hidden", padding: "40px 48px 36px" }}>
+      <section className="roadmaps-hero" style={{ background: P, position: "relative", overflow: "hidden", padding: "40px 48px 36px" }}>
         {/* Decorative translucent circles */}
         <div style={{ position: "absolute", top: -80, left: -80, width: 340, height: 340, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: 20, left: 180, width: 160, height: 160, borderRadius: "50%", background: "rgba(246,201,14,0.10)", pointerEvents: "none" }} />
@@ -510,9 +500,9 @@ export default function AlgoNestPage() {
         <div style={{ position: "absolute", bottom: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "50%", right: 280, width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.07)", pointerEvents: "none" }} />
  
-        <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 40, position: "relative", zIndex: 1 }}>
+        <div className="roadmaps-hero-inner">
           {/* Left: headline + price */}
-          <div style={{ flex: "0 0 auto", maxWidth: 520 }}>
+          <div className="roadmaps-hero-copy" style={{ flex: "0 0 auto", maxWidth: 520 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "4px 12px", marginBottom: 16 }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: Y }} />
               <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: 1.2, textTransform: "uppercase" }}>Execution-first mentorship</span>
@@ -526,7 +516,7 @@ export default function AlgoNestPage() {
             <p style={{ fontSize: 15, color: "rgba(255,255,255,0.70)", lineHeight: 1.6, marginBottom: 24, fontFamily: "'DM Sans'" }}>
               Work on your own real project, guided by a structured roadmap and vouched for by a real mentor.
             </p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.30)", color: "#fff", borderRadius: 999, padding: "11px 18px", border: "1px solid rgba(255,255,255,0.12)" }}>
+            <div className="roadmaps-price-pill" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.30)", color: "#fff", borderRadius: 999, padding: "11px 18px", border: "1px solid rgba(255,255,255,0.12)" }}>
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.50)", fontFamily: "'DM Sans'" }}>Everything below —</span>
               <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5 }}>₹9,999</span>
               <span style={{ fontSize: 10, fontWeight: 700, background: Y, color: DARK, borderRadius: 100, padding: "4px 10px", whiteSpace: "nowrap" }}>3–5 months · Mentor-verified</span>
@@ -534,7 +524,7 @@ export default function AlgoNestPage() {
           </div>
  
           {/* Right: pillars as compact grid */}
-          <div style={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <div className="roadmaps-pillars">
             {pillars.map((p, i) => (
               <div key={i} style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 12, padding: "14px 14px", backdropFilter: "blur(4px)" }}>
                 <div style={{ fontSize: 18, marginBottom: 6 }}>{p.icon}</div>
@@ -547,7 +537,7 @@ export default function AlgoNestPage() {
       </section>
 
       {/* ─── CATEGORY TABS + STACK CARDS ─── */}
-      <section style={{ marginTop:"5%", marginBottom:"10%",padding: "44px 48px", background: "#fff" }}>
+      <section className="roadmaps-section">
         <div style={{ maxWidth: 1160, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
             <div>
@@ -555,7 +545,7 @@ export default function AlgoNestPage() {
               <h2 style={{ fontSize: 30, fontWeight: 800, letterSpacing: -1, lineHeight: 1.05 }}>What are you building?</h2>
             </div>
             {/* Tab pills */}
-            <div style={{ display: "inline-flex", background: "#f3f4f6", borderRadius: 999, padding: 4, gap: 4 }}>
+            <div className="roadmaps-tabs" style={{ display: "inline-flex", background: "#f3f4f6", borderRadius: 999, padding: 4, gap: 4 }}>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -583,7 +573,7 @@ export default function AlgoNestPage() {
 
           {/* Active category description */}
           {activeCat && (
-            <div style={{ background: LP, border: `1px solid ${P}22`, borderRadius: 12, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14 }}>
+            <div className="roadmaps-category-note" style={{ background: LP, border: `1px solid ${P}22`, borderRadius: 12, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: P }}>
                   {categories.find((c) => c.id === activeCat)?.tagline}
@@ -604,7 +594,7 @@ export default function AlgoNestPage() {
           ) : filtered.length === 1 ? (
             <StackCardHorizontal stack={filtered[0]} onStart={handleStart} onBook={handleBook} />
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 20 }}>
+            <div className="roadmaps-card-grid">
               {filtered.map((stack, i) => (
                 <StackCardVertical key={`${stack.type}-${stack.course_id || stack.id || i}`} stack={stack} onStart={handleStart} onBook={handleBook} />
               ))}
@@ -615,8 +605,8 @@ export default function AlgoNestPage() {
 
       {/* ─── REVIEW SECTION ─── */}
       <hr/>
-      <section style={{padding: "50px 48px 44px", background: "#1e1e1e"}}>
-        <h1 className={"text-4xl font-bold color-gray-100 mb-4"} style={{ color: "#fff" }}>#Generate your project's own Outline</h1>
+      <section className="roadmaps-review-section" style={{ background: "#1e1e1e"}}>
+        <h1 className={"mb-4 text-2xl font-bold color-gray-100 sm:text-4xl"} style={{ color: "#fff" }}>#Generate your project's own Outline</h1>
         <div style={{ maxWidth: 1160, margin: "0 auto" }}>
           <div style={{background: "#fdf8ed", border: "2px solid rgba(10,10,30,0.12)", borderRadius: 18, padding: "24px 28px", display: "flex", gap: 40, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 260 }}>
@@ -629,14 +619,16 @@ export default function AlgoNestPage() {
                 Submit your GitHub project. Our mentors review architecture, code quality, and roadmap potential — manually.
               </p>
             </div>
-            <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="roadmaps-review-input">
                 <input
+                  id="github-review-link"
+                  name="githubReviewLink"
                   type="text"
                   placeholder="Paste GitHub repo or profile link"
                   value={githubLink}
                   onChange={(e) => { setGithubLink(e.target.value); if (reviewStatus) setReviewStatus(null); }}
-                  style={{ flex: 1, background: "#fff", border: "1px solid #dbe2ee", borderRadius: 10, padding: "11px 14px", color: DARK, fontSize: 12, outline: "none", fontFamily: "'DM Sans'" }}
+                  style={{ flex: 1, minWidth: 0, background: "#fff", border: "1px solid #dbe2ee", borderRadius: 10, padding: "11px 14px", color: DARK, fontSize: 12, outline: "none", fontFamily: "'DM Sans'" }}
                 />
                 <button
                   type="button"
@@ -659,7 +651,7 @@ export default function AlgoNestPage() {
       </section>
 
       {/* ─── TRUST BAR ─── */}
-      <section style={{ background: "#fafafa", borderTop: "1px solid #ececec", borderBottom: "1px solid #ececec", padding: "22px 48px" }}>
+      <section className="roadmaps-trust" style={{ background: "#fafafa", borderTop: "1px solid #ececec", borderBottom: "1px solid #ececec", padding: "22px 48px" }}>
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
           {[
             "No classroom needed",
@@ -679,7 +671,7 @@ export default function AlgoNestPage() {
       </section>
 
       {/* ─── BOTTOM CTA ─── */}
-      <section style={{ background: P, padding: "64px 48px", textAlign: "center" }}>
+      <section className="roadmaps-bottom-cta" style={{ background: P, padding: "64px 48px", textAlign: "center" }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 16, fontFamily: "'DM Sans'" }}>Not sure where to start?</p>
         <h2 style={{ color: "#fff", fontSize: "clamp(32px,4vw,48px)", fontWeight: 800, letterSpacing: -1.8, marginBottom: 12, lineHeight: 1.05 }}>
           Take the quiz.<br />
@@ -688,7 +680,12 @@ export default function AlgoNestPage() {
         <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, marginBottom: 32, fontFamily: "'DM Sans'", maxWidth: 420, margin: "0 auto 32px" }}>
           2 minutes. Tell us your background and goal. We'll show you the path, the projects, and the mentor that fits.
         </p>
-        <button className="quiz-cta" style={{ background: Y, color: DARK, border: "none", padding: "15px 36px", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>
+        <button
+          type="button"
+          className="quiz-cta"
+          onClick={() => navigate("/careerQuiz")}
+          style={{ background: Y, color: DARK, border: "none", padding: "15px 36px", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer" }}
+        >
           Take Career Quiz →
         </button>
         <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 16, fontFamily: "'DM Sans'" }}>Free · No sign-up · 2 minutes</p>

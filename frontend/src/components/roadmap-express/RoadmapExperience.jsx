@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import ChatBox from "../chatbox";
 import LessonQuiz from "../LessonQuiz";
 import RoadmapBookingOverview from "../../pages/roadmap_booking_overview";
@@ -7,11 +8,104 @@ import InterviewMilestones from "./InterviewMilestones";
 import LessonCard from "./LessonCard";
 import RoadmapSidebar from "./RoadmapSidebar";
 import RoadmapTopBar from "./RoadmapTopBar";
+
+function CheckpointSuccessBanner({ checkpointSuccess, onDismiss }) {
+  if (!checkpointSuccess) return null;
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-emerald-900 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="text-xs font-extrabold">
+          Session linked to {checkpointSuccess.title}
+        </div>
+        <div className="mt-1 break-all font-mono text-[11px]">
+          session_id: {checkpointSuccess.sessionId || "pending"}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="self-start text-sm font-bold text-emerald-900 sm:self-auto"
+      >
+        Dismiss
+      </button>
+    </div>
+  );
+}
+
+function RoadmapSummaryCard({
+  checkpoints,
+  completedCount,
+  courseId,
+  dashboardData,
+  hasActiveBooking,
+  hasDomain,
+  interviews,
+  totalLessons,
+}) {
+  const cards = [
+    {
+      label: "Lessons",
+      value: `${completedCount}/${totalLessons}`,
+      className: "text-[var(--road-purple)]",
+    },
+    {
+      label: "Checkpoints",
+      value: checkpoints.length,
+      className: "text-[var(--road-amber)]",
+    },
+    {
+      label: "Interviews",
+      value: interviews.length,
+      className: "text-[var(--road-green)]",
+    },
+    {
+      label: "AI Access",
+      value: hasDomain ? (hasActiveBooking ? "Unlocked" : "Preview") : "Locked",
+      className: hasDomain
+        ? hasActiveBooking
+          ? "text-[var(--road-green)]"
+          : "text-[var(--road-purple)]"
+        : "text-red-600",
+    },
+  ];
+
+  return (
+    <section className="road-card rounded-xl p-4 sm:p-5">
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--road-subtle)]">
+        Node.js + Express - Backend Developer Path
+      </div>
+      <h1 className="text-2xl font-extrabold leading-tight text-[var(--road-ink)]">
+        Your Learning Roadmap
+      </h1>
+      <p className="mt-1.5 font-mono text-xs leading-5 text-[var(--road-muted)]">
+        Project:{" "}
+        <strong className="text-[var(--road-purple)]">
+          {dashboardData?.profile?.project_title || `Course #${courseId}`}
+        </strong>{" "}
+        - Complete lessons in order. Click a lesson to see topics.
+      </p>
+
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((item) => (
+          <div key={item.label} className="road-card-soft rounded-lg px-3 py-2.5">
+            <div className={`text-lg font-extrabold leading-tight ${item.className}`}>
+              {item.value}
+            </div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[#8b7bb8]">
+              {item.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function RoadmapExperience({
   activeCourseData,
   activeLessonId,
   activeTab,
-  allLessonsCompleted,
   askAi,
   askSeededLessonQuestion,
   askedLessonId,
@@ -30,7 +124,6 @@ export default function RoadmapExperience({
   courseId,
   dashboardData,
   expandedTopics,
-  finalCheckpointStatus,
   getLockedNotice,
   goToTeacherSelection,
   handleUserAIMessage,
@@ -46,7 +139,6 @@ export default function RoadmapExperience({
   interviewTwoProgress,
   interviewTwoStatus,
   interviewTwoUnlocked,
-  isAuthenticated,
   lessonTopics,
   lessons,
   markLessonComplete,
@@ -67,20 +159,25 @@ export default function RoadmapExperience({
   setPendingMessage,
   setSidebarOpen,
   sidebarOpen,
-  terminalCheckpoint,
-  terminalCheckpointProgress,
   totalLessons,
   user,
 }) {
-  return (
-    <div style={{
-      fontFamily: "'Trebuchet MS', sans-serif",
-      background: "linear-gradient(180deg, #f8f6f2 0%, #f4f0ea 100%)",
-      minHeight: "100vh",
-      display: "flex", flexDirection: "column",
-      overflow: "hidden", height: "100vh",
-    }}>
+  const chatPanelRef = useRef(null);
 
+  useEffect(() => {
+    if (!pendingMessage?.trim()) return;
+    if (typeof window === "undefined" || window.innerWidth >= 1024) return;
+
+    window.requestAnimationFrame(() => {
+      chatPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  }, [pendingMessage]);
+
+  return (
+    <div className="roadmap-express flex min-h-screen flex-col overflow-visible lg:h-screen lg:overflow-hidden">
       <RoadmapTopBar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -90,208 +187,119 @@ export default function RoadmapExperience({
         totalLessons={totalLessons}
       />
 
-      {/* ── BODY ── */}
       {activeTab === "roadmap" ? (
-      <div style={{
-        flex: 1,
-        display: "flex",
-        gap: 18,
-        overflow: "hidden",
-        position: "relative",
-        padding: "18px 22px 22px",
-        maxWidth: 1520,
-        width: "100%",
-        margin: "0 auto",
-      }}>
-
-        <RoadmapSidebar
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          user={user}
-          completedCount={completedCount}
-          totalLessons={totalLessons}
-        />
-        {/* ── LEFT: ROADMAP 60% ── */}
-        <div style={{
-          width: "60%",
-          minWidth: 0,
-          overflowY: "auto",
-          padding: "0",
-          display: "flex", flexDirection: "column", gap: 12,
-        }}>
-          {checkpointSuccess && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              padding: "14px 16px",
-              background: "#ecfdf5",
-              border: "1px solid #a7f3d0",
-              borderRadius: 10,
-              color: "#065f46",
-            }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800 }}>
-                  Session linked to {checkpointSuccess.title}
-                </div>
-                <div style={{ fontSize: 11, fontFamily: "monospace", marginTop: 3 }}>
-                  session_id: {checkpointSuccess.sessionId || "pending"}
-                </div>
-              </div>
-              <button
-                onClick={() => setCheckpointSuccess(null)}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  color: "#065f46",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          <div style={{ marginBottom: 8 }}>
-            <div style={{
-              background: "#fff",
-              border: "1px solid #e8e4f0",
-              borderRadius: 12,
-              padding: 18,
-              boxShadow: "0 12px 28px rgba(26,16,53,0.05)",
-              marginBottom: 14,
-            }}>
-              <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>
-                Node.js + Express · Backend Developer Path
-              </div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1a1035", margin: 0, lineHeight: 1.2 }}>
-                Your Learning Roadmap
-              </h1>
-              <p style={{ fontSize: 12, color: "#7b70a0", margin: "6px 0 0", fontFamily: "monospace" }}>
-                Project: <strong style={{ color: "#6b46c1" }}>{dashboardData?.profile?.project_title || `Course #${courseId}`}</strong> · Complete lessons in order. Click a lesson to see topics.
-              </p>
-
-              <div style={{
-                marginTop: 16,
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 10,
-              }}>
-                {[
-                  { label: "Lessons", value: `${completedCount}/${totalLessons}`, color: "#6b46c1" },
-                  { label: "Checkpoints", value: `${checkpoints.length}`, color: "#b45309" },
-                  { label: "Interviews", value: `${interviews.length}`, color: "#059669" },
-                  { label: "AI Access", value: hasDomain ? (hasActiveBooking ? "Unlocked" : "Preview") : "Locked", color: hasDomain ? (hasActiveBooking ? "#059669" : "#6b46c1") : "#dc2626" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    style={{
-                      background: "#faf9ff",
-                      border: "1px solid #ece7fb",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                    }}
-                  >
-                    <div style={{ fontSize: 18, fontWeight: 800, color: item.color, lineHeight: 1.1 }}>
-                      {item.value}
-                    </div>
-                    <div style={{ fontSize: 10, color: "#8b7bb8", fontFamily: "monospace", marginTop: 4, textTransform: "uppercase", letterSpacing: 1 }}>
-                      {item.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {lessons.length === 0 && (
-            <div style={{ fontSize: 12, color: "#9991b8", fontFamily: "monospace", padding: "20px 0" }}>
-              Loading roadmap...
-            </div>
-          )}
-
-          {lessons.map((lesson, idx) => (
-            <LessonCard
-              key={lesson.lesson_id}
-              lesson={lesson}
-              idx={idx}
-              lessons={lessons}
-              isLast={idx === lessons.length - 1}
-              progressMap={progressMap}
-              checkpointMap={checkpointMap}
-              checkpointProgressMap={checkpointProgressMap}
-              hasActiveBooking={hasActiveBooking}
-              user={user}
-              openToolbox={openToolbox}
-              lessonTopics={lessonTopics}
-              askedLessonId={askedLessonId}
-              checkpoints={checkpoints}
-              courseId={courseId}
-              canUseAI={canUseAI}
-              expandedTopics={expandedTopics}
-              setOpenToolbox={setOpenToolbox}
-              askAi={askAi}
-              openLessonQuiz={openLessonQuiz}
-              askSeededLessonQuestion={askSeededLessonQuestion}
-              normalizeTopicResources={normalizeTopicResources}
-              setExpandedTopics={setExpandedTopics}
-              goToTeacherSelection={goToTeacherSelection}
-              onProgressUpdated={refreshLessonProgress}
-            />
-          ))}
-
-          <InterviewMilestones
-            interviewOne={interviewOne}
-            interviewTwo={interviewTwo}
-            goToTeacherSelection={goToTeacherSelection}
-            interviewOneStatus={interviewOneStatus}
-            interviewOneProgress={interviewOneProgress}
-            interviewOneUnlocked={interviewOneUnlocked}
-            interviewTwoStatus={interviewTwoStatus}
-            interviewTwoProgress={interviewTwoProgress}
-            interviewTwoUnlocked={interviewTwoUnlocked}
+        <main className="relative mx-auto grid w-full max-w-[1520px] flex-1 gap-4 overflow-visible px-3 py-4 sm:px-5 lg:grid-cols-[minmax(0,3fr)_minmax(420px,2fr)] lg:overflow-hidden">
+          <RoadmapSidebar
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            user={user}
+            completedCount={completedCount}
+            totalLessons={totalLessons}
           />
-        </div>
 
-        {/* ── RIGHT: AI COMPANION 40% ── */}
-        <ChatBox
-          systemPrompt={COMPANION_SYSTEM}
-          contextTags={[
-            dashboardData?.profile?.project_title || "My Project",
-            resolvedDomain || "Tech Stack",
-            "AlgoNest"
-          ]}
-          initialMessage={`Hey — I'm your Build Companion. I see you're working on "${dashboardData?.profile?.project_title || 'your project'}". What are you trying to figure out right now?`}
-          pendingMessage={pendingMessage}
-          onPendingConsumed={() => setPendingMessage("")}
-          lessonId={activeLessonId}
-          courseId={courseId}
-          isLocked={chatIsLocked}
-          lockedTitle={chatLockedTitle}
-          lockedDescription={chatLockedDescription}
-          lockedCtaHref={chatLockedCta}
-          lockedFooter={getLockedNotice(user)}
-          onUserMessageSent={handleUserAIMessage}
-        />
+          <section className="road-scrollbar min-w-0 space-y-3 overflow-visible pr-0 lg:overflow-y-auto lg:pr-1">
+            <CheckpointSuccessBanner
+              checkpointSuccess={checkpointSuccess}
+              onDismiss={() => setCheckpointSuccess(null)}
+            />
 
-        <LessonQuiz
-          lessonId={quizLessonId}
-          isOpen={quizLessonId !== null}
-          onClose={closeLessonQuiz}
-          onPassed={markLessonComplete}
-          onResultSaved={refreshLessonProgress}
-        />
-      </div>
+            <RoadmapSummaryCard
+              checkpoints={checkpoints}
+              completedCount={completedCount}
+              courseId={courseId}
+              dashboardData={dashboardData}
+              hasActiveBooking={hasActiveBooking}
+              hasDomain={hasDomain}
+              interviews={interviews}
+              totalLessons={totalLessons}
+            />
+
+            {lessons.length === 0 ? (
+              <div className="px-1 py-5 font-mono text-xs text-[var(--road-subtle)]">
+                Loading roadmap...
+              </div>
+            ) : null}
+
+            {lessons.map((lesson, idx) => (
+              <LessonCard
+                key={lesson.lesson_id}
+                lesson={lesson}
+                idx={idx}
+                lessons={lessons}
+                isLast={idx === lessons.length - 1}
+                progressMap={progressMap}
+                checkpointMap={checkpointMap}
+                checkpointProgressMap={checkpointProgressMap}
+                hasActiveBooking={hasActiveBooking}
+                user={user}
+                openToolbox={openToolbox}
+                lessonTopics={lessonTopics}
+                askedLessonId={askedLessonId}
+                checkpoints={checkpoints}
+                courseId={courseId}
+                canUseAI={canUseAI}
+                expandedTopics={expandedTopics}
+                setOpenToolbox={setOpenToolbox}
+                askAi={askAi}
+                openLessonQuiz={openLessonQuiz}
+                askSeededLessonQuestion={askSeededLessonQuestion}
+                normalizeTopicResources={normalizeTopicResources}
+                setExpandedTopics={setExpandedTopics}
+                goToTeacherSelection={goToTeacherSelection}
+                onProgressUpdated={refreshLessonProgress}
+              />
+            ))}
+
+            <InterviewMilestones
+              interviewOne={interviewOne}
+              interviewTwo={interviewTwo}
+              goToTeacherSelection={goToTeacherSelection}
+              interviewOneStatus={interviewOneStatus}
+              interviewOneProgress={interviewOneProgress}
+              interviewOneUnlocked={interviewOneUnlocked}
+              interviewTwoStatus={interviewTwoStatus}
+              interviewTwoProgress={interviewTwoProgress}
+              interviewTwoUnlocked={interviewTwoUnlocked}
+            />
+          </section>
+
+          <aside
+            ref={chatPanelRef}
+            className="roadmap-chat-panel road-scrollbar min-w-0 overflow-hidden lg:min-h-0 lg:overflow-y-auto"
+          >
+            <ChatBox
+              systemPrompt={COMPANION_SYSTEM}
+              contextTags={[
+                dashboardData?.profile?.project_title || "My Project",
+                resolvedDomain || "Tech Stack",
+                "AlgoNest",
+              ]}
+              initialMessage={`Hey - I'm your Build Companion. I see you're working on "${
+                dashboardData?.profile?.project_title || "your project"
+              }". What are you trying to figure out right now?`}
+              pendingMessage={pendingMessage}
+              onPendingConsumed={() => setPendingMessage("")}
+              lessonId={activeLessonId}
+              courseId={courseId}
+              isLocked={chatIsLocked}
+              lockedTitle={chatLockedTitle}
+              lockedDescription={chatLockedDescription}
+              lockedCtaHref={chatLockedCta}
+              lockedFooter={getLockedNotice(user)}
+              onUserMessageSent={handleUserAIMessage}
+            />
+          </aside>
+
+          <LessonQuiz
+            lessonId={quizLessonId}
+            isOpen={quizLessonId !== null}
+            onClose={closeLessonQuiz}
+            onPassed={markLessonComplete}
+            onResultSaved={refreshLessonProgress}
+          />
+        </main>
       ) : (
-        <div style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "18px 22px 22px",
-          width: "100%",
-        }}>
+        <main className="road-scrollbar flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:px-5">
           <RoadmapBookingOverview
             user={user}
             dashboardData={dashboardData}
@@ -305,27 +313,8 @@ export default function RoadmapExperience({
             navigate={navigate}
             onGoToRoadmap={() => setActiveTab("roadmap")}
           />
-        </div>
+        </main>
       )}
-
-      <style>{`
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e0d8f0; border-radius: 10px; }
-        @keyframes checkpoint-confetti {
-          0% {
-            transform: translate3d(0, 0, 0) rotate(15deg) scale(0.7);
-            opacity: 0;
-          }
-          20% {
-            opacity: 1;
-          }
-          100% {
-            transform: translate3d(0px, -120px, 0) rotate(320deg) scale(1.05);
-            opacity: 0;
-          }
-        }
-      `}</style>
 
       <CheckpointCelebrationModal
         checkpoint={checkpointCelebration}
@@ -335,8 +324,3 @@ export default function RoadmapExperience({
     </div>
   );
 }
-
-
-
-
-
