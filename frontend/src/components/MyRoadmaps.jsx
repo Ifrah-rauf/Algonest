@@ -42,7 +42,7 @@ export default function MyRoadmaps() {
           <h2 className="text-3xl font-bold text-gray-900">My Roadmaps</h2>
           <p className="text-gray-600 mt-2">Courses you actively teach</p>
         </div>
-        <button className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+        <button className="flex items-center gap-2 bg-purple-600 text-white px-3 py-3 rounded-lg hover:bg-purple-700 transition-colors m-2">
           <Plus className="w-5 h-5" />
           Create Roadmap
         </button>

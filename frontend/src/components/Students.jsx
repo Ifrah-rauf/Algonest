@@ -156,41 +156,45 @@ export function Students() {
 
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search students..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMode('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  mode === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                All Sessions
-              </button>
-              <button
-                onClick={() => setMode('unique')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  mode === 'unique'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Unique Students
-              </button>
-            </div>
-          </div>
-        </div>
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    
+    <div className="relative w-full flex-1">
+      <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      <input
+        type="text"
+        placeholder="Search students..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+      />
+    </div>
+
+    <div className="flex w-full sm:w-auto gap-2">
+      <button
+        onClick={() => setMode("all")}
+        className={`flex-1 sm:flex-none px-3 py-2 rounded-lg font-medium transition-colors ${
+          mode === "all"
+            ? "bg-purple-600 text-white"
+            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+      >
+        All Sessions
+      </button>
+
+      <button
+        onClick={() => setMode("unique")}
+        className={`flex-1 sm:flex-none px-3 py-2 rounded-lg font-medium transition-colors ${
+          mode === "unique"
+            ? "bg-purple-600 text-white"
+            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+      >
+        Unique Students
+      </button>
+    </div>
+
+  </div>
+</div>
 
         <div className="overflow-x-auto">
           <table className="w-full">

@@ -81,7 +81,8 @@ async function resolveActiveCheckpointIdForStudent({ studentId, courseId }) {
     ? await dbFetch({
         query: supabase
           .from("checkpoints")
-          .select("checkpoint_id, course_id, title, requires_teacher")
+          // .select("checkpoint_id, course_id, title, requires_teacher")
+          .select("checkpoint_id, course_id, title")
           .eq("course_id", courseId),
         label: "resolveCheckpoint/checkpoints",
       })

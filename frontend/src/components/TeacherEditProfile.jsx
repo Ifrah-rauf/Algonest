@@ -31,13 +31,13 @@ function fileToDataUrl(file) {
 function Field({ label, icon: Icon, ...props }) {
   return (
     <label className="block">
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-        {Icon && <Icon className="w-4 h-4 text-purple-600" />}
+      <div className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700">
+        {Icon && <Icon className="w-4 h-4 text-purple-600 shrink-0" />}
         {label}
       </div>
       <input
         {...props}
-        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
       />
     </label>
   );
@@ -46,13 +46,13 @@ function Field({ label, icon: Icon, ...props }) {
 function TextArea({ label, icon: Icon, ...props }) {
   return (
     <label className="block">
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-        {Icon && <Icon className="w-4 h-4 text-purple-600" />}
+      <div className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700">
+        {Icon && <Icon className="w-4 h-4 text-purple-600 shrink-0" />}
         {label}
       </div>
       <textarea
         {...props}
-        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100 resize-none"
       />
     </label>
   );
@@ -108,14 +108,12 @@ export function TeacherEditProfile() {
         setLoading(false);
       }
     }
-
     loadProfile();
   }, [user?.uid]);
 
   async function handleSave(e) {
     e.preventDefault();
     if (!user?.uid) return;
-
     try {
       setSaving(true);
       setMessage("");
@@ -126,7 +124,6 @@ export function TeacherEditProfile() {
         language_id: form.language_id ? Number(form.language_id) : null,
         frameworks_id: form.frameworks_id ? Number(form.frameworks_id) : null,
       };
-
       const res = await fetch(`${BASE_URL}/profile/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -134,7 +131,6 @@ export function TeacherEditProfile() {
       });
       const body = await res.json();
       if (!body.success) throw new Error(body.error || "Update failed");
-
       setProfile(body.data);
       setMessage("Profile updated successfully.");
     } catch (error) {
@@ -177,24 +173,33 @@ export function TeacherEditProfile() {
   }
 
   if (loading) {
-    return <div className="p-8 text-gray-500">Loading profile editor...</div>;
+    return (
+      <div className="flex items-center justify-center p-12 text-gray-500 text-sm">
+        Loading profile editor...
+      </div>
+    );
   }
 
   return (
-    <div className="w-full p-8">
-      <div className="mb-8 flex items-end justify-between gap-4">
+    <div className="w-full px-4 py-6 sm:px-6 sm:py-8 pb-24 md:pb-8">
+      {/* ── Header ── */}
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Edit Profile</h2>
-          <p className="mt-2 text-gray-600">Update the teacher information shown across the platform.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Profile</h2>
+          <p className="mt-1 text-sm text-gray-500">Update the teacher information shown across the platform.</p>
         </div>
-        <div className="rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
+        <div className="self-start sm:self-auto rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 whitespace-nowrap">
           {profile?.verified ? "Verified teacher" : "Profile editor"}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_0.75fr] gap-6">
-        <form onSubmit={handleSave} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── Layout: stacked on mobile, two-col on lg ── */}
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1.25fr_0.75fr]">
+
+        {/* ── LEFT: Main form ── */}
+        <form onSubmit={handleSave} className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+          {/* 1-col on mobile, 2-col on sm+ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Field label="Name" icon={User} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
             <Field label="Timezone" icon={Globe} value={form.timezone} onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))} />
             <Field label="Experience" icon={Sparkles} value={form.experience} onChange={(e) => setForm((p) => ({ ...p, experience: e.target.value }))} />
@@ -205,86 +210,79 @@ export function TeacherEditProfile() {
             <Field label="Frameworks ID" icon={BookOpen} value={form.frameworks_id} onChange={(e) => setForm((p) => ({ ...p, frameworks_id: e.target.value }))} />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4">
+          <div className="mt-3 sm:mt-4 grid grid-cols-1 gap-3 sm:gap-4">
             <TextArea label="Bio" icon={User} rows={4} value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} />
             <TextArea label="Education" icon={Award} rows={3} value={form.education} onChange={(e) => setForm((p) => ({ ...p, education: e.target.value }))} />
             <TextArea label="Teaching Style" icon={Sparkles} rows={3} value={form.teaching_style} onChange={(e) => setForm((p) => ({ ...p, teaching_style: e.target.value }))} />
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-purple-300"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-purple-300"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               {saving ? "Saving..." : "Save Profile"}
             </button>
-            {message && <span className="text-sm text-gray-600">{message}</span>}
+            {message && (
+              <span className="text-sm text-gray-600">{message}</span>
+            )}
           </div>
         </form>
 
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        {/* ── RIGHT: Side cards ── */}
+        <div className="w-full flex flex-col gap-4 sm:gap-5">
+
+          {/* Profile Picture */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-                <Upload size={18} />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                <Upload size={16} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Profile Picture</h3>
-                <p className="text-sm text-gray-500">Add or update your profile picture.</p>
+                <h3 className="text-base font-bold text-gray-900">Profile Picture</h3>
+                <p className="text-xs text-gray-500">Add or update your profile picture.</p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label
-                htmlFor="profile-pic-upload"
-                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-purple-200 bg-purple-50 px-6 py-8 transition hover:bg-purple-100"
-              >
-                {form.pfp ? (
-                  <img
-                    src={form.pfp}
-                    alt="preview"
-                    className="mb-4 h-24 w-24 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-gray-200">
-                    <Upload size={28} className="text-gray-600" />
-                  </div>
-                )}
-
-                <div className="text-sm font-semibold text-gray-700">
-                  Drop image here or click to upload
+            <label
+              htmlFor="profile-pic-upload"
+              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-purple-200 bg-purple-50 px-4 py-6 transition hover:bg-purple-100"
+            >
+              {form.pfp ? (
+                <img src={form.pfp} alt="preview" className="mb-3 h-20 w-20 rounded-full object-cover" />
+              ) : (
+                <div className="mb-3 grid h-16 w-16 place-items-center rounded-full bg-gray-200">
+                  <Upload size={24} className="text-gray-600" />
                 </div>
-
-                <div className="mt-1 text-xs text-gray-500">
-                  PNG, JPG, WEBP supported
-                </div>
-
-                <input
-                  id="profile-pic-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const dataUrl = await fileToDataUrl(file);
-                    setForm((p) => ({ ...p, pfp: dataUrl }));
-                  }}
-                />
-              </label>
-            </div>
+              )}
+              <div className="text-sm font-semibold text-gray-700 text-center">Drop image here or click to upload</div>
+              <div className="mt-1 text-xs text-gray-500">PNG, JPG, WEBP supported</div>
+              <input
+                id="profile-pic-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const dataUrl = await fileToDataUrl(file);
+                  setForm((p) => ({ ...p, pfp: dataUrl }));
+                }}
+              />
+            </label>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* Certificates */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-                <Award size={18} />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
+                <Award size={16} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Certificates</h3>
-                <p className="text-sm text-gray-500">Attach a certificate file and request admin verification.</p>
+                <h3 className="text-base font-bold text-gray-900">Certificates</h3>
+                <p className="text-xs text-gray-500">Attach a file and request verification.</p>
               </div>
             </div>
 
@@ -294,42 +292,35 @@ export function TeacherEditProfile() {
                 value={certificateName}
                 onChange={(e) => setCertificateName(e.target.value)}
                 placeholder="Certificate title (optional)"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
               />
               <button
                 type="button"
                 onClick={() => setShowCertificateUpload((prev) => !prev)}
-                className="w-full rounded-xl border border-dashed border-purple-200 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-100"
+                className="w-full rounded-xl border border-dashed border-purple-200 bg-purple-50 px-4 py-2.5 text-sm font-semibold text-purple-700 transition hover:bg-purple-100"
               >
                 {showCertificateUpload ? "Hide file upload" : "Attach certificate file"}
               </button>
+
               {showCertificateUpload && (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
                   <label className="block">
-                    <div className="mb-2 text-sm font-medium text-gray-700">Certificate file</div>
+                    <div className="mb-1.5 text-sm font-medium text-gray-700">Certificate file</div>
                     <input
                       type="file"
                       accept="image/jpeg,image/png"
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
-                        if (!file) {
-                          setCertificateFile(null);
-                          setCertificatePreview("");
-                          return;
-                        }
+                        if (!file) { setCertificateFile(null); setCertificatePreview(""); return; }
                         if (!["image/jpeg", "image/png"].includes(file.type)) {
-                          setMessage("Only JPG and PNG certificate files are allowed.");
+                          setMessage("Only JPG and PNG files are allowed.");
                           e.target.value = "";
-                          setCertificateFile(null);
-                          setCertificatePreview("");
-                          return;
+                          setCertificateFile(null); setCertificatePreview(""); return;
                         }
                         if (file.size > MAX_CERTIFICATE_SIZE) {
-                          setMessage("Certificate file must be 2 MB or smaller.");
+                          setMessage("Certificate must be 2 MB or smaller.");
                           e.target.value = "";
-                          setCertificateFile(null);
-                          setCertificatePreview("");
-                          return;
+                          setCertificateFile(null); setCertificatePreview(""); return;
                         }
                         setMessage("");
                         const reader = new FileReader();
@@ -340,41 +331,39 @@ export function TeacherEditProfile() {
                         };
                         reader.readAsDataURL(file);
                       }}
-                      className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-gray-800"
+                      className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-gray-800"
                     />
                   </label>
                   <p className="mt-2 text-xs text-gray-500">
-                    {certificateFile
-                      ? `Selected file: ${certificateFile.name}`
-                      : "Choose a JPG or PNG certificate under 2 MB before uploading."}
+                    {certificateFile ? `Selected: ${certificateFile.name}` : "JPG or PNG, under 2 MB."}
                   </p>
                 </div>
               )}
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddCertificate}
-                  disabled={certSaving || !certificatePreview}
-                  className="flex-1 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-                >
-                  {certSaving ? "Submitting..." : "Get Verification"}
-                </button>
-              </div>
+
+              <button
+                type="button"
+                onClick={handleAddCertificate}
+                disabled={certSaving || !certificatePreview}
+                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {certSaving ? "Submitting..." : "Get Verification"}
+              </button>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-gray-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Current certificate</p>
-              <p className="mt-2 text-sm font-semibold text-gray-900">
+            {/* Current certificate status */}
+            <div className="mt-4 rounded-xl bg-gray-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Current certificate</p>
+              <p className="mt-1.5 text-sm font-semibold text-gray-900">
                 {certificate?.certificate_name || "No certificate added"}
               </p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-0.5 text-xs text-gray-500">
                 Status: {certificate ? (certificate.approved ? "Approved" : "Pending approval") : "Not created"}
               </p>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500">
                 {certificate?.file_url
                   ? "Uploaded certificate is ready for review."
                   : certificateFile
-                  ? `Attached file: ${certificateFile.name}`
+                  ? `Attached: ${certificateFile.name}`
                   : "No file attached yet"}
               </p>
               {certificate?.file_url && (
@@ -390,16 +379,33 @@ export function TeacherEditProfile() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900">Profile Snapshot</h3>
-            <div className="mt-4 space-y-3 text-sm text-gray-600">
-              <p><span className="font-semibold text-gray-900">Verified:</span> {profile?.verified ? "Yes" : "No"}</p>
-              <p><span className="font-semibold text-gray-900">Rating:</span> {profile?.rating ?? "—"}</p>
-              <p><span className="font-semibold text-gray-900">Education:</span> {profile?.education || "—"}</p>
-              <p><span className="font-semibold text-gray-900">Teaching style:</span> {profile?.teaching_style || "—"}</p>
-              <p><span className="font-semibold text-gray-900">Bio:</span> {profile?.bio || "—"}</p>
+          {/* Profile Snapshot */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900 mb-3">Profile Snapshot</h3>
+            <div className="space-y-2 text-sm text-gray-600">
+              <div className="flex justify-between gap-2">
+                <span className="font-semibold text-gray-900 shrink-0">Verified</span>
+                <span className="text-right">{profile?.verified ? "Yes" : "No"}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="font-semibold text-gray-900 shrink-0">Rating</span>
+                <span className="text-right">{profile?.rating ?? "—"}</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-gray-900">Education</span>
+                <span className="text-gray-500 text-xs leading-relaxed">{profile?.education || "—"}</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-gray-900">Teaching style</span>
+                <span className="text-gray-500 text-xs leading-relaxed">{profile?.teaching_style || "—"}</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-gray-900">Bio</span>
+                <span className="text-gray-500 text-xs leading-relaxed">{profile?.bio || "—"}</span>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

@@ -37,7 +37,16 @@ export default function App() {
   return (
     <div>
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="min-h-screen ml-[20%] w-[80%] overflow-y-auto px-6 py-6">
+      <main className="
+        min-h-screen
+        w-full
+        lg:ml-[10%]
+        lg:w-[90%]
+        overflow-y-auto
+        px-4
+        sm:px-6
+        py-6
+      ">
         <div className="mx-auto w-full max-w-7xl">
           {renderContent()}
         </div>
