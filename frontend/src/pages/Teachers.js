@@ -133,10 +133,10 @@ export default function Teachers() {
               </p>
             </div>
           )}
-          <h1 className="text-4xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
             Meet Our Mentors
           </h1>
-          <p className="text-lg text-gray-600 mt-2">
+          <p className="mt-2 text-base text-gray-600 sm:text-lg">
             From pressure test to placement-ready 🚀
           </p>
           <p className="max-w-2xl mx-auto mt-4 text-gray-500">
@@ -148,14 +148,16 @@ export default function Teachers() {
       </FadeInSection>
 
       {/* MAIN PAGE LAYOUT — SAME STRUCTURE AS PROPEERS STYLE */}
-      <div className="flex gap-6 px-6 md:px-12 py-10">
+      <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 md:px-12 md:py-10 lg:flex-row">
 
         {/* LEFT SECTION (Mentor listing — 2/3 width) */}
-        <div className="w-full md:w-2/3 space-y-6">
+        <div className="w-full space-y-4 md:space-y-6 lg:w-2/3">
 
           {/* Optional Search + Filters */}
-          <div className="flex flex-col md:flex-row gap-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5 md:flex-row">
             <input
+              id="teacher-search"
+              name="teacherSearch"
               type="text"
               placeholder="Search mentor by name"
               value={search}
@@ -164,7 +166,7 @@ export default function Teachers() {
                         focus:outline-none focus:ring-2 focus:ring-[var(--algo-purple)]"
             />
 
-            <button className="bg-[var(--nest-yellow)] hover:bg-yellow-400 text-gray-900 font-semibold px-6 py-2 rounded-lg transition">
+            <button className="rounded-lg bg-[var(--nest-yellow)] px-6 py-2 font-semibold text-gray-900 transition hover:bg-yellow-400 md:w-auto">
               Search
             </button>
           </div>
@@ -179,15 +181,18 @@ export default function Teachers() {
         </div>
 
         {/* RIGHT SECTION (Filters — 1/3 width) */}
-        <div className="hidden h-[min-content] md:block w-1/3 bg-white rounded-xl shadow-sm p-5 border">
+        <div className="order-first h-[min-content] w-full rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:order-none lg:w-1/3">
           <h3 className="text-lg font-semibold mb-4">Filter by</h3>
 
           {/* Mentorship Type */}
           <div className="mb-6">
             <p className="text-sm font-medium mb-2">Mentorship Type</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
             {PLAN_FILTERS.map(p => (
-              <label key={p.value} className="flex items-center gap-2 text-sm mb-1">
+              <label key={p.value} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm">
                 <input
+                  id={`teacher-plan-${p.value}`}
+                  name="teacherPlan"
                   type="checkbox"
                   checked={params.get("plan") === p.value}
                   onChange={() => updateQuery("plan", p.value)}
@@ -195,6 +200,7 @@ export default function Teachers() {
                 {p.label}
               </label>
             ))}
+            </div>
           </div>
 
           {/* Domain */}
@@ -227,9 +233,11 @@ export default function Teachers() {
                 return (
                   <label
                     key={l}
-                    className="flex items-center gap-2 text-sm mb-1"
+                    className="mb-1 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm"
                   >
                     <input
+                      id={`teacher-language-${l}`}
+                      name="teacherLanguage"
                       type="checkbox"
                       checked={selectedLangs.includes(l)}
                       onChange={() => toggleMulti("lang", l)}
@@ -247,8 +255,10 @@ export default function Teachers() {
             <p className="text-sm font-medium mb-2">Availability</p>
             <div className="flex flex-wrap gap-2">
             {AVAILABILITY.map(a => (
-              <label key={a.value} className="flex items-center gap-2 text-sm mb-1">
+              <label key={a.value} className="mb-1 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm">
                 <input
+                  id={`teacher-availability-${a.value}`}
+                  name="teacherAvailability"
                   type="radio"
                   checked={params.get("availability") === a.value}
                   onChange={() => updateQuery("availability", a.value)}

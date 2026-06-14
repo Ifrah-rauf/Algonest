@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GraduationCap, Sparkles, X } from "lucide-react";
-import { API_BASE, C } from "./constants";
+import { API_BASE } from "./constants";
 import { SectionCard } from "./ui";
 import { normalizeGithubUrl } from "./github";
 
@@ -20,7 +20,6 @@ function ProfileToast({ toast }) {
           ? "border border-green-200 bg-green-100 text-green-800"
           : "border border-red-200 bg-red-100 text-red-800"
       }`}
-      style={{ maxWidth: "400px" }}
     >
       {toast.message}
     </div>
@@ -224,7 +223,11 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
       <SectionCard
         title="Quiz performance"
         action={
-          <button type="button" className="rounded-full bg-[var(--dash-purple)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90" onClick={() => navigate("/careerquiz")}>
+          <button
+            type="button"
+            className="dash-button-primary px-3 py-1.5 text-xs"
+            onClick={() => navigate("/careerquiz")}
+          >
             {hasAttempts ? "View quiz history" : "Take a quiz"}
           </button>
         }
@@ -232,12 +235,12 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
         {hasAttempts ? (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl border p-4" style={{ borderColor: C.border, background: C.white }}>
+              <div className="dash-card rounded-3xl border p-4">
                 <div className="text-xs uppercase tracking-[0.12em] text-[var(--dash-purple)] sm:tracking-[0.2em]">Latest attempt</div>
-                <div className="mt-3 text-2xl font-bold sm:text-3xl" style={{ color: C.ink }}>
+                <div className="mt-3 text-2xl font-bold text-[var(--dash-ink)] sm:text-3xl">
                   {quizSummary.latestScore != null ? `${quizSummary.latestScore}/6` : "-"}
                 </div>
-                <div className="mt-2 text-sm" style={{ color: C.muted }}>
+                <div className="mt-2 text-sm text-[var(--dash-muted)]">
                   {quizSummary.latestLessonTitle || "Recent quiz result"}
                 </div>
                 <div className="mt-3 text-sm text-[var(--dash-purple)]">
@@ -245,12 +248,12 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
                 </div>
               </div>
 
-              <div className="rounded-3xl border p-4" style={{ borderColor: C.border, background: C.white }}>
+              <div className="dash-card rounded-3xl border p-4">
                 <div className="text-xs uppercase tracking-[0.12em] text-[var(--dash-purple)] sm:tracking-[0.2em]">Summary</div>
-                <div className="mt-3 text-2xl font-bold sm:text-3xl" style={{ color: C.ink }}>
+                <div className="mt-3 text-2xl font-bold text-[var(--dash-ink)] sm:text-3xl">
                   {quizSummary.attempted}
                 </div>
-                <div className="mt-2 text-sm" style={{ color: C.muted }}>
+                <div className="mt-2 text-sm text-[var(--dash-muted)]">
                   Attempt{quizSummary.attempted === 1 ? "" : "s"}
                 </div>
                 <div className="mt-3 text-sm text-[var(--dash-purple)]">{quizSummary.passRate || "No pass data yet"}</div>
@@ -260,7 +263,7 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
         ) : (
           <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
             <Sparkles className="h-16 w-16 text-[var(--dash-purple)]" />
-            <p className="mt-5 max-w-xl text-sm" style={{ color: C.muted }}>
+            <p className="mt-5 max-w-xl text-sm text-[var(--dash-muted)]">
               No quiz data found yet. Take a lesson quiz to start tracking scores and get better project matches.
             </p>
           </div>
@@ -270,20 +273,20 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
       <SectionCard title="Skill and domain matrix">
         <div className="space-y-5">
           <div>
-            <div className="mb-2 text-sm font-semibold" style={{ color: C.ink }}>
+            <div className="mb-2 text-sm font-semibold text-[var(--dash-ink)]">
               Core Domains:
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "rgba(107,70,193,0.22)", background: C.purpleLight, color: C.purpleDark }}>
+              <span className="rounded-lg border border-[rgba(107,70,193,0.22)] bg-[var(--dash-purple-light)] px-3 py-2 text-sm text-[var(--dash-purple-dark)]">
                 {resolvedDomain || "No domain selected"}
               </span>
             </div>
           </div>
           <div>
-            <div className="mb-2 text-sm font-semibold" style={{ color: C.ink }}>
+            <div className="mb-2 text-sm font-semibold text-[var(--dash-ink)]">
               Current focus:
             </div>
-            <div className="rounded-2xl border p-4 text-sm leading-7" style={{ borderColor: C.border, background: C.bg, color: C.muted }}>
+            <div className="dash-card-soft rounded-2xl border p-4 text-sm leading-7 text-[var(--dash-muted)]">
               {student.headline}
             </div>
           </div>
@@ -292,12 +295,26 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
 
       <SectionCard title="GitHub profile">
         <div className="space-y-3">
-          <label className="block text-sm font-medium" style={{ color: C.ink }}>
+          <label htmlFor="student-github-url" className="block text-sm font-medium text-[var(--dash-ink)]">
             GitHub URL
           </label>
-          <input type="url" value={githubLink} onChange={(event) => setGithubLink(event.target.value)} placeholder="https://github.com/yourusername" className="w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-[var(--dash-purple)]" style={{ borderColor: C.border, background: C.white, color: C.ink }} />
+          <input
+            id="student-github-url"
+            name="githubUrl"
+            type="url"
+            value={githubLink}
+            onChange={(event) => setGithubLink(event.target.value)}
+            placeholder="https://github.com/yourusername"
+            autoComplete="url"
+            className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
+          />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button type="button" onClick={handleGithubSave} className="w-full rounded-full bg-[var(--dash-purple)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto" disabled={savingGithub}>
+            <button
+              type="button"
+              onClick={handleGithubSave}
+              className="dash-button-primary w-full px-4 py-2 text-sm sm:w-auto"
+              disabled={savingGithub}
+            >
               {savingGithub ? "Saving..." : "Save GitHub"}
             </button>
             {githubLink ? (
@@ -306,7 +323,7 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
               </a>
             ) : null}
           </div>
-          <p className="text-sm" style={{ color: C.muted }}>
+          <p className="text-sm text-[var(--dash-muted)]">
             Add your GitHub link so your projects and repositories are visible to mentors.
           </p>
         </div>
@@ -315,28 +332,29 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
       <SectionCard title="Project Details (AI Context)">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium" style={{ color: C.ink }}>
+            <label htmlFor="student-project-title" className="block text-sm font-medium text-[var(--dash-ink)]">
               Featured Project Title
             </label>
             <input
+              id="student-project-title"
+              name="projectTitle"
               type="text"
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
               placeholder="e.g. Job Tracker API"
-              className="w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-[var(--dash-purple)]"
-              style={{ borderColor: C.border, background: C.white, color: C.ink }}
+              className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
             />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={handleProjectSave}
-              className="w-full rounded-full bg-[var(--dash-purple)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
+              className="dash-button-primary w-full px-4 py-2 text-sm sm:w-auto"
               disabled={savingProject}
             >
               {savingProject ? "Saving..." : "Save Project Title"}
             </button>
-            <p className="text-xs italic" style={{ color: C.muted }}>
+            <p className="text-xs italic text-[var(--dash-muted)]">
               *Required to enable AI Companion
             </p>
           </div>
@@ -345,16 +363,40 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
 
       <SectionCard title="Resume">
         <div className="space-y-3">
-          <label className="block text-sm font-medium" style={{ color: C.ink }}>
+          <label htmlFor="student-resume-url" className="block text-sm font-medium text-[var(--dash-ink)]">
             Resume URL or Upload
           </label>
-          <input type="url" value={resumeLink} onChange={(event) => setResumeLink(event.target.value)} placeholder="Paste resume link here" className="w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-[var(--dash-purple)]" style={{ borderColor: C.border, background: C.white, color: C.ink }} />
+          <input
+            id="student-resume-url"
+            name="resumeUrl"
+            type="url"
+            value={resumeLink}
+            onChange={(event) => setResumeLink(event.target.value)}
+            placeholder="Paste resume link here"
+            autoComplete="url"
+            className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
+          />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[var(--dash-purple)] bg-white px-4 py-2 text-sm font-semibold text-[var(--dash-purple)] transition hover:bg-purple-50 sm:w-auto" style={{ borderColor: C.border }}>
+            <label
+              htmlFor="student-resume-file"
+              className="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[var(--dash-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--dash-purple)] transition hover:bg-purple-50 sm:w-auto"
+            >
               Upload file
-              <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeFile} className="sr-only" />
+              <input
+                id="student-resume-file"
+                name="resumeFile"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleResumeFile}
+                className="sr-only"
+              />
             </label>
-            <button type="button" onClick={handleResumeSave} className="w-full rounded-full bg-[var(--dash-purple)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto" disabled={savingResume}>
+            <button
+              type="button"
+              onClick={handleResumeSave}
+              className="dash-button-primary w-full px-4 py-2 text-sm sm:w-auto"
+              disabled={savingResume}
+            >
               {savingResume ? "Saving..." : "Save resume"}
             </button>
           </div>
@@ -379,7 +421,7 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
             </div>
           ) : null}
 
-          <p className="text-sm" style={{ color: C.muted }}>
+          <p className="text-sm text-[var(--dash-muted)]">
             Upload a PDF or provide a resume link so mentors can review your experience in one place.
           </p>
         </div>
@@ -388,10 +430,10 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
       <SectionCard title="Education" action={<button type="button" className="rounded-full text-[var(--dash-purple)] transition hover:opacity-80">+</button>}>
         <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
           <GraduationCap className="h-16 w-16 text-[var(--dash-purple)]" />
-          <div className="mt-5 text-base font-semibold" style={{ color: C.ink }}>
+          <div className="mt-5 text-base font-semibold text-[var(--dash-ink)]">
             {student.education}
           </div>
-          <div className="mt-2 text-sm" style={{ color: C.muted }}>
+          <div className="mt-2 text-sm text-[var(--dash-muted)]">
             Package window: {student.packageStart} to {student.packageEnd}
           </div>
         </div>

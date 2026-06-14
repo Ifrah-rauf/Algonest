@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import Navbar from "../components/navbar.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import "../styles/booking-page.css";
 
 const COURSE_DEFAULTS = {
   1: {
@@ -124,26 +125,26 @@ export default function BookingPage() {
   }
 
   return (
-    <div style={{ background: "#fff", minHeight: "100vh", color: "#111827", fontFamily: "'Syne', 'DM Sans', sans-serif" }}>
+    <div className="booking-page" style={{ background: "#fff", minHeight: "100vh", color: "#111827", fontFamily: "'Syne', 'DM Sans', sans-serif", overflowX: "hidden" }}>
       <Navbar />
 
-      <section style={{ background: "linear-gradient(180deg, #faf7ff 0%, #ffffff 100%)", padding: "64px 24px 80px" }}>
+      <section className="booking-section">
         <div style={{ maxWidth: 1160, margin: "0 auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f0effc", border: "1px solid #ddd8f8", borderRadius: 999, padding: "6px 14px", marginBottom: 18 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: course.accent }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: course.accent, fontFamily: "'DM Sans'" }}>Booking flow</span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 24, alignItems: "start" }}>
+          <div className="booking-layout">
             <div>
-              <h1 style={{ fontSize: "clamp(36px, 4vw, 56px)", fontWeight: 800, letterSpacing: -2, lineHeight: 1.02, marginBottom: 14 }}>
+              <h1 className="booking-title" style={{ fontSize: "clamp(36px, 4vw, 56px)", fontWeight: 800, letterSpacing: -2, lineHeight: 1.02, marginBottom: 14 }}>
                 Complete your booking for <span style={{ color: course.accent }}>{stackName}</span>
               </h1>
-              <p style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.7, maxWidth: 760, fontFamily: "'DM Sans'" }}>
+              <p className="booking-lead" style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.7, maxWidth: 760, fontFamily: "'DM Sans'" }}>
                 Choose a payment option, then use the dummy booking button to create a booking record now. The payment gateway can be wired in later without changing this flow.
               </p>
 
-              <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+              <div className="booking-meta-grid" style={{ marginTop: 28 }}>
                 {[
                   { label: "Course ID", value: courseId },
                   { label: "Plan ID", value: "null" },
@@ -157,11 +158,11 @@ export default function BookingPage() {
                 ))}
               </div>
 
-              <div style={{ marginTop: 28, background: "#fff", border: "1px solid #ece7fb", borderRadius: 24, padding: 24, boxShadow: "0 20px 50px rgba(17,24,39,0.06)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
+              <div className="booking-payment-card" style={{ marginTop: 28, background: "#fff", border: "1px solid #ece7fb", borderRadius: 24, padding: 24, boxShadow: "0 20px 50px rgba(17,24,39,0.06)" }}>
+                <div className="booking-card-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
                   <div>
                     <p style={{ fontSize: 12, fontWeight: 700, color: course.accent, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8, fontFamily: "'DM Sans'" }}>Payment options</p>
-                    <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, marginBottom: 6 }}>Pick the gateway style you want later</h2>
+                    <h2 className="booking-card-heading" style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, marginBottom: 6 }}>Pick the gateway style you want later</h2>
                     <p style={{ fontSize: 14, color: "#6b7280", fontFamily: "'DM Sans'" }}>This is ready to swap to a live provider after deployment.</p>
                   </div>
                   <div style={{ background: "#f0effc", color: course.accent, padding: "8px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans'" }}>
@@ -169,7 +170,7 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+                <div className="booking-options-grid">
                   {PAYMENT_OPTIONS.map((option) => {
                     const active = paymentMethod === option.id;
                     return (
@@ -231,8 +232,8 @@ export default function BookingPage() {
               </div>
             </div>
 
-            <aside style={{ position: "sticky", top: 88 }}>
-              <div style={{ background: "#0f0020", color: "#fff", borderRadius: 28, padding: 24, boxShadow: "0 24px 60px rgba(15,0,32,0.16)" }}>
+            <aside className="booking-summary">
+              <div className="booking-summary-card" style={{ background: "#0f0020", color: "#fff", borderRadius: 28, padding: 24, boxShadow: "0 24px 60px rgba(15,0,32,0.16)" }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: "#f6c90e", textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 10, fontFamily: "'DM Sans'" }}>Booking summary</p>
                 <h3 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, marginBottom: 10 }}>{course.stack}</h3>
                 <p style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.7, marginBottom: 18, fontFamily: "'DM Sans'" }}>
@@ -254,7 +255,7 @@ export default function BookingPage() {
                   ))}
                 </div>
 
-                <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div className="booking-summary-actions" style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <Link
                     to="/roadmaps"
                     style={{

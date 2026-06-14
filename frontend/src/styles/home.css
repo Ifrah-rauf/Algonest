@@ -4,8 +4,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-  html {
+html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 :root {
   --algo-purple: #6b46c1; 
@@ -33,6 +34,7 @@ body {
   background-size: cover;
   color: #222;
   line-height: 1.6;
+  overflow-x: clip;
 
 }
 .user-icon .icon-img {
@@ -70,9 +72,10 @@ nav{
 .logo {
   font-weight: 700;
   font-size: 2.3rem;
-  a{
+}
+
+.logo a {
   text-decoration: none;
-  }
 }
 
 .logo-purple { color: #8e5ce9; }
@@ -393,8 +396,8 @@ backdrop-filter: blur(4px);
 	padding: 0;
 }
 
-ul,
-ol {
+ul:has(.mli),
+ol:has(.mli) {
 	list-style: none;
 	font-family: 'Grape Nuts', cursive;
 	font-size: 2.4rem;
@@ -403,98 +406,102 @@ ol {
 
 
 
-ul:not(ul ul) {
+ul:has(.mli):not(ul ul) {
 	display: grid;
 	grid-template-columns: max-content;
 	z-index: 1;
 	position: relative;
 	perspective: 50vw;
 	transform-style: preserve-3d;
+}
 
-	.done {
-		text-decoration: line-through;
-	}
+ul:has(.mli):not(ul ul) .done {
+	text-decoration: line-through;
+}
 
-	> .mli {
-		--levitate: 0;
-    font-size:20px;
-		padding: 0.2rem 1rem;
-		background-color: rgb(252, 252, 252);
-		position: relative;
-		transform-style: preserve-3d;
-		cursor: pointer;
-		position: relative;
-    border-radius:8px;
-		transition: transform 0.3s ;
+ul:has(.mli):not(ul ul) > .mli {
+	--levitate: 0;
+	font-size:20px;
+	padding: 0.2rem 1rem;
+	background-color: rgb(252, 252, 252);
+	position: relative;
+	transform-style: preserve-3d;
+	cursor: pointer;
+	border-radius:8px;
+	transition: transform 0.3s ;
+}
 
-		&::after {
-			content: '';
-			pointer-events: none;
-			display: block;
-			position: absolute;
-			width: 100%;
-			height: 100%;
-			left: 0;
-			top: 0;
-			opacity: 0;
-			transition: opacity 0.3s;
-			z-index: 1;
-			mix-blend-mode: overlay;
-			background-image: linear-gradient(to left, #ffe4b2, #c8b188);
-		}
+ul:has(.mli):not(ul ul) > .mli::after {
+	content: '';
+	pointer-events: none;
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	transition: opacity 0.3s;
+	z-index: 1;
+	mix-blend-mode: overlay;
+	background-image: linear-gradient(to left, #ffe4b2, #c8b188);
+}
 
-		&:hover {
-			--levitate: 1;
-			&::before {
-				transform: translate3d(6rem, 1rem, -1px) scale(calc(1 - var(--levitate) * 0.1)) rotate(1.5deg);
-				filter: blur(8px);
-			}
+ul:has(.mli):not(ul ul) > .mli:hover {
+	--levitate: 1;
+}
 
-			&::after {
-				opacity: 0.6;
-			}
-		}
+ul:has(.mli):not(ul ul) > .mli:hover::before {
+	transform: translate3d(6rem, 1rem, -1px) scale(calc(1 - var(--levitate) * 0.1)) rotate(1.5deg);
+	filter: blur(8px);
+}
 
+ul:has(.mli):not(ul ul) > .mli:hover::after {
+	opacity: 0.6;
+}
 
-		ul {
-			font-size: 20px;
-			.mli {
-				z-index: 1;
-				&:first-letter {
-					font-size: 20px;
-				}
-			}
-		}
+ul:has(.mli):not(ul ul) > .mli ul {
+	font-size: 20px;
+}
 
-		&:not(:first-of-type) {
-			margin-top: 1rem;
-		}
-		&:nth-child(3n) {
-			transform: translate3d(-5px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(-0.6deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
-		}
-		&:nth-child(3n-1) {
-			transform: translate3d(7px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(-0.5deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
-		}
-		&:nth-child(3n-2) {
-			transform: translate3d(0px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(0.5deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
-		}
-		&::before {
-			content: '';
-			display: block;
-			position: absolute;
-			width: 100%;
-			height: 100%;
-			left: 0;
-			top: 0;
-			transition: all 0.3s;
-			height: calc(100% - 2px);
-			background-color: rgba(0, 0, 0, 0.4);
-			z-index: -1;
-			transform-origin: bottom left;
-			transform: translate3d(8px, 2px, -1px) rotate(1deg);
-			filter: blur(2px);
-		}
-	}
+ul:has(.mli):not(ul ul) > .mli ul .mli {
+	z-index: 1;
+}
+
+ul:has(.mli):not(ul ul) > .mli ul .mli:first-letter {
+	font-size: 20px;
+}
+
+ul:has(.mli):not(ul ul) > .mli:not(:first-of-type) {
+	margin-top: 1rem;
+}
+
+ul:has(.mli):not(ul ul) > .mli:nth-child(3n) {
+	transform: translate3d(-5px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(-0.6deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
+}
+
+ul:has(.mli):not(ul ul) > .mli:nth-child(3n-1) {
+	transform: translate3d(7px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(-0.5deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
+}
+
+ul:has(.mli):not(ul ul) > .mli:nth-child(3n-2) {
+	transform: translate3d(0px, calc(var(--levitate) * -5px), calc(var(--levitate) * 3rem)) rotate(0.5deg) rotateX(calc(var(--levitate) * 6deg)) rotateY(calc(var(--levitate) * -3deg));
+}
+
+ul:has(.mli):not(ul ul) > .mli::before {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 0;
+	transition: all 0.3s;
+	height: calc(100% - 2px);
+	background-color: rgba(0, 0, 0, 0.4);
+	z-index: -1;
+	transform-origin: bottom left;
+	transform: translate3d(8px, 2px, -1px) rotate(1deg);
+	filter: blur(2px);
 }
 
 .s2{
@@ -741,12 +748,13 @@ margin-bottom:4%;
 }
 .teachers-outer{
   margin-top:7%;
-  h1{
-    margin-bottom:0.2%;
-    color:rgb(41, 41, 41);
-    font-size:40px;
-    font-weight:bolder;
-  }
+}
+
+.teachers-outer h1 {
+  margin-bottom:0.2%;
+  color:rgb(41, 41, 41);
+  font-size:40px;
+  font-weight:bolder;
 }
 
 
@@ -761,24 +769,25 @@ margin-bottom:4%;
 }
 .drop-down li {
   list-style: none;
+}
 
-  a{
-    text-decoration: none;
-    color:#333;
-    padding: 10px 15px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: color 0.2s ease, background 0.2s ease;
-  }
+.drop-down li a {
+  text-decoration: none;
+  color:#333;
+  padding: 10px 15px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 .drop-down li:hover {
   /* background: rgba(75, 0, 130, 0.6); */
   color: #6b46c1;
   text-decoration-line: underline;
-  a{
-    color:#6b46c1;
-  }
+}
+
+.drop-down li:hover a {
+  color:#6b46c1;
 }
 .drop-down {
   position: absolute;

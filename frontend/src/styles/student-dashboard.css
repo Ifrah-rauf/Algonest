@@ -1,0 +1,97 @@
+.student-dashboard {
+  --dash-purple: #6b46c1;
+  --dash-purple-dark: #4c1d95;
+  --dash-purple-light: #f3eeff;
+  --dash-purple-tint: #ede9fa;
+  --dash-yellow: #f6c90e;
+  --dash-ink: #21153f;
+  --dash-muted: #766f8e;
+  --dash-border: #e8e1f5;
+  --dash-bg: #faf8ff;
+  --dash-white: #ffffff;
+  --dash-red: #dc2626;
+  --dash-red-light: #fef2f2;
+  min-height: 100vh;
+  background: var(--dash-bg);
+  color: var(--dash-ink);
+  font-family: "Trebuchet MS", "Trebuchet", sans-serif;
+}
+
+.dash-card {
+  border-color: var(--dash-border);
+  background: var(--dash-white);
+  box-shadow: 0 16px 40px rgba(33, 21, 63, 0.08);
+}
+
+.dash-card-soft {
+  border-color: var(--dash-border);
+  background: var(--dash-bg);
+}
+
+.dash-input {
+  border-color: var(--dash-border);
+  background: var(--dash-white);
+  color: var(--dash-ink);
+}
+
+.dash-input:focus {
+  border-color: var(--dash-purple);
+}
+
+.dash-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--dash-purple);
+  color: #fff;
+  font-weight: 600;
+  transition: filter 150ms ease, opacity 150ms ease;
+}
+
+.dash-button-primary:hover {
+  filter: brightness(1.08);
+}
+
+.dash-button-primary:disabled {
+  opacity: 0.7;
+}
+
+.dash-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--dash-border);
+  color: var(--dash-muted);
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+
+.dash-button-secondary:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(107, 70, 193, 0.25);
+  background: var(--dash-purple-light);
+  color: var(--dash-purple);
+  font-weight: 500;
+}
+
+.dash-gradient {
+  background: linear-gradient(90deg, var(--dash-purple-dark), var(--dash-purple));
+}
+
+.dash-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 28%);
+}
+
+.dash-modal-backdrop {
+  background: rgba(33, 21, 63, 0.45);
+}

@@ -56,7 +56,6 @@ export function buildRoadmaps(data) {
 
 export function buildRoadmapActivityState(data) {
   const activeCourse = data?.activeCourse || data?.selectedCourse;
-  const lessonProgress = data?.lessonProgress || {};
   const roadmaps = buildRoadmaps(data);
 
   if (!activeCourse) {

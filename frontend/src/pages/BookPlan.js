@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { X } from "lucide-react";
-import Modal from "./Modal";
 import booking from "../static/booking.PNG";
 
 export default function BookPlan({ plan, onClose }) {
@@ -105,21 +104,20 @@ export default function BookPlan({ plan, onClose }) {
 
 
   return (
-<Modal show={true} onClose={onClose}>
-  <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50 backdrop-blur-sm">
-    <div className="bg-white w-[90%] h-[85vh] rounded-2xl overflow-hidden shadow-xl flex">
+  <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 backdrop-blur-sm sm:p-5 md:items-center">
+    <div className="my-auto flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl md:h-[85vh] md:max-h-[720px] md:min-h-[560px] md:flex-row">
       
       {/* LEFT FORM */}
-      <div className="w-1/2 bg-white px-10 py-6 flex flex-col justify-center">
+      <div className="flex w-full flex-col justify-center bg-white px-4 py-5 sm:px-6 md:w-1/2 md:px-10 md:py-6">
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 leading-tight">
+        <div className="mb-5 flex items-start justify-between gap-4 md:mb-6">
+          <h2 className="text-xl font-semibold leading-tight text-gray-900 sm:text-2xl">
             Talk to our <span className="text-[#4B0082]">mentorship experts</span>
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-gray-100 transition"
+            className="shrink-0 rounded-full p-1.5 transition hover:bg-gray-100"
           >
             <X size={20} className="text-gray-500" />
           </button>
@@ -129,7 +127,7 @@ export default function BookPlan({ plan, onClose }) {
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Name Fields */}
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <input
               type="text"
               name="username"
@@ -137,7 +135,7 @@ export default function BookPlan({ plan, onClose }) {
               value={formData.username}
               onChange={handleChange}
               required
-              className="w-1/2 p-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-[#4B0082]"
+              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-[#4B0082] focus:outline-none sm:w-1/2"
             />
             <input
               type="text"
@@ -145,7 +143,7 @@ export default function BookPlan({ plan, onClose }) {
               placeholder="Last name"
               value={formData.lastname}
               onChange={handleChange}
-              className="w-1/2 p-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-[#4B0082]"
+              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-[#4B0082] focus:outline-none sm:w-1/2"
             />
           </div>
 
@@ -248,16 +246,15 @@ export default function BookPlan({ plan, onClose }) {
         </form>
       </div>
 
-      <div className="w-1/2 relative overflow-hidden">
+      <div className="relative hidden w-full overflow-hidden md:block md:w-1/2">
             <img
               src={booking}
               alt="Booking Visual"
-              className="w-full h-full object-cover object-top"
+              className="h-full w-full object-cover object-center"
             />
             {/* <div className="absolute inset-0 bg-gradient-to-r from-[#4B0082]/40 to-transparent"></div> */}
           </div>
     </div>
   </div>
-</Modal>
   );
 }

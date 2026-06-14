@@ -655,15 +655,21 @@ if (step > totalQ) {
             </div>
             <div className="space-y-3">
               <input
+                id="career-quiz-signup-name"
+                name="name"
                 placeholder="Full name"
                 className="w-full rounded-xl px-4 py-3 text-sm text-gray-800 border border-gray-200 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all bg-white"
               />
               <input
+                id="career-quiz-signup-email"
+                name="email"
                 placeholder="Email address"
                 type="email"
                 className="w-full rounded-xl px-4 py-3 text-sm text-gray-800 border border-gray-200 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all bg-white"
               />
               <input
+                id="career-quiz-signup-password"
+                name="password"
                 placeholder="Password"
                 type="password"
                 className="w-full rounded-xl px-4 py-3 text-sm text-gray-800 border border-gray-200 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all bg-white"

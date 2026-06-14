@@ -120,34 +120,58 @@ export default function Signup() {
 
         <div className="mt-6 grid lg:grid-cols-[1.45fr_1fr] gap-5 items-start">
           <div className="space-y-3">
+            <label className="sr-only" htmlFor="signup-username">
+              Username
+            </label>
             <input
+              id="signup-username"
+              name="username"
               type="text"
               placeholder="Username"
               value={username}
+              autoComplete="username"
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
+            <label className="sr-only" htmlFor="signup-email">
+              Email address
+            </label>
             <input
+              id="signup-email"
+              name="email"
               type="email"
               placeholder="Email address"
               value={mail}
+              autoComplete="email"
               onChange={(e) => setMail(e.target.value)}
               className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
+            <label className="sr-only" htmlFor="signup-password">
+              Password
+            </label>
             <input
+              id="signup-password"
+              name="password"
               type="password"
               placeholder="Password"
               value={password}
+              autoComplete="new-password"
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />
 
+            <label className="sr-only" htmlFor="signup-confirm-password">
+              Confirm password
+            </label>
             <input
+              id="signup-confirm-password"
+              name="confirmPassword"
               type="password"
               placeholder="Confirm Password"
               value={confirm}
+              autoComplete="new-password"
               onChange={(e) => setConfirm(e.target.value)}
               className="w-full px-5 py-3.5 rounded-2xl border border-purple-100 bg-white/90 shadow-[0_12px_30px_rgba(107,70,193,0.08)] focus:border-[#8b5cf6] focus:ring-4 focus:ring-purple-100 outline-none text-sm"
             />

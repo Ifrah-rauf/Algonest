@@ -17,6 +17,7 @@ import BookingPage from "./pages/BookingPage";
 import CareerQuiz from "./pages/CareerQuiz";
 import CSCore from "./pages/CSCore";
 import Grill from "./pages/Grill";
+import Footer from "./components/footer";
 // Assuming authContext is imported; adjust if needed
 import { useAuth } from "./context/AuthContext.jsx";// Replace with actual path
 
@@ -44,11 +45,20 @@ function Landing() {
   }
 }
 
-function App() {
+
+function AppLayout() {
+  const location = useLocation();
+  const { user } = useAuth();
+  const isTeacherDashboard =
+    user?.role === "TEACHER" &&
+    (location.pathname === "/" || location.pathname === "/dashboard");
+
+  const hideFooter =
+    location.pathname === "/login" ||
+    location.pathname === "/signup";
   return (
-    <Router>
-      <ScrollToTop />
-      <ScrollToHash/>
+      <>
+     
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Sign />} />
@@ -67,9 +77,21 @@ function App() {
         <Route path="/cscore" element={<CSCore />} />
         <Route path="/grill" element={<Grill />} />
         <Route path="/book-now" element={<BookingPage />} />
+        <Route path="/careerQuiz" element={<CareerQuiz />} />
         <Route path="/careerquiz" element={<CareerQuiz />} />
 
       </Routes>
+    {!hideFooter && <Footer className={isTeacherDashboard ? "teacher-dashboard-footer" : ""} />}
+     </>
+  );
+}
+function App() {
+  return (
+    <Router future={{ v7_relativeSplatPath: true }}>
+      <ScrollToTop />
+      <ScrollToHash />
+
+      <AppLayout />
     </Router>
   );
 }

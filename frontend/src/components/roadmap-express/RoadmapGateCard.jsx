@@ -1,5 +1,27 @@
+const statusMeta = {
+  completed: {
+    label: "Completed",
+    className: "border-white bg-white text-black",
+    messageClass: "text-emerald-700",
+  },
+  pending: {
+    label: "Session Pending",
+    className: "border-amber-200 bg-amber-50 text-[var(--road-amber)]",
+    messageClass: "text-[var(--road-muted)]",
+  },
+  ready: {
+    label: "Ready to book",
+    className: "border-[#d8d0f0] bg-[var(--road-purple-soft)] text-[var(--road-purple)]",
+    messageClass: "text-[var(--road-muted)]",
+  },
+  locked: {
+    label: "Locked",
+    className: "border-slate-200 bg-slate-100 text-slate-500",
+    messageClass: "text-[var(--road-muted)]",
+  },
+};
+
 export default function RoadmapGateCard({
-  kind,
   indexLabel,
   title,
   description,
@@ -9,97 +31,66 @@ export default function RoadmapGateCard({
   bookLabel = "Select Teacher",
   lockedHint = "Locked until you complete the previous step.",
 }) {
-  const statusMeta = {
-    completed: { label: "Completed", background: "#ffffff", color: "#000000", border: "#ffffff" },
-    pending: { label: "Session Pending", background: "#fff8e1", color: "#b45309", border: "#fde68a" },
-    ready: { label: "Ready to book", background: "#f0ecfc", color: "#6b46c1", border: "#d8d0f0" },
-    locked: { label: "Locked", background: "#f3f4f6", color: "#6b7280", border: "#e5e7eb" },
-  };
-
   const meta = statusMeta[status] || statusMeta.locked;
 
   return (
-    <div style={{
-      background: "#f2e5fbff",
-      border: "2px solid #dca2ffff",
-      borderRadius: 10,
-      padding: 18,
-      boxShadow: status === "ready" ? "0 10px 28px rgba(107,70,193,0.08)" : "0 1px 6px rgba(0,0,0,0.04)",
-      transition: "all 0.22s ease",
-    }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#9991b8", letterSpacing: 2, textTransform: "uppercase" }}>
+    <div
+      className={`rounded-xl border-2 border-[#dca2ff] bg-[#f2e5fb] p-4 transition ${
+        status === "ready" ? "shadow-[0_10px_28px_rgba(107,70,193,0.08)]" : "shadow-sm"
+      }`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--road-subtle)]">
             {indexLabel}
           </div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "#1a1035", marginTop: 4 }}>
+          <div className="mt-1 text-base font-extrabold text-[var(--road-ink)]">
             {title}
           </div>
-          <div style={{ fontSize: 12, color: "#5c5478", lineHeight: 1.65, marginTop: 6 }}>
+          <div className="mt-1.5 text-xs leading-6 text-[#5c5478]">
             {description}
           </div>
         </div>
-        <span style={{
-          fontSize: 10,
-          fontFamily: "monospace",
-          background: meta.background,
-          color: meta.color,
-          border: `1px solid ${meta.border}`,
-          padding: "4px 8px",
-          borderRadius: 999,
-          whiteSpace: "nowrap",
-          fontWeight: 700,
-          flexShrink: 0,
-        }}>
+
+        <span
+          className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 font-mono text-[10px] font-bold ${meta.className}`}
+        >
           {meta.label}
         </span>
       </div>
 
-      <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        {sessionId && (
-          <div style={{
-            fontSize: 10,
-            fontFamily: "monospace",
-            color: "#7b70a0",
-            background: "#faf9ff",
-            border: "1px solid #ece7fb",
-            borderRadius: 999,
-            padding: "6px 10px",
-          }}>
+      <div className="mt-3 flex flex-wrap items-center gap-2.5">
+        {sessionId ? (
+          <div className="rounded-full border border-[#ece7fb] bg-[var(--road-purple-tint)] px-2.5 py-1.5 font-mono text-[10px] text-[var(--road-muted)]">
             session_id: {sessionId}
           </div>
-        )}
-        {status === "locked" && (
-          <div style={{ fontSize: 11, color: "#7b70a0" }}>{lockedHint}</div>
-        )}
-        {status === "pending" && (
-          <div style={{ fontSize: 11, color: "#7b70a0" }}>
+        ) : null}
+
+        {status === "locked" ? (
+          <div className={`text-[11px] ${meta.messageClass}`}>{lockedHint}</div>
+        ) : null}
+
+        {status === "pending" ? (
+          <div className={`text-[11px] ${meta.messageClass}`}>
             We&apos;ll unlock the next step once this session is completed and marked by the mentor.
           </div>
-        )}
-        {status === "completed" && (
-          <div style={{ fontSize: 11, color: "#047857" }}>
+        ) : null}
+
+        {status === "completed" ? (
+          <div className={`text-[11px] ${meta.messageClass}`}>
             Great work. This milestone is complete.
           </div>
-        )}
-        {status === "ready" && onBook && (
+        ) : null}
+
+        {status === "ready" && onBook ? (
           <button
+            type="button"
             onClick={onBook}
-            style={{
-              border: "none",
-              background: "linear-gradient(135deg, #6b46c1, #8b5cf6)",
-              color: "#fff",
-              borderRadius: 12,
-              padding: "10px 14px",
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: "pointer",
-              marginLeft: "auto",
-            }}
+            className="road-gradient ml-auto rounded-xl px-3.5 py-2.5 text-xs font-extrabold text-white"
           >
             {bookLabel}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
