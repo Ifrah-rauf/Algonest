@@ -48,8 +48,8 @@ export function Footer({ className = "" }) {
   };
 
   return (
-    <footer className={`algonest-footer mt-20 w-full text-white ${className}`.trim()}>
-      <section className="footer-newsletter-band w-full px-4 py-3 sm:px-6">
+    <footer className={`algonest-footer mt-36 w-full text-white ${className}`.trim()}>
+      <section className="footer-newsletter-band max-w-7xl m-auto px-4 py-3 sm:px-6">
         <div className="mx-auto max-w-7xl">
           <div className="footer-newsletter-card rounded-lg px-6 py-8 md:px-10 md:py-10">
             <div className="grid items-center gap-8 md:grid-cols-[320px_1fr] lg:gap-12">
@@ -119,8 +119,8 @@ export function Footer({ className = "" }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12">
-        <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <section className="mx-auto max-w-7xl px-6 py-12 mt-12">
+        <div className="m-4 mb-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <div className="footer-brand-mark flex h-12 w-12 items-center justify-center rounded-lg">
@@ -130,10 +130,10 @@ export function Footer({ className = "" }) {
               <h3 className="text-2xl font-bold text-white">AlgoNest</h3>
             </div>
 
-            <p className="mb-6 max-w-xs text-sm leading-6 text-white/55">
+            {/* <p className="mb-6 max-w-xs text-sm leading-6 text-white/55">
               Structured roadmaps, AI guidance, and personal mentorship for
               students who want to build proof of work.
-            </p>
+            </p> */}
 
             <div className="flex gap-3">
               <SocialLink href="https://twitter.com" label="Twitter">
@@ -154,17 +154,17 @@ export function Footer({ className = "" }) {
           <FooterLinks title="Explore" links={exploreLinks} />
 
           <div>
-            <h4 className="mb-4 font-semibold text-white">Contact Us</h4>
+            <h4 className="mb-4 font-semibold text-gray-400">Contact Us</h4>
 
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-white/55">
+              <li className="flex items-center gap-2 text-gray-400">
                 <FaPhone size={14} />
                 <FooterTextLink href="tel:+15551234567">
                   +1 (555) 123-4567
                 </FooterTextLink>
               </li>
 
-              <li className="flex items-center gap-2 text-white/55">
+              <li className="flex items-center gap-2 text-gray-400">
                 <FaEnvelope size={14} />
                 <FooterTextLink href="mailto:support@algonest.com">
                   support@algonest.com
@@ -176,7 +176,7 @@ export function Footer({ className = "" }) {
 
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-gray-400">
               &copy; {new Date().getFullYear()} AlgoNest. All rights reserved.
             </p>
 
@@ -197,9 +197,9 @@ export function Footer({ className = "" }) {
 function FooterLinks({ title, links }) {
   return (
     <div>
-      <h4 className="mb-4 font-semibold text-white">{title}</h4>
+      <h4 className="mb-4 font-semibold text-gray-400">{title}</h4>
 
-      <ul className="space-y-3">
+      <ul className="space-y-3 text-gray-400">
         {links.map((link) => (
           <li key={link.href}>
             <FooterTextLink href={link.href}>{link.label}</FooterTextLink>
@@ -215,7 +215,7 @@ function FooterTextLink({ href, children, small = false }) {
     <a
       href={href}
       className={`footer-text-link transition-colors ${
-        small ? "text-sm text-white/40" : "text-sm text-white/55"
+        small ? "text-sm text-gray-400" : "text-sm text-gray-400"
       }`}
     >
       {children}

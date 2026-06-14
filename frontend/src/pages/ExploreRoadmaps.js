@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../components/student-dashboard/constants";
 import { isGithubUrl, normalizeGithubUrl } from "../components/student-dashboard/github";
 import "../styles/explore-roadmaps.css";
+import "../styles/footer.css";
 
 const P = "#534AB7";
 const Y = "#f6c90e";
@@ -671,7 +672,7 @@ export default function AlgoNestPage() {
       </section>
 
       {/* ─── BOTTOM CTA ─── */}
-      <section className="roadmaps-bottom-cta" style={{ background: P, padding: "64px 48px", textAlign: "center" }}>
+      {/* <section className="footer-newsletter-band roadmaps-bottom-cta" style={{ padding: "64px 48px", textAlign: "center", marginTop: "6rem" }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 16, fontFamily: "'DM Sans'" }}>Not sure where to start?</p>
         <h2 style={{ color: "#fff", fontSize: "clamp(32px,4vw,48px)", fontWeight: 800, letterSpacing: -1.8, marginBottom: 12, lineHeight: 1.05 }}>
           Take the quiz.<br />
@@ -689,7 +690,7 @@ export default function AlgoNestPage() {
           Take Career Quiz →
         </button>
         <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 16, fontFamily: "'DM Sans'" }}>Free · No sign-up · 2 minutes</p>
-      </section>
+      </section> */}
     </div>
   );
 }

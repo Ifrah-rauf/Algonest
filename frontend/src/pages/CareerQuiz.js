@@ -1,5 +1,35 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { motion, AnimatePresence } from "framer-motion";
+import {redirect,useNavigate} from "react-router-dom";
+const fadeUp = {
+  hidden: {
+    opacity: 0,
+    y: 30,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.25,
+    },
+  },
+};
+
+const stagger = {
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 const QUESTIONS = [
   {
     id: 1,
@@ -140,7 +170,7 @@ function CheckIcon() {
 
 function RocketSVG() {
   return (
-    <svg viewBox="0 0 120 120" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 120 120" className="w-[80%] h-[80%] m-auto" fill="none">
       <ellipse cx="60" cy="60" rx="52" ry="52" fill="#F3EEFF" />
       <ellipse cx="60" cy="60" rx="38" ry="38" fill="#EDE9FE" />
       <path d="M60 22 C60 22 76 38 76 62 L60 78 L44 62 C44 38 60 22 60 22Z" fill="#7C3AED" />
@@ -172,6 +202,7 @@ function DecoGrid() {
 }
 
 export default function CareerQuiz() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [current, setCurrent] = useState(null);
@@ -252,7 +283,12 @@ export default function CareerQuiz() {
         <div className="absolute top-1/2 right-8 w-40 h-40 rounded-full opacity-10 pointer-events-none"
           style={{ background: "radial-gradient(circle, #FCD34D, transparent)" }} />
 
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 relative z-10">
+        <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col items-center justify-center min-h-screen px-4 relative z-10"
+          >
           {/* Nav */}
           <div className="absolute top-6 left-8 flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -263,9 +299,10 @@ export default function CareerQuiz() {
           </div>
 
           {/* Rocket */}
-          <div className="w-36 h-36 mb-6">
+          <motion.div variants={fadeUp}>
             <RocketSVG />
-          </div>
+          </motion.div>
+
 
           {/* Pill */}
           <div className="flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border"
@@ -311,7 +348,7 @@ export default function CareerQuiz() {
               <span key={f} className="text-gray-400 text-xs">{f}</span>
             ))}
           </div> */}
-        </div>
+      </motion.div>
       </div>
     );
   }
@@ -593,14 +630,15 @@ if (step > totalQ) {
 
               <div className="space-y-2 flex-shrink-0">
                 <button
-                  onClick={() => setShowSignup(true)}
+                  // onClick={() => setShowSignup(true)}
+                  onClick={() => navigate("/signup")}
                   className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:scale-105 shadow-md"
                   style={{
                     background: "linear-gradient(135deg, #7C3AED, #4C1D95)",
                     boxShadow: "0 4px 20px rgba(124,58,237,0.3)",
                   }}
                 >
-                  Create Profile & Upload Resume
+                  Create Profile
                 </button>
                 {/* <button
                   onClick={() => setShowSignup(true)}
@@ -609,7 +647,7 @@ if (step > totalQ) {
                 >
                   Explore Free Roadmaps →
                 </button> */}
-                <button
+                {/* <button
                     onClick={() => {
                         if (user) {
                         window.location.href = "/dashboard";
@@ -621,7 +659,7 @@ if (step > totalQ) {
                     style={{ background: "rgba(124,58,237,0.08)", borderColor: "#DDD6FE" }}
                     >
                     {user ? "Go to My Dashboard →" : "Explore Free Roadmaps →"}
-                    </button>
+                    </button> */}
               </div>
             </div>
           </div>
@@ -674,11 +712,11 @@ if (step > totalQ) {
                 type="password"
                 className="w-full rounded-xl px-4 py-3 text-sm text-gray-800 border border-gray-200 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all bg-white"
               />
-              <div className="border-2 border-dashed border-gray-200 rounded-xl px-4 py-5 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all">
+              {/* <div className="border-2 border-dashed border-gray-200 rounded-xl px-4 py-5 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all">
                 <div className="text-2xl mb-1">📎</div>
                 <div className="text-gray-600 text-sm font-medium">Upload your resume</div>
                 <div className="text-gray-400 text-xs mt-1">PDF, DOC up to 5MB</div>
-              </div>
+              </div> */}
               <button
                 className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-105 shadow-md"
                 style={{ background: "linear-gradient(135deg, #7C3AED, #4C1D95)" }}

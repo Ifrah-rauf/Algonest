@@ -55,7 +55,8 @@ function AppLayout() {
 
   const hideFooter =
     location.pathname === "/login" ||
-    location.pathname === "/signup";
+    location.pathname === "/signup"||
+    location.pathname === "/careerQuiz";
   return (
       <>
      
