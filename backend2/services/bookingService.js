@@ -99,7 +99,7 @@ async function resolveActiveCheckpointIdForStudent({ studentId, courseId }) {
   ) || null;
 
   const nextCheckpointId = nextLesson?.checkpoint_id ? Number(nextLesson.checkpoint_id) : null;
-  if (nextCheckpointId) {
+  if (nextCheckpointId && latestCompletedIndex > 0) {
     return nextCheckpointId;
   }
 
@@ -118,6 +118,48 @@ async function resolveActiveCheckpointIdForStudent({ studentId, courseId }) {
     .at(-1) || null;
 
   return terminalCheckpoint?.checkpoint_id ? Number(terminalCheckpoint.checkpoint_id) : null;
+}
+
+function normalizeSlotType(slotOrAvailability) {
+  const type = String(slotOrAvailability?.availability?.type || slotOrAvailability?.type || "")
+    .trim()
+    .toLowerCase();
+  return type === "free" ? "session" : type;
+}
+
+function checkpointBlockedResponse(message, extra = {}) {
+  return {
+    success: false,
+    code: CODE.CHECKPOINT_BLOCKED,
+    message,
+    ...extra,
+  };
+}
+
+async function getReachedCheckpointForPlanBooking({ studentId, courseId, requestedCheckpointId = null }) {
+  const reachedCheckpointId = await resolveActiveCheckpointIdForStudent({ studentId, courseId });
+
+  if (!reachedCheckpointId) {
+    return checkpointBlockedResponse(
+      "Complete lessons until your next mentor checkpoint unlocks before booking a plan session.",
+      { checkpointId: null }
+    );
+  }
+
+  if (
+    requestedCheckpointId &&
+    Number(requestedCheckpointId) !== Number(reachedCheckpointId)
+  ) {
+    return checkpointBlockedResponse(
+      "This checkpoint is not currently unlocked for your roadmap progress.",
+      { checkpointId: reachedCheckpointId }
+    );
+  }
+
+  return {
+    success: true,
+    checkpointId: reachedCheckpointId,
+  };
 }
 
 export async function getStudentCheckpointBookingGuard({ userId = null, studentId = null, checkpointId = null }) {
@@ -623,7 +665,7 @@ export async function bookingMailService({ studentId, slot }) {
    - Checks if teacher offers the student's subscribed plan
    - Returns code + studentId + planData for the frontend to use
 ============================================================ */
-export async function getPlanService({ userId, teacherId, slot }) {
+export async function getPlanService({ userId, teacherId, slot, checkpointId = null }) {
   // Verify role
   const roleData = await dbFetch({
     query: supabase.from("auth").select("role").eq("uid", userId).maybeSingle(),
@@ -699,8 +741,7 @@ export async function getPlanService({ userId, teacherId, slot }) {
     };
   }
 
-  const slotTypeRaw = String(slot?.availability?.type || "").trim().toLowerCase();
-  const slotType = slotTypeRaw === "free" ? "session" : slotTypeRaw;
+  const slotType = normalizeSlotType(slot);
 
   // Open session — available to anyone with a valid plan
   if (slotType === "session") {
@@ -715,6 +756,16 @@ export async function getPlanService({ userId, teacherId, slot }) {
 
   // Course-matched slot — check teacher offers the student's mapped course
   if (slotType === "plan") {
+    const checkpointEligibility = await getReachedCheckpointForPlanBooking({
+      studentId,
+      courseId: booking.course_id,
+      requestedCheckpointId: checkpointId,
+    });
+
+    if (!checkpointEligibility.success) {
+      return checkpointEligibility;
+    }
+
     const teacherCourse = await dbFetch({
       query: supabase
         .from("course_teacher_mapping")
@@ -738,6 +789,7 @@ export async function getPlanService({ userId, teacherId, slot }) {
       message: "Your course matches. Ready to book!",
       studentId,
       planData: teacherCourse,
+      checkpointId: checkpointEligibility.checkpointId,
     };
   }
 
@@ -879,7 +931,7 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
     studentId,
     courseId: bookingData.course_id || null,
   });
-  const finalCheckpointId = resolvedCheckpointId || checkpointId || null;
+  let finalCheckpointId = resolvedCheckpointId || checkpointId || null;
 
   if (finalCheckpointId) {
     const checkpointStatus = await getStudentCheckpointBookingGuard({
@@ -914,6 +966,22 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
       code: CODE.PLAN_EXPIRED,
       message: "Availability record not found for this slot.",
     };
+  }
+
+  const slotType = normalizeSlotType(availability);
+
+  if (slotType === "plan") {
+    const checkpointEligibility = await getReachedCheckpointForPlanBooking({
+      studentId,
+      courseId: bookingData.course_id || null,
+      requestedCheckpointId: checkpointId,
+    });
+
+    if (!checkpointEligibility.success) {
+      return checkpointEligibility;
+    }
+
+    finalCheckpointId = checkpointEligibility.checkpointId;
   }
 
   // Payment check BEFORE any writes

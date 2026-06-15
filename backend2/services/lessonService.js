@@ -1,5 +1,73 @@
+import axios from "axios";
 import { supabase } from "../lib/supabase.js";
 import { saveCheckpointEmbedding } from "./rag/saveFeedback.js";
+
+function extractGithubRepoUrl(value) {
+  const raw = String(value || "").trim();
+  const markdownMatch = raw.match(/\((https?:\/\/github\.com\/[^)\s]+)\)/i);
+  if (markdownMatch) return markdownMatch[1];
+
+  const urlMatch = raw.match(/https?:\/\/github\.com\/[^\s)\]]+/i);
+  if (urlMatch) return urlMatch[0];
+
+  return raw;
+}
+
+function normalizeGithubRepoUrl(value) {
+  const raw = extractGithubRepoUrl(value)
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/[),.;\]]+$/g, "");
+
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (url.hostname.toLowerCase() !== "github.com") return null;
+
+    const [owner, repo] = url.pathname
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/\.git$/i, "")
+      .split("/");
+
+    if (!owner || !repo) return null;
+    return {
+      owner,
+      repo,
+      url: `https://github.com/${owner}/${repo}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function verifyGithubCommitExists(repoUrl, commitSha) {
+  const repoParts = normalizeGithubRepoUrl(repoUrl);
+  if (!repoParts) {
+    throw new Error("Enter a valid GitHub repository URL.");
+  }
+
+  try {
+    await axios.get(
+      `https://api.github.com/repos/${encodeURIComponent(repoParts.owner)}/${encodeURIComponent(repoParts.repo)}/commits/${encodeURIComponent(commitSha)}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+        },
+        timeout: 8000,
+      }
+    );
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 404) {
+      throw new Error("GitHub could not find that commit in the submitted repository.");
+    }
+    if (status === 403) {
+      throw new Error("GitHub verification is rate limited. Try again later.");
+    }
+    throw new Error("GitHub commit verification failed. The proof was not saved.");
+  }
+
+  return repoParts.url;
+}
 
 async function getLessonIdsByCourseId(courseId) {
   if (!courseId) return [];
@@ -1007,15 +1075,22 @@ export async function saveLessonCommitProof({
   if (!cleanedRepoUrl) throw new Error("repoUrl is required");
   if (!cleanedCommitSha) throw new Error("commitSha is required");
 
+  const normalizedRepo = normalizeGithubRepoUrl(cleanedRepoUrl);
   const verified =
-    /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/?$/.test(cleanedRepoUrl) &&
+    Boolean(normalizedRepo) &&
     /^[a-f0-9]{7,40}$/i.test(cleanedCommitSha);
+
+  if (!verified) {
+    throw new Error("Enter a valid GitHub repository URL and a 7-40 character commit SHA.");
+  }
+
+  const verifiedRepoUrl = await verifyGithubCommitExists(normalizedRepo.url, cleanedCommitSha);
 
   const payload = {
     s_id: studentId,
     lesson_id: lessonContext.lessonId,
     course_id: lessonContext.courseId,
-    repo_url: cleanedRepoUrl,
+    repo_url: verifiedRepoUrl,
     commit_sha: cleanedCommitSha,
     deliverable,
     micro_proof: microProof,
@@ -1041,7 +1116,7 @@ export async function saveLessonCommitProof({
     ? supabase
         .from("lesson_commit_proofs")
         .update({
-          repo_url: cleanedRepoUrl,
+          repo_url: verifiedRepoUrl,
           commit_sha: cleanedCommitSha,
           deliverable,
           micro_proof: microProof,

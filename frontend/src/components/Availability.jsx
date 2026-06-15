@@ -29,6 +29,11 @@ function algoswal(opts) {
     didOpen: () => {
       const btn = Swal.getConfirmButton();
       if (btn) btn.style.color = "#202020";
+      const cancelBtn = Swal.getCancelButton();
+      if (cancelBtn) {
+        cancelBtn.style.backgroundColor = "#e5e7eb";
+        cancelBtn.style.color = "#374151";
+      }
     },
     ...opts,
   });
@@ -188,6 +193,7 @@ export default function AvailabilityDisplay({
           userId: user.uid,
           teacherId,
           slot,
+          checkpointId: activeFlowKind === "checkpoint" ? activeFlow?.checkpointId || null : null,
         }),
       });
 
@@ -219,6 +225,15 @@ export default function AvailabilityDisplay({
       }
 
       // ── any other backend failure
+      if (!data.success && data.code === CODE.CHECKPOINT_BLOCKED) {
+        await algoswal({
+          icon: "warning",
+          title: "Checkpoint not reached",
+          text: data.message || "Complete lessons until your next mentor checkpoint unlocks before booking a plan session.",
+        });
+        return;
+      }
+
       if (!data.success) {
         await algoswal({
           icon: "error",

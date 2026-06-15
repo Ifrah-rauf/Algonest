@@ -36,7 +36,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
     <>
       {/* ── DESKTOP SIDEBAR (hidden on mobile) ── */}
       <aside className="hidden md:flex fixed left-0 top-[6%] h-screen w-[20%] bg-gray-900 text-white flex-col z-50">
-        <nav className="flex-1 p-4 mt-[30%] overflow-y-auto overflow-x-scroll ">
+        <nav className="flex-1 p-4 mt-[30%] overflow-y-auto overflow-x-hidden">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

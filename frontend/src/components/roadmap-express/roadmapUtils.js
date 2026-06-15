@@ -26,18 +26,24 @@ export function getLessonUnlockState(
   hasActiveBooking,
   isAuthenticated
 ) {
-  if (!isAuthenticated || (isAuthenticated && !hasActiveBooking)) {
+  if (!isAuthenticated) {
     return "unlocked";
   }
-  if (lesson.order_index === 1) return "unlocked";
+  if (Number(lesson.order_index) === 1) return "unlocked";
   if (!lesson.prerequisite_id && !lesson.checkpoint_id) return "locked";
 
   let prerequisitePassed = !lesson.prerequisite_id;
   if (lesson.prerequisite_id) {
     const prerequisiteProgress = progressMap[lesson.prerequisite_id];
+    const quizPassed =
+      prerequisiteProgress?.quiz_passed === true ||
+      Number(prerequisiteProgress?.quiz_passed) === 1;
+    const readyToUnlock =
+      prerequisiteProgress?.ready_to_unlock === true ||
+      prerequisiteProgress?.ready_to_unlock == null;
     prerequisitePassed =
       prerequisiteProgress?.completed === true &&
-      prerequisiteProgress?.ready_to_unlock === true;
+      (readyToUnlock || quizPassed);
   }
 
   let checkpointPassed = !lesson.checkpoint_id;

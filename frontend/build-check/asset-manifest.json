@@ -1,0 +1,35 @@
+{
+  "files": {
+    "main.css": "/static/css/main.deafe05e.css",
+    "main.js": "/static/js/main.a1e980a2.js",
+    "static/js/910.91bb0317.chunk.js": "/static/js/910.91bb0317.chunk.js",
+    "static/js/151.336e0668.chunk.js": "/static/js/151.336e0668.chunk.js",
+    "static/js/260.82353c67.chunk.js": "/static/js/260.82353c67.chunk.js",
+    "static/js/149.13180332.chunk.js": "/static/js/149.13180332.chunk.js",
+    "static/js/746.fce4aefa.chunk.js": "/static/js/746.fce4aefa.chunk.js",
+    "static/js/723.9fc7a607.chunk.js": "/static/js/723.9fc7a607.chunk.js",
+    "static/js/453.670e15c7.chunk.js": "/static/js/453.670e15c7.chunk.js",
+    "static/media/paper2.jpg": "/static/media/paper2.5737e153f3d753af37ac.jpg",
+    "static/media/AlgoNest2.PNG": "/static/media/AlgoNest2.ab39b87766b75251bc8c.PNG",
+    "static/media/booking.PNG": "/static/media/booking.eadaeb49b16973f44ef5.PNG",
+    "static/media/AlgoPlane.png": "/static/media/AlgoPlane.11b9d39aaad78689ff21.png",
+    "static/media/m1.png": "/static/media/m1.8862f7a47eed497e6474.png",
+    "static/media/m3.png": "/static/media/m3.1ecac3d497c27b91ce90.png",
+    "static/media/m2.png": "/static/media/m2.66048a2892fdd3d0e2e0.png",
+    "static/media/roadmap.png": "/static/media/roadmap.417d58b88e82efac933c.png",
+    "static/media/review.png": "/static/media/review.1ab17a10e75dd11ebf39.png",
+    "static/media/logo.png": "/static/media/logo.786896afce0c10eae397.png",
+    "static/media/formula.png": "/static/media/formula.a0607f83a564716c863c.png",
+    "static/media/user.png": "/static/media/user.2860bd5e3966fb20af2b.png",
+    "static/media/github.png": "/static/media/github.47d8f1de6d5ebe9e86de.png",
+    "static/media/bg7.png": "/static/media/bg7.a83da5ad2cb7b924c520.png",
+    "index.html": "/index.html",
+    "main.deafe05e.css.map": "/static/css/main.deafe05e.css.map",
+    "main.a1e980a2.js.map": "/static/js/main.a1e980a2.js.map",
+    "453.670e15c7.chunk.js.map": "/static/js/453.670e15c7.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.deafe05e.css",
+    "static/js/main.a1e980a2.js"
+  ]
+}

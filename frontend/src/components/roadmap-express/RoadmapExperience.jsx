@@ -102,17 +102,38 @@ function RoadmapSummaryCard({
   );
 }
 
+function AccessLimitBanner({ chatLockedCta }) {
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
+      <div className="text-sm font-extrabold">AI limit exhausted - booking needed</div>
+      <p className="mt-1 text-xs leading-5">
+        Your free AI preview is used up. Book a plan to continue AI guidance, assessments, lesson progress,
+        checkpoints, and mentor review.
+      </p>
+      <a
+        href={chatLockedCta || "/#pricing"}
+        className="mt-2 inline-flex rounded-lg bg-[#6b46c1] px-3 py-2 text-xs font-bold text-white no-underline"
+      >
+        See plans
+      </a>
+    </section>
+  );
+}
+
 export default function RoadmapExperience({
   activeCourseData,
   activeLessonId,
   activeTab,
+  aiQuestionProgressMap = {},
   askAi,
   askSeededLessonQuestion,
   askedLessonId,
+  assetProgressMap = {},
   canUseAI,
   chatIsLocked,
   chatLockedCta,
   chatLockedDescription,
+  chatLockReason,
   chatLockedTitle,
   checkpoints = [],
   checkpointCelebration,
@@ -121,6 +142,7 @@ export default function RoadmapExperience({
   checkpointSuccess,
   closeLessonQuiz,
   completedCount,
+  commitProofProgressMap = {},
   courseId,
   dashboardData,
   expandedTopics,
@@ -163,6 +185,7 @@ export default function RoadmapExperience({
   user,
 }) {
   const chatPanelRef = useRef(null);
+  const isProgressLocked = chatLockReason === "free_prompt_limit";
 
   useEffect(() => {
     if (!pendingMessage?.trim()) return;
@@ -190,9 +213,16 @@ export default function RoadmapExperience({
       {activeTab === "roadmap" ? (
         <main className="relative mx-auto grid w-full max-w-[1520px] flex-1 gap-4 overflow-visible px-3 py-4 sm:px-5 lg:grid-cols-[minmax(0,3fr)_minmax(420px,2fr)] lg:overflow-hidden">
           <RoadmapSidebar
+            activeCourseData={activeCourseData}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
             user={user}
+            courseId={courseId}
+            dashboardData={dashboardData}
+            hasActiveBooking={hasActiveBooking}
+            hasAnyBooking={hasAnyBooking}
+            checkpoints={checkpoints}
+            checkpointProgressMap={checkpointProgressMap}
             completedCount={completedCount}
             totalLessons={totalLessons}
           />
@@ -213,6 +243,8 @@ export default function RoadmapExperience({
               interviews={interviews}
               totalLessons={totalLessons}
             />
+
+            {isProgressLocked ? <AccessLimitBanner chatLockedCta={chatLockedCta} /> : null}
 
             {lessons.length === 0 ? (
               <div className="px-1 py-5 font-mono text-xs text-[var(--road-subtle)]">
@@ -237,7 +269,11 @@ export default function RoadmapExperience({
                 askedLessonId={askedLessonId}
                 checkpoints={checkpoints}
                 courseId={courseId}
+                savedAIQuestions={aiQuestionProgressMap[lesson.lesson_id] || []}
+                savedAssetAnswers={assetProgressMap[lesson.lesson_id] || []}
+                savedCommitProofs={commitProofProgressMap[lesson.lesson_id] || []}
                 canUseAI={canUseAI}
+                isProgressLocked={isProgressLocked}
                 expandedTopics={expandedTopics}
                 setOpenToolbox={setOpenToolbox}
                 askAi={askAi}
@@ -268,6 +304,7 @@ export default function RoadmapExperience({
             className="roadmap-chat-panel road-scrollbar min-w-0 overflow-hidden lg:min-h-0 lg:overflow-y-auto"
           >
             <ChatBox
+              studentName={dashboardData?.profile?.name || user?.username || user?.email || "Student"}
               systemPrompt={COMPANION_SYSTEM}
               contextTags={[
                 dashboardData?.profile?.project_title || "My Project",

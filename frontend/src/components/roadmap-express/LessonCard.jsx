@@ -19,7 +19,11 @@ export default function LessonCard({
   askedLessonId,
   checkpoints,
   courseId,
+  savedAIQuestions,
+  savedAssetAnswers,
+  savedCommitProofs,
   canUseAI,
+  isProgressLocked = false,
   expandedTopics,
   setOpenToolbox,
   askAi,
@@ -29,8 +33,13 @@ export default function LessonCard({
   setExpandedTopics,
   goToTeacherSelection,
   onProgressUpdated,
-}) {  const unlock   = getLessonUnlockState(
-              lesson,
+}) {  const previousLesson = lessons[idx - 1] || null;
+            const lessonForUnlock =
+              lesson.order_index === 1 || lesson.prerequisite_id || !previousLesson
+                ? lesson
+                : { ...lesson, prerequisite_id: previousLesson.lesson_id };
+            const unlock   = getLessonUnlockState(
+              lessonForUnlock,
               progressMap,
               checkpointMap,
               checkpointProgressMap,
@@ -38,8 +47,8 @@ export default function LessonCard({
               Boolean(user?.uid)
             );
             const progress = progressMap[lesson.lesson_id] || null;
-            const isLocked = unlock === "locked";
             const isDone   = progress?.completed === true;
+            const isLocked = unlock === "locked" || (isProgressLocked && !isDone);
             const isActive = !isLocked && !isDone;
             const isOpen   = openToolbox === lesson.lesson_id;
             const topics   = lessonTopics[lesson.lesson_id] || [];
@@ -155,6 +164,7 @@ export default function LessonCard({
                         <div style={{ fontSize: isLast ? 12 : 10, fontFamily: "monospace", color: "#9991b8", lineHeight: 1.5 }}>
                           {isLast ? "The Final Milestone" : `Lesson ${lesson.order_index}`} · {topicCount} topics
                           {isDone && progress?.quiz_marks != null && ` · score ${progress.quiz_marks}/6`}
+                          {isProgressLocked && !isDone && " - AI limit exhausted - booking needed"}
                           {/* no locked notice for users without an active booking; roadmap is accessible per Rule 2 */}
                           {lesson.prerequisite_id && !isDone && ` · Unlocks after Lesson ${lesson.prerequisite_id}`}
                           {lesson.checkpoint_id && !isDone && ` · Requires Checkpoint ${lesson.checkpoint_id}`}
@@ -273,6 +283,9 @@ export default function LessonCard({
                             courseId={courseId}
                             userId={user?.uid || null}
                             canUseAI={canUseAI}
+                            savedAIQuestions={savedAIQuestions}
+                            savedAssetAnswers={savedAssetAnswers}
+                            savedCommitProofs={savedCommitProofs}
                             onAskAIQuestion={(question) => askSeededLessonQuestion(lesson, question)}
                             onProgressUpdated={onProgressUpdated}
                           />

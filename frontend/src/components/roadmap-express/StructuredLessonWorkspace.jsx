@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+const COMPANION_TASK_PROGRESS_KEY = "__ai_companion_task_started__";
 
 /**
  * UI Components reflecting the refined design language from LessonPage.jsx 
@@ -44,6 +45,14 @@ function StatusPill({ tone = "neutral", children }) {
     <span className={`inline-flex items-center border px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>
       {children}
     </span>
+  );
+}
+
+function LastChangeNotice() {
+  return (
+    <div className="mb-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">
+      Your last change was recorded.
+    </div>
   );
 }
 
@@ -199,6 +208,9 @@ export default function StructuredLessonWorkspace({
   courseId,
   userId,
   canUseAI,
+  savedAIQuestions = [],
+  savedAssetAnswers = [],
+  savedCommitProofs = [],
   onAskAIQuestion,
   onProgressUpdated,
 }) {
@@ -213,6 +225,20 @@ export default function StructuredLessonWorkspace({
 
   const lessonConfig = buildLessonConfig(lesson, topics);
   const normalizedRepoUrl = useMemo(() => normalizeGithubUrl(repoUrl), [repoUrl]);
+  const savedAIQuestionTexts = useMemo(
+    () => new Set((savedAIQuestions || []).filter((row) => row.completed === true).map((row) => row.question_text)),
+    [savedAIQuestions]
+  );
+  const savedAssetKeys = useMemo(
+    () => new Set((savedAssetAnswers || []).filter((row) => row.answered === true).map((row) => row.asset_key)),
+    [savedAssetAnswers]
+  );
+  const hasSavedCommitProof = useMemo(
+    () => (savedCommitProofs || []).some((row) => row.verified === true),
+    [savedCommitProofs]
+  );
+  const companionTaskRecorded =
+    companionStatus?.status === "saved" || savedAIQuestionTexts.has(COMPANION_TASK_PROGRESS_KEY);
 
   // Priority functions preserved for backend sync
   async function handleIndustryQuestion(item) {
@@ -220,7 +246,7 @@ export default function StructuredLessonWorkspace({
     setAskedQuestions((prev) => ({ ...prev, [item.key]: { status: "saving", question: item.question } }));
     onAskAIQuestion?.(item.question);
     try {
-      await postJson("/api/lessons/ai-question", { userId, lessonId: lesson.lesson_id, questionKey: item.question, questionText: item.answerText || item.question, completed: true });
+      await postJson("/api/lessons/ai-question", { userId, lessonId: lesson.lesson_id, questionKey: item.question, questionText: item.question, completed: true });
       setAskedQuestions((prev) => ({ ...prev, [item.key]: { status: "saved", question: item.question } }));
       onProgressUpdated?.();
     } catch (err) {
@@ -263,6 +289,13 @@ export default function StructuredLessonWorkspace({
       ].join("\n\n"));
     setCompanionStatus({ status: "saving", message: "Saving task start..." });
     try {
+      await postJson("/api/lessons/ai-question", {
+        userId,
+        lessonId: lesson.lesson_id,
+        questionKey: COMPANION_TASK_PROGRESS_KEY,
+        questionText: COMPANION_TASK_PROGRESS_KEY,
+        completed: true,
+      });
       setCompanionStatus({ status: "saved", message: "sent to chat" });
       onProgressUpdated?.();
     } catch (err) {
@@ -281,10 +314,10 @@ export default function StructuredLessonWorkspace({
     setCommitStatus({ status: "saving", message: "Verifying commit..." });
     try {
       const result = await postJson("/api/lessons/github-commit", { userId, lessonId: lesson.lesson_id, repoUrl: cleanedRepo, commitSha: cleanedSha, deliverable: lessonConfig.deliverable, microProof: lessonConfig.microProof });
-      setCommitStatus({ status: result.verified === false ? "error" : "saved", message: result.message || (result.verified === false ? "Commit could not be verified." : "Commit verified and saved.") });
+      setCommitStatus({ status: "saved", message: result.message || "Commit verified and saved." });
       onProgressUpdated?.();
     } catch (err) {
-      setCommitStatus({ status: "local", message: `Could not verify commit yet: ${err.message}` });
+      setCommitStatus({ status: "error", message: `Commit was not saved: ${err.message}` });
     } finally {
       setSubmittingCommit(false);
     }
@@ -325,8 +358,10 @@ export default function StructuredLessonWorkspace({
           <div className="flex flex-col gap-3">
             {lessonConfig.aiIndustryQuestions.map((item) => {
               const state = askedQuestions[item.key];
+              const isRecorded = state?.status === "saved" || savedAIQuestionTexts.has(item.question);
               return (
                 <div key={item.key} className="group relative">
+                  {isRecorded && <LastChangeNotice />}
                   <button
                     type="button"
                     onClick={() => handleIndustryQuestion(item)}
@@ -364,8 +399,10 @@ export default function StructuredLessonWorkspace({
         <div className="flex flex-col gap-4 mt-2">
           {lessonConfig.guidedEvaluations.map((item, index) => {
             const evaluation = evaluations[item.key];
+            const isRecorded = evaluation?.status === "sent" || savedAssetKeys.has(item.prompt);
             return (
               <div key={item.key} className="group border border-slate-100 bg-slate-50/50 rounded-xl p-5 transition hover:bg-white hover:border-slate-200">
+                {isRecorded && <LastChangeNotice />}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm">
                     {index + 1}
@@ -424,6 +461,7 @@ export default function StructuredLessonWorkspace({
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <SectionEyebrow icon={PlayCircle} label="AI Companion Task" />
           <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-5">
+            {companionTaskRecorded && <LastChangeNotice />}
             <div className="flex items-center gap-3 mb-4">
               <div className={`p-2 rounded-lg ${canUseAI ? "bg-amber-100 text-amber-600" : "bg-slate-200 text-slate-400"}`}>
                 {canUseAI ? <Zap size={18} /> : <Lock size={18} />}
@@ -456,6 +494,7 @@ export default function StructuredLessonWorkspace({
 
         <div className="bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-md">
           <SectionEyebrow icon={Github} label="GitHub Deliverable Proof" />
+          {(commitStatus?.status === "saved" || hasSavedCommitProof) && <LastChangeNotice />}
           <div className="mb-4">
              <div className="text-xs font-bold text-slate-900 mb-1">{lessonConfig.deliverable}</div>
              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Enter repository and commit SHA to verify</p>

@@ -19,6 +19,32 @@ export async function getTeacherByUid(uid) {
   return data; // { t_id, uid, name }
 }
 
+async function getSessionProcessingBySessionIds(sessionIds) {
+  if (!sessionIds.length) return {};
+
+  const { data, error } = await supabase
+    .from("session_processing_jobs")
+    .select("session_id, session_summary, mentor_feedback_text, summary_json, processing_status")
+    .in("session_id", sessionIds);
+
+  if (error) {
+    console.error("teacherSessionService: failed to fetch session summaries", error.message);
+    return {};
+  }
+
+  return Object.fromEntries((data || []).map((job) => [job.session_id, job]));
+}
+
+function buildSummaryFields(session, processingBySessionId) {
+  const processing = processingBySessionId[session?.session_id] || {};
+  return {
+    session_summary: processing.session_summary || processing.summary_json?.summary || null,
+    mentor_feedback_text: processing.mentor_feedback_text || session?.feedback || null,
+    processing_status: processing.processing_status || null,
+    summary_json: processing.summary_json || null,
+  };
+}
+
 // Return array of students that have been connected to the given teacher (by t_id)
 // Uses tables: session -> booking -> student (per provided schema)
 // Each student object includes: s_id, uid, name, email (if present), lastSessionAt, hasActiveSession
@@ -29,7 +55,7 @@ export async function getStudentsConnectedToTeacher(t_id) {
   // 1) fetch sessions for this teacher
   const { data: sessions, error: sessionsError } = await supabase
     .from("session")
-    .select("session_id, booking_id, start_time, end_time, status, join_url")
+    .select("session_id, booking_id, start_time, end_time, status, join_url, feedback")
     .eq("t_id", t_id);
 
   if (sessionsError) {
@@ -90,6 +116,9 @@ export async function getStudentsConnectedToTeacher(t_id) {
 
   // 4) Aggregate sessions per student to compute lastSessionAt, active flag and include latest session info
   const sessionsByStudent = {};
+  const processingBySessionId = await getSessionProcessingBySessionIds(
+    sessionsWithBooking.map((session) => session.session_id).filter(Boolean)
+  );
   const now = new Date();
   sessionsWithBooking.forEach((s) => {
     const s_id = bookingToStudent[s.booking_id];
@@ -153,6 +182,7 @@ export async function getStudentsConnectedToTeacher(t_id) {
             join_url: sessionJoinUrl,
             start_time: latestSession.start_time,
             end_time: latestSession.end_time,
+            ...buildSummaryFields(latestSession, processingBySessionId),
           }
         : null,
     };
@@ -189,7 +219,7 @@ export async function getAllSessionsForTeacherByUid(uid) {
   // 1) fetch sessions for this teacher
   const { data: sessions, error: sessionsError } = await supabase
     .from("session")
-    .select("session_id, booking_id, start_time, end_time, status")
+    .select("session_id, booking_id, start_time, end_time, status, join_url, feedback")
     .eq("t_id", t_id);
 
   if (sessionsError) {
@@ -257,6 +287,9 @@ export async function getAllSessionsForTeacherByUid(uid) {
   });
 
   // 6) Build result: one entry per session/booking
+  const processingBySessionId = await getSessionProcessingBySessionIds(
+    sessionsWithBooking.map((session) => session.session_id).filter(Boolean)
+  );
   const now = new Date();
   const result = sessionsWithBooking.map((s) => {
     const booking = bookingMap[s.booking_id] || {};
@@ -290,7 +323,9 @@ export async function getAllSessionsForTeacherByUid(uid) {
         join_url: s.join_url || null,
         start_time: s.start_time,
         end_time: s.end_time,
+        ...buildSummaryFields(s, processingBySessionId),
       },
+      ...buildSummaryFields(s, processingBySessionId),
     };
   });
 

@@ -34,6 +34,9 @@ export default function useAlgoNestRoadmapController() {
   const [checkpoints,    setCheckpoints]    = useState([]);
   const [interviews,     setInterviews]     = useState([]);
   const [progressMap,    setProgressMap]    = useState({});
+  const [aiQuestionProgressMap, setAiQuestionProgressMap] = useState({});
+  const [assetProgressMap, setAssetProgressMap] = useState({});
+  const [commitProofProgressMap, setCommitProofProgressMap] = useState({});
   const [checkpointMap,  setCheckpointMap]  = useState({});
   const [checkpointProgressMap, setCheckpointProgressMap] = useState({});
   const [interviewProgressMap, setInterviewProgressMap] = useState({});
@@ -52,20 +55,43 @@ export default function useAlgoNestRoadmapController() {
   const [hasAnyBooking, setHasAnyBooking] = useState(false);
   const [resolvedDomain, setResolvedDomain] = useState(null);
   const [aiInputCount, setAiInputCount] = useState(0);
+  const [aiPromptLimit, setAiPromptLimit] = useState(10);
   const [aiLockedByUsage, setAiLockedByUsage] = useState(false);
+  const [aiAccessReason, setAiAccessReason] = useState(null);
+
+  function groupProgressRowsByLesson(rows) {
+    return (rows || []).reduce((acc, row) => {
+      const lessonId = row.lesson_id;
+      if (!lessonId) return acc;
+      if (!acc[lessonId]) acc[lessonId] = [];
+      acc[lessonId].push(row);
+      return acc;
+    }, {});
+  }
 
   async function refreshLessonProgress() {
     if (!user?.uid) return;
 
     try {
-      const progressRes = await fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`);
+      const [progressRes, aiQuestionsRes, assetsRes, commitProofsRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/assets/${user.uid}?courseId=${courseId}`),
+        fetch(`http://localhost:5000/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`),
+      ]);
       const progressData = await progressRes.json();
+      const aiQuestionsData = await aiQuestionsRes.json();
+      const assetsData = await assetsRes.json();
+      const commitProofsData = await commitProofsRes.json();
 
       setProgressMap(
         Object.fromEntries(
           (progressData.data || []).map((progress) => [progress.lesson_id, progress])
         )
       );
+      setAiQuestionProgressMap(groupProgressRowsByLesson(aiQuestionsData.data || []));
+      setAssetProgressMap(groupProgressRowsByLesson(assetsData.data || []));
+      setCommitProofProgressMap(groupProgressRowsByLesson(commitProofsData.data || []));
     } catch (err) {
       console.error("Failed to refresh lesson progress:", err);
     }
@@ -83,9 +109,17 @@ export default function useAlgoNestRoadmapController() {
         requests.push(fetch(`http://localhost:5000/api/dashboard/active-course/${user.uid}`));
         // Also fetch dashboard summary which includes hasAnyBooking and activeCourse
         requests.push(fetch(`http://localhost:5000/api/dashboard/getDashboard/${user.uid}`));
+        requests.push(fetch("http://localhost:5000/api/ai/access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: user.uid, courseId }),
+        }));
         requests.push(fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`));
         requests.push(fetch(`http://localhost:5000/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`));
         requests.push(fetch(`http://localhost:5000/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/assets/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(`http://localhost:5000/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`));
       }
 
       const responses = await Promise.all(requests);
@@ -95,9 +129,13 @@ export default function useAlgoNestRoadmapController() {
         interviewsRes,
         activeCourseRes,
         dashboardRes,
+        aiAccessRes,
         progressRes,
         checkpointProgressRes,
         interviewProgressRes,
+        aiQuestionsRes,
+        assetsRes,
+        commitProofsRes,
       ] = responses;
       const lessonsData = await lessonsRes.json();
       const checkpointsData = await checkpointsRes.json();
@@ -131,6 +169,21 @@ export default function useAlgoNestRoadmapController() {
           setDashboardData(null);
         }
 
+        try {
+          const aiAccessJson = await aiAccessRes.json();
+          const promptCount = Number(aiAccessJson?.promptCount || 0);
+          const promptLimit = Number(aiAccessJson?.promptLimit || 10);
+          setAiInputCount(promptCount);
+          setAiPromptLimit(promptLimit);
+          setAiAccessReason(aiAccessJson?.reason || null);
+          setAiLockedByUsage(aiAccessJson?.reason === "free_prompt_limit" || promptCount >= promptLimit);
+        } catch (e) {
+          setAiInputCount(0);
+          setAiPromptLimit(10);
+          setAiAccessReason(null);
+          setAiLockedByUsage(false);
+        }
+
         const dashboardDataValue = dashboardJson?.data || null;
         const activeCourseDataValue = activeCourseJson?.course || null;
         const dashboardActiveCourse = dashboardDataValue?.activeCourse || null;
@@ -152,6 +205,10 @@ export default function useAlgoNestRoadmapController() {
         setHasActiveBooking(false);
         setHasAnyBooking(false);
         setResolvedDomain(null);
+        setAiInputCount(0);
+        setAiPromptLimit(10);
+        setAiAccessReason(null);
+        setAiLockedByUsage(false);
       }
 
       if (progressRes) {
@@ -163,6 +220,27 @@ export default function useAlgoNestRoadmapController() {
         );
       } else {
         setProgressMap({});
+      }
+
+      if (aiQuestionsRes) {
+        const aiQuestionsData = await aiQuestionsRes.json();
+        setAiQuestionProgressMap(groupProgressRowsByLesson(aiQuestionsData.data || []));
+      } else {
+        setAiQuestionProgressMap({});
+      }
+
+      if (assetsRes) {
+        const assetsData = await assetsRes.json();
+        setAssetProgressMap(groupProgressRowsByLesson(assetsData.data || []));
+      } else {
+        setAssetProgressMap({});
+      }
+
+      if (commitProofsRes) {
+        const commitProofsData = await commitProofsRes.json();
+        setCommitProofProgressMap(groupProgressRowsByLesson(commitProofsData.data || []));
+      } else {
+        setCommitProofProgressMap({});
       }
 
       if (checkpointProgressRes) {
@@ -191,30 +269,17 @@ export default function useAlgoNestRoadmapController() {
     loadRoadmapData();
   }, [loadRoadmapData]);
 
-  // track AI input count for logged-in users with no previous bookings
-  useEffect(() => {
-    if (!user?.uid) {
-      setAiInputCount(0);
-      setAiLockedByUsage(false);
-      return;
-    }
-
-    const key = `ai_inputs:${user.uid}`;
-    const stored = parseInt(localStorage.getItem(key) || "0", 10) || 0;
-    setAiInputCount(stored);
-    setAiLockedByUsage(stored >= 10);
-  }, [user?.uid]);
-
   function handleUserAIMessage() {
     if (!user?.uid) return;
     // only count preview usage when AI is actually available
     if (!canUseAI || hasActiveBooking) return;
 
-    const key = `ai_inputs:${user.uid}`;
     const next = aiInputCount + 1;
-    localStorage.setItem(key, String(next));
     setAiInputCount(next);
-    if (next >= 10) setAiLockedByUsage(true);
+    if (next >= aiPromptLimit) {
+      setAiLockedByUsage(true);
+      setAiAccessReason("free_prompt_limit");
+    }
   }
 
   useEffect(() => {
@@ -229,7 +294,14 @@ export default function useAlgoNestRoadmapController() {
     if (!user?.uid) {
       setHasActiveBooking(false);
       setCheckpointProgressMap({});
+      setAiQuestionProgressMap({});
+      setAssetProgressMap({});
+      setCommitProofProgressMap({});
       setResolvedDomain(null);
+      setAiInputCount(0);
+      setAiPromptLimit(10);
+      setAiAccessReason(null);
+      setAiLockedByUsage(false);
     }
   }, [user?.uid]);
 
@@ -345,9 +417,9 @@ export default function useAlgoNestRoadmapController() {
       navigate("/signup");
       return;
     }
-    // Only allow quiz if user has a valid booking for this course
-    if (!hasActiveBooking) {
-      // logged-in but no valid booking — send to pricing
+    // Allow quiz whenever the student currently has AI access.
+    // That includes active bookings and the limited AI preview window.
+    if (!canUseAI) {
       navigate("/#pricing");
       return;
     }
@@ -426,25 +498,34 @@ export default function useAlgoNestRoadmapController() {
     ? "ready"
     : "locked";
 
-  // Determine AI/chat availability based on resolved domain + booking state
+  // Determine AI/chat availability based on selected roadmap + project + booking state
   const isAuthenticated = Boolean(user?.uid);
-  const hasDomain = Boolean(resolvedDomain);
+  const selectedRoadmapCourseId =
+    dashboardData?.activeCourse?.courseId ||
+    dashboardData?.activeCourse?.course_id ||
+    dashboardData?.selectedCourse?.courseId ||
+    dashboardData?.selectedCourse?.course_id ||
+    dashboardData?.profile?.course_id ||
+    null;
+  const hasSelectedRoadmap = Boolean(selectedRoadmapCourseId);
+  const isSelectedRoadmap = Number(selectedRoadmapCourseId) === Number(courseId);
+  const hasDomain = hasSelectedRoadmap;
   const hasProjectTitle = Boolean(dashboardData?.profile?.project_title);
   let canUseAI = false;
   let chatLockReason = null; // e.g., "other_roadmap"
 
   if (isAuthenticated) {
-    if (!hasDomain) {
+    if (!hasSelectedRoadmap) {
       canUseAI = false;
-      chatLockReason = "no_domain";
+      chatLockReason = "no_roadmap";
     } else if (!hasProjectTitle) {
       canUseAI = false;
       chatLockReason = "no_project";
     } else if (hasActiveBooking) {
       // Active booking for this roadmap: full AI access
       canUseAI = true;
-    } else if (hasAnyBooking && !hasActiveBooking) {
-      // User has a booking, but it's for another course -> disallow chat
+    } else if (!isSelectedRoadmap || (hasAnyBooking && !hasActiveBooking)) {
+      // User has selected or booked another course -> disallow chat
       canUseAI = false;
       chatLockReason = "other_roadmap";
     } else {
@@ -462,12 +543,12 @@ export default function useAlgoNestRoadmapController() {
   let chatLockedCta = "/#pricing";
 
   if (aiLockedByUsage) {
-    chatLockedTitle = "Create your study plan";
-    chatLockedDescription = "You have used the AI preview 10 times. Create a study plan to continue using the companion.";
+    chatLockedTitle = "AI limit exhausted - booking needed";
+    chatLockedDescription = `You have used all ${aiPromptLimit} free AI prompts. Book a plan to continue AI guidance, assessments, lesson progress, checkpoints, and mentor review.`;
     chatLockedCta = "/#pricing";
-  } else if (chatLockReason === "no_domain") {
-    chatLockedTitle = "Select a domain first";
-    chatLockedDescription = "AI depends on your selected domain. Choose a roadmap or booking that sets your domain before using the companion.";
+  } else if (chatLockReason === "no_roadmap") {
+    chatLockedTitle = "Select a roadmap first";
+    chatLockedDescription = "AI depends on your selected roadmap and project. Choose a roadmap in your dashboard before using the companion.";
     chatLockedCta = "/dashboard";
   } else if (chatLockReason === "no_project") {
     chatLockedTitle = "Feed project title first";
@@ -479,7 +560,7 @@ export default function useAlgoNestRoadmapController() {
     chatLockedCta = "/dashboard";
   } else if (isAuthenticated) {
     chatLockedTitle = "AI Build Companion unlocks with a plan";
-    chatLockedDescription = `You can preview milestone 1 and send up to 10 prompts (${aiInputCount}/10 used). Full AI guidance, all milestones, and mentor reviews unlock once your plan is active.`;
+    chatLockedDescription = `You can preview milestone 1 and send up to ${aiPromptLimit} prompts (${aiInputCount}/${aiPromptLimit} used). Full AI guidance, all milestones, and mentor reviews unlock once your plan is active.`;
     chatLockedCta = "/#pricing";
   } else {
     chatLockedTitle = "Sign up to unlock your AI Build Companion";
@@ -493,15 +574,19 @@ export default function useAlgoNestRoadmapController() {
   activeCourseData,
   activeLessonId,
   activeTab,
+  aiQuestionProgressMap,
   allLessonsCompleted,
   askAi,
   askSeededLessonQuestion,
   askedLessonId,
+  assetProgressMap,
+  commitProofProgressMap,
   canUseAI,
   chatIsLocked,
   chatLockedCta,
   chatLockedDescription,
   chatLockedTitle,
+  chatLockReason: aiAccessReason || chatLockReason,
   checkpoints,
   checkpointCelebration,
   checkpointMap,

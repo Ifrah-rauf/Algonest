@@ -43,6 +43,7 @@ export default function App() {
 
     <main className="
       flex-1
+      md:ml-[20%]
       min-h-screen
       overflow-y-auto
       px-4

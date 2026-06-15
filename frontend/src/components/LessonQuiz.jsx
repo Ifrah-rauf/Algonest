@@ -129,7 +129,7 @@ export default function LessonQuiz({
       onResultSaved(result?.data || null);
 
       if (didPass) {
-        onPassed(lessonId, nextScore, result?.data?.progress || null);
+        onPassed(lessonId, nextScore, result?.data?.unlock?.progress || result?.data?.progress || null);
       }
     } catch (err) {
       setSaveError(err.message || "Quiz result could not be saved.");

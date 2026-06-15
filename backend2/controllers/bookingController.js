@@ -111,7 +111,7 @@ export async function bookingMail(req, res) {
 ============================================================ */
 export async function getPlan(req, res) {
   try {
-    const { userId, teacherId, slot } = req.body;
+    const { userId, teacherId, slot, checkpointId } = req.body;
 
     if (!userId || !teacherId || !slot) {
       return res.status(400).json({
@@ -121,7 +121,7 @@ export async function getPlan(req, res) {
       });
     }
 
-    const result = await getPlanService({ userId, teacherId, slot });
+    const result = await getPlanService({ userId, teacherId, slot, checkpointId: checkpointId || null });
     return res.json(result);
   } catch (err) {
     return serverError(res, "getPlan", err);
@@ -304,11 +304,12 @@ export async function bookPlan(req, res) {
       finalResult.checkpoint = checkpoint;
     } catch (err) {
       console.error("[bookPlan/checkpoint] Failed to attach session to checkpoint:", err.message);
+      await cleanupCreatedSession(finalResult.session.session_id);
+      await compensate({ slot, bookingId: coreResult.booking_id, studentId });
       return res.status(500).json({
         success: false,
         code: "CHECKPOINT_LINK_FAILED",
-        message: "Session was created, but checkpoint linking failed. Please contact support.",
-        session_id: finalResult.session.session_id,
+        message: "Session could not be saved. Your booking has been rolled back. Please try again.",
       });
     }
   }
@@ -324,11 +325,12 @@ export async function bookPlan(req, res) {
       finalResult.interview = interview;
     } catch (err) {
       console.error("[bookPlan/interview] Failed to attach session to interview:", err.message);
+      await cleanupCreatedSession(finalResult.session.session_id);
+      await compensate({ slot, bookingId: coreResult.booking_id, studentId });
       return res.status(500).json({
         success: false,
         code: "INTERVIEW_LINK_FAILED",
-        message: "Session was created, but interview linking failed. Please contact support.",
-        session_id: finalResult.session.session_id,
+        message: "Session could not be saved. Your booking has been rolled back. Please try again.",
       });
     }
   }
@@ -336,6 +338,44 @@ export async function bookPlan(req, res) {
   finalResult.session_id = finalResult.session?.session_id || null;
 
   return res.status(200).json(finalResult);
+}
+
+async function cleanupCreatedSession(sessionId) {
+  if (!sessionId) return;
+
+  try {
+    const { supabase } = await import("../lib/supabase.js");
+
+    const { error: checkpointError } = await supabase
+      .from("checkpoints_progress")
+      .delete()
+      .eq("session_id", sessionId);
+
+    if (checkpointError) {
+      throw new Error(`Failed to delete checkpoint link: ${checkpointError.message}`);
+    }
+
+    const { error: interviewError } = await supabase
+      .from("interview_sessions")
+      .delete()
+      .eq("session_id", sessionId);
+
+    if (interviewError) {
+      throw new Error(`Failed to delete interview link: ${interviewError.message}`);
+    }
+
+    const { error } = await supabase
+      .from("session")
+      .delete()
+      .eq("session_id", sessionId);
+
+    if (error) {
+      throw new Error(`Failed to delete session: ${error.message}`);
+    }
+  } catch (cleanupErr) {
+    console.error("[cleanupCreatedSession] Cleanup failed:", cleanupErr.message);
+    console.error("Affected session_id:", sessionId);
+  }
 }
 
 /* ============================================================

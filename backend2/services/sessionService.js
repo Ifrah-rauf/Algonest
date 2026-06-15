@@ -48,6 +48,33 @@ async function getBookingIdsByStudentId(studentId) {
   return (bookings || []).map((booking) => booking.booking_id).filter(Boolean);
 }
 
+async function getSessionProcessingBySessionIds(sessionIds) {
+  if (!sessionIds.length) return {};
+
+  const { data, error } = await supabase
+    .from("session_processing_jobs")
+    .select("session_id, session_summary, mentor_feedback_text, summary_json, processing_status")
+    .in("session_id", sessionIds);
+
+  if (error) {
+    console.error("Failed to fetch session processing summaries:", error.message);
+    return {};
+  }
+
+  return Object.fromEntries((data || []).map((job) => [job.session_id, job]));
+}
+
+function attachSessionSummary(session, processingBySessionId) {
+  const processing = processingBySessionId[session.session_id] || {};
+  return {
+    ...session,
+    session_summary: processing.session_summary || processing.summary_json?.summary || null,
+    mentor_feedback_text: processing.mentor_feedback_text || session.feedback || null,
+    processing_status: processing.processing_status || null,
+    summary_json: processing.summary_json || null,
+  };
+}
+
 export async function getSessionPreparationData(slotId, studentIdFromAuth) {
   if (!studentIdFromAuth) {
     throw new Error("Unauthorized");
@@ -168,8 +195,15 @@ export async function sessionHistory(uid){
     if (sessionError) {
         throw new Error("Failed to fetch session");
     }
+
+    const processingBySessionId = await getSessionProcessingBySessionIds(
+        (sessionData || []).map((session) => session.session_id).filter(Boolean)
+    );
+
     return {
-        session: sessionData
+        session: (sessionData || []).map((session) =>
+            attachSessionSummary(session, processingBySessionId)
+        )
     };
 }
 export async function completeSessionData({ sessionId, feedbackText = null }) {

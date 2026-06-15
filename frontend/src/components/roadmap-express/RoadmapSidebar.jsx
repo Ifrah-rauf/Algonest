@@ -1,22 +1,68 @@
 const sidebarStats = [
   { key: "lessons", label: "Lessons", colorClass: "text-violet-300" },
   { key: "checkpoints", label: "Checkpoints", colorClass: "text-[var(--road-yellow)]" },
-  { key: "leaderboard", label: "Leaderboard", colorClass: "text-violet-300" },
-  { key: "score", label: "Avg. Score", colorClass: "text-emerald-300" },
 ];
 
+function getInitials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return parts[0]?.slice(0, 2).toUpperCase() || "ST";
+}
+
+function getCourseId(course) {
+  return course?.courseId || course?.course_id || course?.id || null;
+}
+
 export default function RoadmapSidebar({
+  activeCourseData,
   sidebarOpen,
   setSidebarOpen,
   user,
+  courseId,
+  dashboardData,
+  hasActiveBooking = false,
+  hasAnyBooking = false,
+  checkpoints = [],
+  checkpointProgressMap = {},
   completedCount,
   totalLessons,
 }) {
+  const studentName = dashboardData?.profile?.name || user?.username || "Student";
+  const roadmapCourse =
+    dashboardData?.activeCourse ||
+    activeCourseData ||
+    dashboardData?.selectedCourse ||
+    null;
+  const roadmapTitle =
+    roadmapCourse?.title ||
+    roadmapCourse?.name ||
+    dashboardData?.domain ||
+    `Course #${courseId}`;
+  const activeCourseId = getCourseId(roadmapCourse);
+  const isCurrentActiveCourse = Boolean(
+    hasActiveBooking ||
+    (activeCourseId && Number(activeCourseId) === Number(courseId))
+  );
+  const roadmapStatus = isCurrentActiveCourse
+    ? "Active"
+    : hasAnyBooking
+    ? "Other roadmap active"
+    : "Preview";
+  const completedCheckpoints = checkpoints.filter((checkpoint) => {
+    const progress = checkpointProgressMap[checkpoint.checkpoint_id];
+    return progress?.completed === true || progress?.session?.marked_by_teacher === true;
+  }).length;
+
   const values = {
     lessons: `${completedCount}/${totalLessons}`,
-    checkpoints: "0/2",
-    leaderboard: "#7",
-    score: "79",
+    checkpoints: `${completedCheckpoints}/${checkpoints.length}`,
   };
 
   return (
@@ -33,14 +79,14 @@ export default function RoadmapSidebar({
 
           <div className="mb-4 flex min-w-0 items-center gap-2.5">
             <div className="road-gradient grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold text-white">
-              {user?.username?.slice(0, 2).toUpperCase() || "IR"}
+              {getInitials(studentName)}
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-bold text-white">
-                {user?.username || "Student"}
+                {studentName}
               </div>
               <div className="truncate font-mono text-[10px] text-[#8b7bb8]">
-                Backend Dev Path - Active
+                {roadmapTitle} - {roadmapStatus}
               </div>
             </div>
           </div>

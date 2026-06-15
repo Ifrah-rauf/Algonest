@@ -26,11 +26,26 @@ function ProfileToast({ toast }) {
   );
 }
 
-export default function ProfileTab({ student, data, navigate, onProfileSave }) {
+export default function ProfileTab({
+  student,
+  data,
+  courses = [],
+  projectSuggestions = [],
+  projectsLoading = false,
+  navigate,
+  onProfileSave,
+}) {
   const profile = data?.profile || {};
   const studentId = profile.s_id || student?.s_id;
   const initialGithub = profile.github || profile.github_url || profile.githubUrl || "";
   const initialResume = profile.resume || profile.resume_url || profile.resumeUrl || "";
+  const initialCourseId =
+    profile.course_id ||
+    data?.selectedCourse?.courseId ||
+    data?.selectedCourse?.course_id ||
+    data?.activeCourse?.courseId ||
+    data?.activeCourse?.course_id ||
+    "";
   const resolvedDomain =
     data?.domain ||
     profile.domain ||
@@ -40,11 +55,17 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
     null;
 
   const [githubLink, setGithubLink] = useState(initialGithub);
+  const [selectedCourseId, setSelectedCourseId] = useState(String(initialCourseId || ""));
+  const [projectMode, setProjectMode] = useState("recommended");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [courseProjects, setCourseProjects] = useState(projectSuggestions);
+  const [courseProjectsLoading, setCourseProjectsLoading] = useState(false);
   const [projectTitle, setProjectTitle] = useState(profile.project_title || "");
   const [resumeLink, setResumeLink] = useState(initialResume);
   const [resumeFileName, setResumeFileName] = useState("");
   const [resumePreview, setResumePreview] = useState(initialResume);
   const [savingGithub, setSavingGithub] = useState(false);
+  const [savingRoadmap, setSavingRoadmap] = useState(false);
   const [savingProject, setSavingProject] = useState(false);
   const [savingResume, setSavingResume] = useState(false);
   const [toast, setToast] = useState(null);
@@ -56,10 +77,64 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
 
   useEffect(() => {
     setGithubLink(initialGithub);
+    setSelectedCourseId(String(initialCourseId || ""));
     setProjectTitle(profile.project_title || "");
     setResumeLink(initialResume);
     setResumePreview(initialResume);
-  }, [initialGithub, initialResume, profile.project_title]);
+  }, [initialCourseId, initialGithub, initialResume, profile.project_title]);
+
+  useEffect(() => {
+    setCourseProjects(projectSuggestions);
+  }, [projectSuggestions]);
+
+  useEffect(() => {
+    async function loadCourseProjects() {
+      if (!profile.uid || !selectedCourseId) {
+        setCourseProjects([]);
+        return;
+      }
+
+      setCourseProjectsLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/projects/recommend`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: profile.uid, courseId: selectedCourseId }),
+        });
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || "Failed to load project recommendations");
+        }
+
+        setCourseProjects(result.projects || []);
+      } catch (err) {
+        console.error("Project recommendation failed:", err);
+        setCourseProjects([]);
+      } finally {
+        setCourseProjectsLoading(false);
+      }
+    }
+
+    loadCourseProjects();
+  }, [profile.uid, selectedCourseId]);
+
+  const visibleProjects = courseProjects;
+  const recommendationsLoading = projectsLoading || courseProjectsLoading;
+
+  useEffect(() => {
+    if (!visibleProjects.length) {
+      setSelectedProjectId("");
+      return;
+    }
+
+    const currentProject = visibleProjects.find(
+      (project) => project.project_title === profile.project_title
+    );
+    setSelectedProjectId(
+      String(currentProject?.project_id || visibleProjects[0]?.project_id || "")
+    );
+  }, [profile.project_title, visibleProjects]);
 
   const validateGithub = (url) => {
     if (!String(url || "").trim()) {
@@ -119,8 +194,80 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
     }
   }
 
+  async function handleRoadmapSave() {
+    if (!selectedCourseId) {
+      showToast("Please select a roadmap");
+      return false;
+    }
+
+    if (!studentId) {
+      showToast("Student profile is not loaded yet. Please refresh and try again.");
+      return false;
+    }
+
+    const selectedCourse = courses.find(
+      (course) => Number(course.course_id) === Number(selectedCourseId)
+    );
+
+    setSavingRoadmap(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/student/roadmap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, courseId: selectedCourseId }),
+      });
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Failed to save roadmap");
+      }
+
+      onProfileSave?.(
+        { course_id: Number(selectedCourseId), project_title: "" },
+        {
+          selectedCourse: selectedCourse
+            ? {
+                courseId: selectedCourse.course_id,
+                course_id: selectedCourse.course_id,
+                title: selectedCourse.title,
+                desc: selectedCourse.description || selectedCourse.desc || "",
+                description: selectedCourse.description || selectedCourse.desc || "",
+                domain: selectedCourse.domain || null,
+              }
+            : data?.selectedCourse,
+        }
+      );
+      setProjectTitle("");
+      showToast(result.message || "Roadmap saved successfully", "success");
+      return true;
+    } catch (err) {
+      showToast(err.message || "Failed to save roadmap");
+      return false;
+    } finally {
+      setSavingRoadmap(false);
+    }
+  }
+
+  async function saveRoadmapIfNeeded() {
+    const currentCourseId = String(profile.course_id || data?.selectedCourse?.courseId || data?.selectedCourse?.course_id || "");
+    if (!selectedCourseId || currentCourseId === String(selectedCourseId)) return true;
+    return handleRoadmapSave();
+  }
+
   async function handleProjectSave() {
-    if (!projectTitle.trim()) {
+    const selectedProject = visibleProjects.find(
+      (project) => String(project.project_id) === String(selectedProjectId)
+    );
+    const nextProjectTitle =
+      projectMode === "recommended" ? selectedProject?.project_title || "" : projectTitle;
+    const nextProjectId = projectMode === "recommended" ? selectedProject?.project_id || null : null;
+
+    if (!selectedCourseId) {
+      showToast("Please select a roadmap before choosing a project");
+      return;
+    }
+
+    if (!nextProjectTitle.trim()) {
       showToast("Project title is required");
       return;
     }
@@ -132,10 +279,17 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
 
     setSavingProject(true);
     try {
+      const roadmapSaved = await saveRoadmapIfNeeded();
+      if (!roadmapSaved) return;
+
       const res = await fetch(`${API_BASE}/api/student/project-details`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, projectTitle }),
+        body: JSON.stringify({
+          studentId,
+          projectTitle: nextProjectTitle.trim(),
+          projectId: nextProjectId,
+        }),
       });
       const result = await res.json();
 
@@ -143,7 +297,8 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
         throw new Error(result.message || "Failed to save project title");
       }
 
-      onProfileSave?.({ project_title: projectTitle });
+      setProjectTitle(nextProjectTitle);
+      onProfileSave?.({ project_title: nextProjectTitle });
       showToast(result.message || "Project title saved successfully", "success");
     } catch (err) {
       showToast(err.message || "Failed to save project title");
@@ -223,20 +378,22 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
       <SectionCard
         title="Quiz performance"
         action={
+          !hasAttempts ? (
           <button
             type="button"
             className="dash-button-primary px-3 py-1.5 text-xs"
             onClick={() => navigate("/careerquiz")}
           >
-            {hasAttempts ? "View quiz history" : "Take a quiz"}
+            Take a quiz
           </button>
+          ) : null
         }
       >
         {hasAttempts ? (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="dash-card rounded-3xl border p-4">
-                <div className="text-xs uppercase tracking-[0.12em] text-[var(--dash-purple)] sm:tracking-[0.2em]">Latest attempt</div>
+                <div className="text-xs uppercase tracking-[0.12em] text-[var(--dash-purple)] sm:tracking-[0.2em]">Latest quiz score</div>
                 <div className="mt-3 text-2xl font-bold text-[var(--dash-ink)] sm:text-3xl">
                   {quizSummary.latestScore != null ? `${quizSummary.latestScore}/6` : "-"}
                 </div>
@@ -329,22 +486,113 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Project Details (AI Context)">
+      <SectionCard title="Roadmap and Project Details (AI Context)">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="student-project-title" className="block text-sm font-medium text-[var(--dash-ink)]">
-              Featured Project Title
+            <label htmlFor="student-roadmap" className="block text-sm font-medium text-[var(--dash-ink)]">
+              Select Roadmap
             </label>
-            <input
-              id="student-project-title"
-              name="projectTitle"
-              type="text"
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-              placeholder="e.g. Job Tracker API"
+            <select
+              id="student-roadmap"
+              name="courseId"
+              value={selectedCourseId}
+              onChange={(event) => setSelectedCourseId(event.target.value)}
               className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
-            />
+            >
+              <option value="">Choose a roadmap</option>
+              {courses.map((course) => (
+                <option key={course.course_id} value={course.course_id}>
+                  {course.title || course.course_name || `Course #${course.course_id}`}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleRoadmapSave}
+              className="dash-button-primary w-full px-4 py-2 text-sm sm:w-auto"
+              disabled={savingRoadmap || !selectedCourseId}
+            >
+              {savingRoadmap ? "Saving..." : "Save Roadmap"}
+            </button>
           </div>
+
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-[var(--dash-ink)]">
+              Choose Project
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <label className="flex items-center gap-2 text-sm text-[var(--dash-muted)]">
+                <input
+                  type="radio"
+                  name="projectMode"
+                  value="recommended"
+                  checked={projectMode === "recommended"}
+                  onChange={() => setProjectMode("recommended")}
+                />
+                Recommended project
+              </label>
+              <label className="flex items-center gap-2 text-sm text-[var(--dash-muted)]">
+                <input
+                  type="radio"
+                  name="projectMode"
+                  value="custom"
+                  checked={projectMode === "custom"}
+                  onChange={() => setProjectMode("custom")}
+                />
+                Custom project
+              </label>
+            </div>
+          </div>
+
+          {projectMode === "recommended" ? (
+            <div className="space-y-2">
+              <label htmlFor="student-recommended-project" className="block text-sm font-medium text-[var(--dash-ink)]">
+                Recommended Projects
+              </label>
+              <select
+                id="student-recommended-project"
+                name="recommendedProject"
+                value={selectedProjectId}
+                onChange={(event) => setSelectedProjectId(event.target.value)}
+                className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
+                disabled={recommendationsLoading || !visibleProjects.length}
+              >
+                {recommendationsLoading ? (
+                  <option value="">Loading projects...</option>
+                ) : visibleProjects.length ? (
+                  visibleProjects.map((project) => (
+                    <option key={project.project_id || project.project_title} value={project.project_id || ""}>
+                      {project.project_title}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No recommendations for this roadmap yet</option>
+                )}
+              </select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label htmlFor="student-project-title" className="block text-sm font-medium text-[var(--dash-ink)]">
+                Custom Project Title
+              </label>
+              <input
+                id="student-project-title"
+                name="projectTitle"
+                type="text"
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                placeholder="e.g. Job Tracker API"
+                className="dash-input w-full min-w-0 rounded-2xl border px-4 py-3 text-sm outline-none transition"
+              />
+            </div>
+          )}
+
+          {profile.project_title ? (
+            <div className="rounded-2xl border border-[var(--dash-border)] bg-white px-4 py-3 text-sm text-[var(--dash-muted)]">
+              Current AI project: <span className="font-semibold text-[var(--dash-ink)]">{profile.project_title}</span>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
@@ -352,10 +600,10 @@ export default function ProfileTab({ student, data, navigate, onProfileSave }) {
               className="dash-button-primary w-full px-4 py-2 text-sm sm:w-auto"
               disabled={savingProject}
             >
-              {savingProject ? "Saving..." : "Save Project Title"}
+              {savingProject ? "Saving..." : "Save Project"}
             </button>
             <p className="text-xs italic text-[var(--dash-muted)]">
-              *Required to enable AI Companion
+              *Roadmap and project are required to enable AI Companion
             </p>
           </div>
         </div>

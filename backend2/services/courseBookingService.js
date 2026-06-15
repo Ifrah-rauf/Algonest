@@ -19,7 +19,11 @@ async function dbFetch({ query, label }) {
 async function getStudentByUid(uid) {
   if (!uid) return null;
   return dbFetch({
-    query: supabase.from("student").select("s_id, uid, name").eq("uid", uid).maybeSingle(),
+    query: supabase
+      .from("student")
+      .select("s_id, uid, name, total_bookings")
+      .eq("uid", uid)
+      .maybeSingle(),
     label: "courseBooking/student",
   });
 }
@@ -156,9 +160,24 @@ export async function createCourseBookingService({
     throw new Error(`Failed to create booking: ${error.message}`);
   }
 
+  const { data: updatedStudent, error: studentUpdateError } = await supabase
+    .from("student")
+    .update({
+      active_booking_id: data.booking_id,
+      course_id: parsedCourseId,
+      total_bookings: Number(student.total_bookings || 0) + 1,
+    })
+    .eq("s_id", student.s_id)
+    .select("s_id, uid, name, total_bookings, active_booking_id, course_id")
+    .single();
+
+  if (studentUpdateError) {
+    throw new Error(`Booking created but failed to update student active booking: ${studentUpdateError.message}`);
+  }
+
   let email = { sent: false, reason: "Email not attempted" };
   try {
-    email = await sendCourseBookingEmail({ student, auth, booking: data, course });
+    email = await sendCourseBookingEmail({ student: updatedStudent, auth, booking: data, course });
   } catch (err) {
     console.error("[courseBooking/email]", err.message);
     email = { sent: false, reason: err.message };
@@ -167,7 +186,7 @@ export async function createCourseBookingService({
   return {
     success: true,
     booking: data,
-    student,
+    student: updatedStudent,
     email,
   };
 }

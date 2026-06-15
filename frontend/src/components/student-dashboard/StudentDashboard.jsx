@@ -25,6 +25,7 @@ export default function StudentDashboard({ data: propData }) {
   const {
     dashboardData,
     sessionInfo,
+    sessionHistory,
     mentorSuggestions,
     projectSuggestions,
     courseAds,
@@ -106,6 +107,7 @@ export default function StudentDashboard({ data: propData }) {
                 <ActivityTab
                   data={dashboardData}
                   sessionInfo={sessionInfo}
+                  sessionHistory={sessionHistory}
                   roadmapState={roadmapState}
                   roadmaps={roadmaps}
                   activityItems={activityItems}
@@ -117,6 +119,9 @@ export default function StudentDashboard({ data: propData }) {
                 <ProfileTab
                   student={student}
                   data={dashboardData}
+                  courses={courseAds}
+                  projectSuggestions={projectSuggestions}
+                  projectsLoading={projectsLoading}
                   navigate={navigate}
                   onProfileSave={handleProfileSave}
                 />

@@ -1,4 +1,5 @@
 import { saveLessonQuizResult } from "../services/quizService.js";
+import { getRoadmapAccess, sendRoadmapAccessDenied } from "../services/roadmapAccessService.js";
 
 export async function submitLessonQuizResult(req, res) {
   try {
@@ -16,6 +17,11 @@ export async function submitLessonQuizResult(req, res) {
         success: false,
         message: "uid and lessonId are required.",
       });
+    }
+
+    const access = await getRoadmapAccess({ uid, lessonId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
     }
 
     const data = await saveLessonQuizResult({

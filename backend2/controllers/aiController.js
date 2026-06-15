@@ -1,7 +1,18 @@
 import { generateAIResponse } from "../services/ai/aiOrchestrator.js";
 import { fetchHistoryForClient } from "../services/context/contextBuilder.js";
-import { resolveStudentRoadmapContext } from "../services/roadmapContext.js";
-import { supabase } from "../lib/supabase.js";
+import { getRoadmapAccess, sendRoadmapAccessDenied } from "../services/roadmapAccessService.js";
+
+function toAccessResponse(access) {
+  return {
+    success: true,
+    allowed: access.allowed,
+    reason: access.reason,
+    message: access.message,
+    hasActiveBooking: access.hasActiveBooking === true,
+    promptCount: access.promptCount || 0,
+    promptLimit: access.promptLimit || 10,
+  };
+}
 
 export async function handleAIMessage(req, res) {
   try {
@@ -14,50 +25,15 @@ export async function handleAIMessage(req, res) {
       return res.status(400).json({ error: "Message is required." });
     }
 
-    const roadmapContext = await resolveStudentRoadmapContext({ uid });
-    const student = roadmapContext?.student;
-    const selectedCourseId = roadmapContext?.roadmapCourseId || null;
-    const resolvedDomain = roadmapContext?.domain || roadmapContext?.selectedCourse?.domain || roadmapContext?.activeCourse?.domain || null;
     const requestedCourseId = Number(courseId);
-
-    if (!resolvedDomain) {
-      return res.status(403).json({
-        error: "Select a domain in your profile before using AI.",
-      });
-    }
-
-    // requirement: project title must be fed
-    if (!student?.project_title) {
-      return res.status(403).json({
-        error: "Please feed your project title in your profile to enable AI Companion.",
-      });
-    }
 
     if (!Number.isFinite(requestedCourseId) || requestedCourseId <= 0) {
       return res.status(400).json({ error: "courseId is required." });
     }
 
-    if (Number(selectedCourseId) !== requestedCourseId) {
-      return res.status(403).json({
-        error: "AI is only enabled for your selected roadmap.",
-      });
-    }
-
-    // requirement: 10 prompts limit if no booking
-    if (roadmapContext.source !== "booking") {
-      const { count, error: countError } = await supabase
-        .from("conv_history")
-        .select("*", { count: "exact", head: true })
-        .eq("student_id", student.s_id)
-        .eq("role", "user");
-
-      if (countError) {
-        console.error("Error counting prompts:", countError);
-      } else if (count >= 10) {
-        return res.status(403).json({
-          error: "You have reached the 10-prompt limit for free users. Please book a plan to continue using AI Companion.",
-        });
-      }
+    const access = await getRoadmapAccess({ uid, courseId: requestedCourseId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
     }
 
     const reply = await generateAIResponse({
@@ -89,6 +65,24 @@ export async function getHistory(req, res) {
   } catch (error) {
     console.error("getHistory error:", error);
     return res.status(500).json({ error: "Failed to fetch history." });
+  }
+}
+
+export async function getAccessStatus(req, res) {
+  try {
+    const { uid, courseId } = req.body;
+    if (!uid) return res.status(400).json({ success: false, error: "uid is required." });
+
+    const requestedCourseId = Number(courseId);
+    if (!Number.isFinite(requestedCourseId) || requestedCourseId <= 0) {
+      return res.status(400).json({ success: false, error: "courseId is required." });
+    }
+
+    const access = await getRoadmapAccess({ uid, courseId: requestedCourseId });
+    return res.status(200).json(toAccessResponse(access));
+  } catch (error) {
+    console.error("getAccessStatus error:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch AI access status." });
   }
 }
 

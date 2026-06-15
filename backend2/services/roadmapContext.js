@@ -20,6 +20,8 @@ async function getStudentRow({ uid = null, sId = null } = {}) {
     .select(`
       s_id, uid, name, bio, education, pfp, total_bookings, active_booking_id, course_id,
       student_project (
+        course_id,
+        project_id,
         custom_title
       )
     `);
@@ -35,14 +37,23 @@ async function getStudentRow({ uid = null, sId = null } = {}) {
   const { data, error } = await query;
   if (error) throw error;
   
-  if (data) {
-    // Flatten the joined data for backward compatibility in the app
-    const proj = data.student_project?.[0] || {};
-    data.project_title = proj.custom_title || null;
-    data.project_details = null; // Removed as it doesn't exist in schema
-  }
-
   return data || null;
+}
+
+function attachProjectForCourse(student, courseId) {
+  if (!student) return student;
+
+  const projects = Array.isArray(student.student_project) ? student.student_project : [];
+  const matchingProject = projects.find(
+    (project) => Number(project.course_id) === Number(courseId)
+  );
+  const fallbackProject = courseId ? {} : projects[0] || {};
+
+  return {
+    ...student,
+    project_title: matchingProject?.custom_title || fallbackProject.custom_title || null,
+    project_details: null,
+  };
 }
 
 async function getBookingById(bookingId) {
@@ -99,7 +110,7 @@ export async function resolveStudentRoadmapContext({ uid = null, sId = null } = 
       const roadmap = normalizeCourse(bookingCourse);
       const domain = roadmap?.domain || null;
       const studentWithDomain = {
-        ...student,
+        ...attachProjectForCourse(student, roadmap.courseId),
         domain,
         domainSource: "booking",
       };
@@ -149,7 +160,7 @@ export async function resolveStudentRoadmapContext({ uid = null, sId = null } = 
       const roadmap = normalizeCourse(course);
       const domain = roadmap?.domain || null;
       const studentWithDomain = {
-        ...student,
+        ...attachProjectForCourse(student, roadmap.courseId),
         domain,
         domainSource: "course",
       };
@@ -170,7 +181,7 @@ export async function resolveStudentRoadmapContext({ uid = null, sId = null } = 
   }
 
   const studentWithDomain = {
-    ...student,
+    ...attachProjectForCourse(student, null),
     domain: null,
     domainSource: null,
   };

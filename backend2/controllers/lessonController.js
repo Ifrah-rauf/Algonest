@@ -17,6 +17,7 @@ import {
   fetchLessonAIQuestionsByUid,
   upsertLessonProgress
 } from "../services/lessonService.js";
+import { getRoadmapAccess, sendRoadmapAccessDenied } from "../services/roadmapAccessService.js";
 
 export async function getAllLessons(req, res) {
   try {
@@ -253,6 +254,11 @@ export async function trackLessonAIQuestion(req, res) {
     } = req.body || {};
     console.log("[trackLessonAIQuestion]", { userId, lessonId, courseId, questionKey, completed });
 
+    const access = await getRoadmapAccess({ uid: userId, courseId, lessonId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
+    }
+
     const data = await saveLessonAIQuestion({
       userId,
       lessonId,
@@ -308,6 +314,11 @@ export async function saveLessonAssetAnswer(req, res) {
       answered,
     } = req.body || {};
     console.log("[saveLessonAssetAnswer]", { userId, lessonId, courseId, assetKey, answered });
+
+    const access = await getRoadmapAccess({ uid: userId, courseId, lessonId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
+    }
 
     const data = await saveLessonAssetProgress({
       userId,
@@ -367,6 +378,11 @@ export async function submitLessonCommitProof(req, res) {
     } = req.body || {};
     console.log("[submitLessonCommitProof]", { userId, lessonId, courseId, repoUrl, commitSha });
 
+    const access = await getRoadmapAccess({ uid: userId, courseId, lessonId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
+    }
+
     const data = await saveLessonCommitProof({
       userId,
       lessonId,
@@ -384,9 +400,7 @@ export async function submitLessonCommitProof(req, res) {
       data,
       verified,
       readyToUnlock: data.unlock?.readyToUnlock === true,
-      message: verified
-        ? "Commit proof saved."
-        : "Commit proof saved, but the repo URL or commit SHA format could not be verified.",
+      message: "Commit proof verified and saved.",
     });
   } catch (err) {
     console.error("submitLessonCommitProof error:", err);
@@ -430,6 +444,11 @@ export async function saveLessonProgress(req, res) {
       quizAttempt,
       readyToUnlock,
     } = req.body || {};
+
+    const access = await getRoadmapAccess({ uid: userId, lessonId });
+    if (!access.allowed) {
+      return sendRoadmapAccessDenied(res, access);
+    }
 
     const data = await upsertLessonProgress({
       userId,

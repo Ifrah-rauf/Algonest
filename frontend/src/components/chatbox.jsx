@@ -53,7 +53,26 @@ function AssistantIcon({ size = "sm" }) {
   );
 }
 
-function ChatAvatar({ role }) {
+function getInitials(name) {
+  const normalizedName = String(name || "")
+    .trim()
+    .replace(/^@/, "");
+
+  if (!normalizedName) return "ST";
+
+  const nameBeforeEmailDomain = normalizedName.split("@")[0];
+  const parts = nameBeforeEmailDomain
+    .split(/[\s._-]+/)
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return parts[0]?.slice(0, 2).toUpperCase() || "ST";
+}
+
+function ChatAvatar({ role, initials = "ST" }) {
   const isUser = role === "user";
 
   return (
@@ -62,7 +81,7 @@ function ChatAvatar({ role }) {
         isUser ? "bg-[#f6c90e] text-[#78350f]" : "chatbox-ai-avatar-shell"
       }`}
     >
-      {isUser ? "IR" : <AssistantIcon />}
+      {isUser ? initials : <AssistantIcon />}
     </div>
   );
 }
@@ -142,6 +161,7 @@ function Header({ contextTags }) {
 }
 
 export default function ChatBox({
+  studentName = "",
   systemPrompt,
   contextTags = [],
   initialMessage = "Hey - I'm your Build Companion...",
@@ -279,6 +299,7 @@ export default function ChatBox({
   }
 
   const canSend = Boolean(input.trim()) && !loading && !isLocked;
+  const userInitials = getInitials(studentName || user?.username || user?.email || "Student");
 
   return (
     <section className="chatbox flex shrink-0 flex-col">
@@ -293,7 +314,7 @@ export default function ChatBox({
 
             return (
               <div key={`${msg.role}-${index}`} className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
-                <ChatAvatar role={msg.role} />
+                <ChatAvatar role={msg.role} initials={userInitials} />
                 <div
                   className={`max-w-[82%] rounded-xl px-3 py-2.5 text-xs leading-relaxed text-[#1a1035] sm:max-w-[78%] ${
                     isUser

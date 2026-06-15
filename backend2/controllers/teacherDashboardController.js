@@ -12,7 +12,7 @@ import {
 export async function getTeacherStudents(req, res) {
   try {
     const uid = req.body?.uid || req.query?.uid || req.params?.uid;
-    const mode = req.body?.mode || req.query?.mode || "unique"; // "unique" or "all"
+    const mode = req.body?.mode || req.query?.mode || "all"; // "unique" or "all"
     console.debug("teacherDashboardController.getTeacherStudents: incoming uid sources -> body,query,params", {
       body: req.body,
       query: req.query,

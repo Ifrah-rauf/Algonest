@@ -38,12 +38,22 @@ function resolveDomain(data) {
 export default function useStudentDashboardData({ propData, user }) {
   const [dashboardData, setDashboardData] = useState(propData || null);
   const [sessionInfo, setSessionInfo] = useState({ status: "NONE", session: null });
+  const [sessionHistory, setSessionHistory] = useState([]);
   const [mentorSuggestions, setMentorSuggestions] = useState([]);
   const [projectSuggestions, setProjectSuggestions] = useState([]);
   const [courseAds, setCourseAds] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(!propData);
   const [dashboardError, setDashboardError] = useState(null);
+
+  const selectedCourseId = firstTruthy([
+    dashboardData?.profile?.course_id,
+    dashboardData?.selectedCourse?.courseId,
+    dashboardData?.selectedCourse?.course_id,
+    dashboardData?.activeCourse?.courseId,
+    dashboardData?.activeCourse?.course_id,
+    dashboardData?.roadmapContext?.roadmapCourseId,
+  ]);
 
   const loadDashboard = useCallback(async () => {
     if (!user?.uid) return;
@@ -106,6 +116,29 @@ export default function useStudentDashboardData({ propData, user }) {
   }, [user?.uid]);
 
   useEffect(() => {
+    async function loadSessionHistory() {
+      if (!user?.uid) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/session/getSessionHistory`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: user.uid }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const payload = await res.json();
+        setSessionHistory(Array.isArray(payload?.data?.session) ? payload.data.session : []);
+      } catch (err) {
+        console.error("Session history load failed:", err);
+        setSessionHistory([]);
+      }
+    }
+
+    loadSessionHistory();
+  }, [user?.uid]);
+
+  useEffect(() => {
     async function loadProjects() {
       if (!user?.uid) return;
 
@@ -114,7 +147,7 @@ export default function useStudentDashboardData({ propData, user }) {
         const res = await fetch(`${API_BASE}/api/projects/recommend`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: user.uid }),
+          body: JSON.stringify({ uid: user.uid, courseId: selectedCourseId }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -129,7 +162,7 @@ export default function useStudentDashboardData({ propData, user }) {
     }
 
     loadProjects();
-  }, [user?.uid]);
+  }, [user?.uid, selectedCourseId]);
 
   useEffect(() => {
     async function loadCourses() {
@@ -192,9 +225,10 @@ export default function useStudentDashboardData({ propData, user }) {
     loadMentors();
   }, [dashboardData]);
 
-  const handleProfileSave = (updates) => {
+  const handleProfileSave = (updates, dataUpdates = {}) => {
     setDashboardData((prev) => ({
       ...prev,
+      ...dataUpdates,
       profile: {
         ...(prev?.profile || {}),
         ...updates,
@@ -205,6 +239,7 @@ export default function useStudentDashboardData({ propData, user }) {
   return {
     dashboardData,
     sessionInfo,
+    sessionHistory,
     mentorSuggestions,
     projectSuggestions,
     courseAds,
