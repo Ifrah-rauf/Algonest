@@ -21,6 +21,7 @@ import Footer from "./components/footer";
 // Assuming authContext is imported; adjust if needed
 import { useAuth } from "./context/AuthContext.jsx";// Replace with actual path
 
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -88,6 +89,7 @@ function AppLayout() {
   );
 }
 function App() {
+  // const API_URL = process.env.REACT_APP_API_URL;
   return (
     <Router future={{ v7_relativeSplatPath: true }}>
       <ScrollToTop />
