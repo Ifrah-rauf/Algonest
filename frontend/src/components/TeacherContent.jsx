@@ -1,8 +1,9 @@
+import { apiUrl } from "../config/api.js";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { FileUp, FileText, RefreshCw, Sparkles, UploadCloud } from "lucide-react";
 
-const BASE_URL = "http://localhost:5000/api/content";
+const BASE_URL = apiUrl("/api/content");
 
 function formatDate(value) {
   if (!value) return "Just now";

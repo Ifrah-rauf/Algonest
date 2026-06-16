@@ -1,9 +1,10 @@
+import { apiUrl } from "../config/api.js";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import { ShieldAlert, Trash2 } from "lucide-react";
 
-const BASE_URL = "http://localhost:5000/api/support";
+const BASE_URL = apiUrl("/api/support");
 
 export function TeacherSettings() {
   const { user } = useAuth();

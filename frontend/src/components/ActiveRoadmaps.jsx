@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { MoreVertical, Users, FolderOpen, CheckCircle2, Clock3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -123,7 +124,7 @@ export function ActiveRoadmaps({ roadmapProgress = null }) {
       if (!user?.uid) return;
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:5000/api/teachers/courses", {
+        const res = await fetch(apiUrl("/api/teachers/courses"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid }),

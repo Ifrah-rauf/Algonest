@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { useLoading } from "../context/LoadingContext";
@@ -17,7 +18,7 @@ export default function MentorGrid() {
 
   async function fetchMentors(planIds) {
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/teachers/getMentors", {
+    const res = await fetch(apiUrl("/api/teachers/getMentors"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ planIds })

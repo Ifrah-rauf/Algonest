@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import Navbar from "../components/navbar";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Navigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ useEffect(() => {
   async function loadDashboard() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/dashboard/getDashboard/${user.uid}`
+        apiUrl(`/api/dashboard/getDashboard/${user.uid}`)
       );
       const data = await res.json();
 

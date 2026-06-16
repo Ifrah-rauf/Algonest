@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { Plus, Edit, Trash2, Eye, Users, FolderOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +15,7 @@ export default function MyRoadmaps() {
 
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:5000/api/teachers/courses", {
+        const res = await fetch(apiUrl("/api/teachers/courses"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid }),

@@ -1,20 +1,4 @@
-// backend2/services/rag/index.js
-// ─────────────────────────────────────────────────────────────────────────────
-// PUBLIC API — the only file your partner needs to import from.
-//
-// In aiOrchestrator.js (your partner's file):
-//
-//   import {
-//     buildContext,
-//     saveMessage,
-//     saveMentorFeedback,
-//     maybeSummarize,
-//     markCheckpointComplete,
-//     markSessionCheckpointComplete,
-//   } from '../rag/index.js';
-//
-// That's the entire surface area. Nothing else is exposed.
-// ─────────────────────────────────────────────────────────────────────────────
+
 import { buildContext, saveMessage as saveConvMessage } from './contextBuilder.js';
 import { saveMessage as saveEmbeddingMessage, saveMentorFeedback } from './messageStore.js';
 

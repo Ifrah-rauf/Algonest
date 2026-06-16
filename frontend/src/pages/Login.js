@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -45,7 +46,7 @@ export default function Login() {
     try {
       setSubmitting(true);
 
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mail: mail.trim(), password }),
@@ -77,7 +78,7 @@ export default function Login() {
       const payload = buildOAuthPayload(firebaseUser);
 
       const response = await axios.post(
-        "http://localhost:5000/api/auth/save-user",
+        apiUrl("/api/auth/save-user"),
         payload
       );
 

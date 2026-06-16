@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 // import { useState, useEffect } from "react";
 // import { useLocation, useNavigate } from "react-router-dom";
 // import ChatBox from "../components/chatbox";
@@ -425,7 +426,7 @@
 //     if (!user?.uid) return;
 
 //     try {
-//       const progressRes = await fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`);
+//       const progressRes = await fetch(apiUrl(`/api/lessons/progress/${user.uid}?courseId=${courseId}`));
 //       const progressData = await progressRes.json();
 
 //       setProgressMap(
@@ -441,20 +442,20 @@
 //   async function loadRoadmapData() {
 //     try {
 //       const requests = [
-//         fetch(`http://localhost:5000/api/lessons/lessons?courseId=${courseId}`),
-//         fetch(`http://localhost:5000/api/lessons/lesson-topics?courseId=${courseId}`),
-//         fetch(`http://localhost:5000/api/lessons/lesson-topic-materials?courseId=${courseId}`),
-//         fetch(`http://localhost:5000/api/lessons/checkpoints?courseId=${courseId}`),
-//         fetch(`http://localhost:5000/api/lessons/interviews?courseId=${courseId}`),
+//         fetch(apiUrl(`/api/lessons/lessons?courseId=${courseId}`)),
+//         fetch(apiUrl(`/api/lessons/lesson-topics?courseId=${courseId}`)),
+//         fetch(apiUrl(`/api/lessons/lesson-topic-materials?courseId=${courseId}`)),
+//         fetch(apiUrl(`/api/lessons/checkpoints?courseId=${courseId}`)),
+//         fetch(apiUrl(`/api/lessons/interviews?courseId=${courseId}`)),
 //       ];
 
 //       if (user?.uid) {
-//         requests.push(fetch(`http://localhost:5000/api/dashboard/active-course/${user.uid}`));
+//         requests.push(fetch(apiUrl(`/api/dashboard/active-course/${user.uid}`)));
 //         // Also fetch dashboard summary which includes hasAnyBooking and activeCourse
-//         requests.push(fetch(`http://localhost:5000/api/dashboard/getDashboard/${user.uid}`));
-//         requests.push(fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`));
-//         requests.push(fetch(`http://localhost:5000/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`));
-//         requests.push(fetch(`http://localhost:5000/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`));
+//         requests.push(fetch(apiUrl(`/api/dashboard/getDashboard/${user.uid}`)));
+//         requests.push(fetch(apiUrl(`/api/lessons/progress/${user.uid}?courseId=${courseId}`)));
+//         requests.push(fetch(apiUrl(`/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`)));
+//         requests.push(fetch(apiUrl(`/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`)));
 //       }
 
 //       const responses = await Promise.all(requests);

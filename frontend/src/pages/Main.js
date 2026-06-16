@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { Link } from "react-router-dom";
 import AlgoPlane from "../static/AlgoPlane.png";
 import AlgoNest2 from "../static/AlgoNest2.PNG";
@@ -368,7 +369,7 @@ useEffect(() => {
   async function loadDashboard() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/dashboard/getDashboard/${user.uid}`
+        apiUrl(`/api/dashboard/getDashboard/${user.uid}`)
       );
       const data = await res.json();
 

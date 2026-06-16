@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import FadeInSection from "../components/FadeInSection";
@@ -144,7 +145,7 @@ const TeacherProfile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/teachers/getTeacher/${id}`)
+    fetch(apiUrl(`/api/teachers/getTeacher/${id}`))
       .then((res) => res.json())
       .then((data) => {
         setTeacher(data.teacher);
@@ -159,7 +160,7 @@ const TeacherProfile = () => {
     if (!user || !teacher?.t_id) return;
     async function checkOwnership() {
       try {
-        const res = await fetch("http://localhost:5000/api/teachers/isOwner", {
+        const res = await fetch(apiUrl("/api/teachers/isOwner"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid, teacherId: teacher.t_id }),

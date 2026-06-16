@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useState } from "react";
 
 /**
@@ -120,7 +121,7 @@ export default function AvailabilitySettings({ avail = [], teacherId }) {
 
   const saveToDatabase = async () => {
     // Backend should UPSERT by a_id
-    await fetch("http://localhost:5000/api/teachers/save", {
+    await fetch(apiUrl("/api/teachers/save"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ teacherId, slots }),

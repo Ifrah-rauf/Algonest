@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { TrendingUp, Award, Target, Zap } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
@@ -58,7 +59,7 @@ async function checkSession() {
     const uid = user?.uid;
     if (!uid) return;
 
-    const sessionRes = await fetch("http://localhost:5000/api/session/check", {
+    const sessionRes = await fetch(apiUrl("/api/session/check"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid })

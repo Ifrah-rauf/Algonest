@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -79,7 +80,7 @@ export default function BookingPage() {
       setLoading(true);
       setError("");
 
-      const res = await fetch("http://localhost:5000/api/booking/course-booking", {
+      const res = await fetch(apiUrl("/api/booking/course-booking"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

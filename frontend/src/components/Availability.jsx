@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -6,7 +7,7 @@ import LoadingButton from "../components/LoadingButton";
 import { useLoading } from "../context/LoadingContext";
 
 // ─── constants ────────────────────────────────────────────────
-const API = "http://localhost:5000/api/booking";
+const API = apiUrl("/api/booking");
 
 // ─── response codes (never match on .message strings) ─────────
 const CODE = {
@@ -107,7 +108,7 @@ export default function AvailabilityDisplay({
         const endpoint = activeFlowKind === "interview"
           ? "interviewBookingGuard"
           : "checkpointBookingGuard";
-        const res = await fetch(`http://localhost:5000/api/booking/${endpoint}`, {
+        const res = await fetch(apiUrl(`/api/booking/${endpoint}`), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

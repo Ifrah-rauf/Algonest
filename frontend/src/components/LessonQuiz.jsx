@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
@@ -80,7 +81,7 @@ export default function LessonQuiz({
 
   async function saveQuizResult(nextScore, didPass, nextAttempts) {
     try {
-      const res = await fetch("http://localhost:5000/api/quiz/lesson-result", {
+      const res = await fetch(apiUrl("/api/quiz/lesson-result"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

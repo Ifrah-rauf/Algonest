@@ -1,10 +1,11 @@
+import { apiUrl } from "../config/api.js";
 import { Users, BookOpen, DollarSign, TrendingUp, Upload, FileAudio, PlayCircle } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { ActiveRoadmaps } from './ActiveRoadmaps';
 import { useAuth } from '../context/AuthContext';
 import {useState , useEffect} from "react";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = apiUrl("");
 
 function formatDbDateTime(value) {
   if (!value) return "—";
@@ -47,7 +48,7 @@ async function loadSummary() {
     const uid = user?.uid;
     if (!uid) return;
 
-    const res = await fetch("http://localhost:5000/api/teachers/overview", {
+    const res = await fetch(apiUrl("/api/teachers/overview"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid })
@@ -154,7 +155,7 @@ async function checkSession() {
     const uid = user?.uid;
     if (!uid) return;
 
-    const sessionRes = await fetch("http://localhost:5000/api/session/checkTsession", {
+    const sessionRes = await fetch(apiUrl("/api/session/checkTsession"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid })

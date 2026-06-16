@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -33,7 +34,7 @@ export default function BookPlan({ plan, onClose }) {
 
   //   try {
   //     // Send WhatsApp
-  //     const whatsappRes = await fetch("http://localhost:5000/api/auth/send-whatsapp", {
+  //     const whatsappRes = await fetch(apiUrl("/api/auth/send-whatsapp"), {
   //       method: "POST",
   //       headers: { "Content-Type": "application/json" },
   //       body: JSON.stringify({
@@ -52,7 +53,7 @@ export default function BookPlan({ plan, onClose }) {
 
   //     // Book in backend
   //     const uid = localStorage.getItem("uid");
-  //     const bookingRes = await fetch(`http://localhost:5000/api/auth/book/${uid}`, {
+  //     const bookingRes = await fetch(apiUrl(`/api/auth/book/${uid}`), {
   //       method: "POST",
   //       headers: { "Content-Type": "application/json" },
   //       body: JSON.stringify({ ...formData, plan_id: plan }),
@@ -79,7 +80,7 @@ export default function BookPlan({ plan, onClose }) {
 
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/booking/create",
+      apiUrl("/api/booking/create"),
       formData
     );
 

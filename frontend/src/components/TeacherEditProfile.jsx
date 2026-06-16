@@ -1,8 +1,9 @@
+import { apiUrl } from "../config/api.js";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { User, Video, Globe, BookOpen, Award, Sparkles, Upload, CheckCircle2, Loader2 } from "lucide-react";
 
-const BASE_URL = "http://localhost:5000/api/teachers";
+const BASE_URL = apiUrl("/api/teachers");
 
 const EMPTY_FORM = {
   name: "",
