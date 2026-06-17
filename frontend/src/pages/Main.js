@@ -1105,33 +1105,6 @@ useEffect(() => {
         {/* ══════════════════════════════════════════
             TESTIMONIALS
         ══════════════════════════════════════════ */}
-        // <section className="bg-[#f9f7ff] py-24">
-        //   <div className="max-w-6xl mx-auto px-6">
-        //     <div className="text-center mb-14">
-        //       <SectionLabel>Results</SectionLabel>
-        //       <h2 className="text-4xl font-semibold text-[#1a0533]">
-        //         From uncertain candidates<br />
-        //         <span className="text-[#6b46c1]">to placed professionals</span>
-        //       </h2>
-        //     </div>
-        //     <div className="grid md:grid-cols-3 gap-8">
-        //       {TESTIMONIALS.map((t, i) => (
-        //         <motion.div key={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
-        //           className="bg-white rounded-2xl p-8 border border-purple-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-        //           <div className="text-5xl text-[#6b46c1]/15 font-serif mb-3">"</div>
-        //           <p className="text-gray-600 text-sm leading-relaxed mb-6">{t.text}</p>
-        //           <div className="flex items-center gap-3">
-        //             <div className="w-10 h-10 rounded-full bg-[#6b46c1] flex items-center justify-center text-white text-sm font-bold">{t.av}</div>
-        //             <div>
-        //               <p className="font-bold text-[#333] text-sm">{t.name}</p>
-        //               <p className="text-[#6b46c1] text-xs font-semibold">{t.role}</p>
-        //             </div>
-        //           </div>
-        //         </motion.div>
-        //       ))}
-        //     </div>
-        //   </div>
-        // </section>
 
         {/* ══════════════════════════════════════════
             OUTRO CTA
@@ -1181,37 +1154,6 @@ useEffect(() => {
         {/* ══════════════════════════════════════════
             FOOTER
         ══════════════════════════════════════════ */}
-        // <footer className="border-t border-gray-200 bg-white">
-        //   <div className="max-w-7xl mx-auto px-6 py-20">
-        //     <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-        //       <div>
-        //         <h3 className="text-lg font-bold text-[#1a0533] mb-3">AlgoNest</h3>
-        //         <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-        //           In the AI era, proof beats credentials. AlgoNest turns candidates into
-        //           placed professionals through structured execution and human validation.
-        //         </p>
-        //       </div>
-        //       {[
-        //         { title: "Product", links: [["How it works","/how-it-works"],["Roadmaps","/roadmaps"],["AI Companion","/ai"],["Mentorship","/mentorship"],["Leaderboard","/community"]] },
-        //         { title: "Paths",   links: [["Backend Dev","/paths"],["Full Stack","/paths"],["ML Engineer","/paths"],["Frontend Dev","/paths"],["DevOps","/paths"]] },
-        //         { title: "Company", links: [["About AlgoNest","/about"],["For Mentors","/mentors"],["Consult","/consult"],["Contact","/contact"],["Privacy","/policies/privacy"]] },
-        //       ].map((col) => (
-        //         <div key={col.title}>
-        //           <h4 className="text-sm font-bold text-[#1a0533] mb-4">{col.title}</h4>
-        //           <ul className="space-y-3 text-sm text-gray-500">
-        //             {col.links.map(([label, href]) => (
-        //               <li key={label}><Link to={href} className="hover:text-[#6b46c1] transition-colors">{label}</Link></li>
-        //             ))}
-        //           </ul>
-        //         </div>
-        //       ))}
-        //     </div>
-        //     <div className="border-t border-gray-100 mt-16 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        //       <p className="text-sm text-gray-400">© {new Date().getFullYear()} AlgoNest. All rights reserved.</p>
-        //       <p className="text-sm text-gray-400">Built for proof, not passive consumption.</p>
-        //     </div>
-        //   </div>
-        // </footer>
       </main>)}
     </>
   );
