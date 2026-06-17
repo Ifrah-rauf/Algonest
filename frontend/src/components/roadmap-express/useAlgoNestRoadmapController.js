@@ -1,3 +1,4 @@
+import { apiUrl } from "../../config/api.js";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -74,10 +75,10 @@ export default function useAlgoNestRoadmapController() {
 
     try {
       const [progressRes, aiQuestionsRes, assetsRes, commitProofsRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`),
-        fetch(`http://localhost:5000/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`),
-        fetch(`http://localhost:5000/api/lessons/assets/${user.uid}?courseId=${courseId}`),
-        fetch(`http://localhost:5000/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`),
+        fetch(apiUrl(`/api/lessons/progress/${user.uid}?courseId=${courseId}`)),
+        fetch(apiUrl(`/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`)),
+        fetch(apiUrl(`/api/lessons/assets/${user.uid}?courseId=${courseId}`)),
+        fetch(apiUrl(`/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`)),
       ]);
       const progressData = await progressRes.json();
       const aiQuestionsData = await aiQuestionsRes.json();
@@ -100,26 +101,26 @@ export default function useAlgoNestRoadmapController() {
   const loadRoadmapData = useCallback(async function loadRoadmapData() {
     try {
       const requests = [
-        fetch(`http://localhost:5000/api/lessons/lessons?courseId=${courseId}`),
-        fetch(`http://localhost:5000/api/lessons/checkpoints?courseId=${courseId}`),
-        fetch(`http://localhost:5000/api/lessons/interviews?courseId=${courseId}`),
+        fetch(apiUrl(`/api/lessons/lessons?courseId=${courseId}`)),
+        fetch(apiUrl(`/api/lessons/checkpoints?courseId=${courseId}`)),
+        fetch(apiUrl(`/api/lessons/interviews?courseId=${courseId}`)),
       ];
 
       if (user?.uid) {
-        requests.push(fetch(`http://localhost:5000/api/dashboard/active-course/${user.uid}`));
+        requests.push(fetch(apiUrl(`/api/dashboard/active-course/${user.uid}`)));
         // Also fetch dashboard summary which includes hasAnyBooking and activeCourse
-        requests.push(fetch(`http://localhost:5000/api/dashboard/getDashboard/${user.uid}`));
-        requests.push(fetch("http://localhost:5000/api/ai/access", {
+        requests.push(fetch(apiUrl(`/api/dashboard/getDashboard/${user.uid}`)));
+        requests.push(fetch(apiUrl("/api/ai/access"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid, courseId }),
         }));
-        requests.push(fetch(`http://localhost:5000/api/lessons/progress/${user.uid}?courseId=${courseId}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/assets/${user.uid}?courseId=${courseId}`));
-        requests.push(fetch(`http://localhost:5000/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`));
+        requests.push(fetch(apiUrl(`/api/lessons/progress/${user.uid}?courseId=${courseId}`)));
+        requests.push(fetch(apiUrl(`/api/lessons/checkpoint-progress/${user.uid}?courseId=${courseId}`)));
+        requests.push(fetch(apiUrl(`/api/lessons/interview-progress/${user.uid}?courseId=${courseId}`)));
+        requests.push(fetch(apiUrl(`/api/lessons/ai-questions/${user.uid}?courseId=${courseId}`)));
+        requests.push(fetch(apiUrl(`/api/lessons/assets/${user.uid}?courseId=${courseId}`)));
+        requests.push(fetch(apiUrl(`/api/lessons/commit-proofs/${user.uid}?courseId=${courseId}`)));
       }
 
       const responses = await Promise.all(requests);

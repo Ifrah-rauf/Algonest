@@ -1,8 +1,9 @@
+import { apiUrl } from "../config/api.js";
 import { Search, MoreVertical, Mail } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = apiUrl("");
 
 function formatDbDateTime(value) {
   if (!value) return '—';

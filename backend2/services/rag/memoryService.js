@@ -1,6 +1,3 @@
-// backend2/services/rag/memoryService.js
-// Automatically builds and updates a student's memory profile.
-// Triggered in the background every 20 messages — never blocks a response.
 
 import {
   getMessageCount,
@@ -11,15 +8,6 @@ import {
 
 const SUMMARIZE_EVERY = 5;  // run at message 5, 10, 15, 20...
 const KEEP_RECENT     = 6;  // never summarize the last 6 (they stay as live context)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// maybeSummarize
-// Your partner calls this at the end of every chat, fire-and-forget:
-//   maybeSummarize(sId, claudeProvider).catch(console.error)
-//
-// provider = any function that accepts { systemPrompt, history, message }
-// and returns a string. Your partner passes their existing claudeProvider.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function maybeSummarize(sId, provider) {
   const total = await getMessageCount(sId);

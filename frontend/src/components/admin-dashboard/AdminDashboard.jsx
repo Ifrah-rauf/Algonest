@@ -1,3 +1,4 @@
+import { apiUrl } from "../../config/api.js";
 import { useState } from "react";
 import { Shield, UserPlus, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -44,7 +45,7 @@ export default function AdminDashboard({ data }) {
         ...form,
       };
 
-      const res = await fetch("http://localhost:5000/api/admin/teachers", {
+      const res = await fetch(apiUrl("/api/admin/teachers"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

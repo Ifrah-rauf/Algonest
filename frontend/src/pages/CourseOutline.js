@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -22,7 +23,7 @@ export default function CourseOutline() {
         setLoading(true);
         setError("");
 
-        const res = await fetch(`http://localhost:5000/api/plans/course-outline/${id}`);
+        const res = await fetch(apiUrl(`/api/plans/course-outline/${id}`));
         const json = await res.json();
 
         if (!active) return;

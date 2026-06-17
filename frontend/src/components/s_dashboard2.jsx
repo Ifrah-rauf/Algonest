@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -340,7 +341,7 @@ function HomeTab({ data, hasAnyBooking }) {
       try {
         if (!user?.uid) return;
 
-        const res = await fetch("http://localhost:5000/api/session/check", {
+        const res = await fetch(apiUrl("/api/session/check"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid }),

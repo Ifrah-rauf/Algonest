@@ -1,8 +1,9 @@
+import { apiUrl } from "../config/api.js";
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Plus, Trash2, ChevronDown, Calendar, ToggleLeft, ToggleRight, Info, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const BASE_URL = "http://localhost:5000/api/availability";
+const BASE_URL = apiUrl("/api/availability");
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 

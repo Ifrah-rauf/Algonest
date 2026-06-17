@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import { Video, Calendar, User } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
@@ -33,7 +34,7 @@ export function SessionsAttended() {
     const uid = user?.uid;
     if (!uid) return;
 
-    const response = await fetch("http://localhost:5000/api/session/getSessionHistory", {
+    const response = await fetch(apiUrl("/api/session/getSessionHistory"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid })

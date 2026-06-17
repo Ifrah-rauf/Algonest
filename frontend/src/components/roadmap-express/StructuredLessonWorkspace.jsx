@@ -1,3 +1,4 @@
+import { apiUrl } from "../../config/api.js";
 import { useMemo, useState } from "react";
 import { normalizeGithubUrl } from "../student-dashboard/github";
 import {
@@ -12,13 +13,8 @@ import {
   Trophy,
 } from "lucide-react";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+const API_BASE = apiUrl("");
 const COMPANION_TASK_PROGRESS_KEY = "__ai_companion_task_started__";
-
-/**
- * UI Components reflecting the refined design language from LessonPage.jsx 
- * but maintaining the functional logic of StructuredLessonWorkspace.
- */
 
 function SectionEyebrow({ icon: Icon, label }) {
   return (

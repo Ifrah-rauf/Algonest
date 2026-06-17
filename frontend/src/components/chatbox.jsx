@@ -1,11 +1,12 @@
+import { apiUrl } from "../config/api.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import aiIcon from "../static/ai_icon.jpg";
 import "../styles/chatbox.css";
 
-const AI_HISTORY_URL = "http://localhost:5000/api/ai/history";
-const AI_MESSAGE_URL = "http://localhost:5000/api/ai/handleAi";
+const AI_HISTORY_URL = apiUrl("/api/ai/history");
+const AI_MESSAGE_URL = apiUrl("/api/ai/handleAi");
 const noop = () => {};
 
 function renderInlineMarkdown(text, keyPrefix) {

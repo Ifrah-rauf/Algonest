@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import "../styles/home.css";
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
@@ -58,7 +59,7 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
     try {
       setQuerySending(true);
       setQueryMessage("");
-      const res = await fetch("http://localhost:5000/api/support/teacher-query", {
+      const res = await fetch(apiUrl("/api/support/teacher-query"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

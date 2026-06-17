@@ -23,22 +23,21 @@ import studentRoutes from "./routes/studentRoutes.js";
 import meetingRoutes from "./routes/geminiAudioRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(express.json({ limit: "6mb" })); // parse JSON bodies
+app.use(express.json({ limit: "6mb" }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    maxAge: 1000 * 60 * 60, // 1 hour
+    maxAge: 1000 * 60 * 60,
     httpOnly: true
   }
 }));
 app.use(cors({
-  origin: process.env.CLIENT_URL ||"http://localhost:3000", // <-- React app URL
-  credentials: true               // <-- allow cookies/session to be sent
+  origin: process.env.CLIENT_URL ||"http://localhost:3000",
+  credentials: true
 }));
 
 app.use("/api/auth", authRoutes);
@@ -52,7 +51,6 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/quiz", quizRoutes);
-// teacher dashboard routes (students list, etc.)
 app.use("/api/teachers", teacherDashboardRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/content", contentRoutes);

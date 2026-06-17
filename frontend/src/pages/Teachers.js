@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api.js";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TeacherCard from "../components/TeacherCard";
@@ -31,7 +32,7 @@ export default function Teachers() {
     async function loadTeachers() {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/teachers/getAllTeachers${location.search}`
+          apiUrl(`/api/teachers/getAllTeachers${location.search}`)
         );
         const data = await res.json();
         setTeachers(Array.isArray(data) ? data : []);
@@ -48,7 +49,7 @@ export default function Teachers() {
     async function loadFilterMeta() {
       try {
         const res = await fetch(
-          "http://localhost:5000/api/teachers/getFilterMeta"
+          apiUrl("/api/teachers/getFilterMeta")
         );
         const data = await res.json();
 
@@ -102,7 +103,7 @@ export default function Teachers() {
     params.delete("search");
   }
 
-  const url = `http://localhost:5000/api/teachers/getAllTeachers?${params.toString()}`;
+  const url = apiUrl(`/api/teachers/getAllTeachers?${params.toString()}`);
 
   fetch(url)
     .then(res => res.json())
