@@ -1581,47 +1581,60 @@ useEffect(() => {
     </div>
 
     {/* COMPACT MOBILE */}
-    <div className="md:hidden mt-10 space-y-3 max-w-md mx-auto">
-      {comparisons.map((row, index) => (
-        <div
-          key={index}
-          className={`
-            rounded-xl p-4 border shadow-sm
-            ${row.highlight
-              ? "bg-violet-50/50 border-violet-200"
-              : "bg-white border-slate-100"}
-          `}
-        >
-          <h3 className="text-slate-900 font-bold text-sm">
-            {row.feature}
-          </h3>
-          <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-violet-500 mb-1">
-                Algonest
-              </div>
-              <div className={`
-                inline-block px-2.5 py-1 rounded-full font-semibold max-w-full truncate
-                ${row.highlight
-                  ? "bg-violet-600 text-white"
-                  : "bg-violet-100 text-violet-700"}
-              `}>
-                {row.algonest}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Bootcamps
-              </div>
-              <div className="inline-block px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium max-w-full truncate">
-                {row.others}
-              </div>
-            </div>
+    <div className="md:hidden mt-10 max-w-md mx-auto">
+  <div className="bg-white rounded-xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-hidden">
+    {/* Header */}
+    <div className="grid grid-cols-2 items-center bg-slate-50/50 text-center">
+      <div className="px-3 py-2 bg-violet-50/60 border-r border-violet-100">
+        <div className="px-2 py-0.5 inline-block rounded-full bg-violet-600 text-white text-[10px] font-bold shadow-sm">
+          Algonest ✨
+        </div>
+      </div>
+      <div className="px-3 py-2">
+        <div className="px-2 py-0.5 inline-block rounded-full bg-slate-200/70 text-slate-700 text-[10px] font-bold">
+          Bootcamps
+        </div>
+      </div>
+    </div>
+    
+    {/* Rows */}
+    {comparisons.map((row, index) => (
+      <div
+        key={index}
+        className={`
+          grid grid-cols-2 items-center text-[11px]
+          ${index !== comparisons.length - 1 && "border-b border-slate-100"}
+          ${row.highlight && "bg-violet-50/20"}
+        `}
+      >
+        {/* Algonest column */}
+        <div className="px-3 py-2 border-r border-violet-100 flex justify-center">
+          <div
+            className={`
+              px-2 py-0.5 rounded-full font-semibold text-center w-full truncate
+              ${row.highlight
+                ? "bg-violet-600 text-white shadow-sm"
+                : "bg-violet-100 text-violet-700"}
+            `}
+            title={row.algonest}
+          >
+            {row.algonest}
           </div>
         </div>
-      ))}
-    </div>
-
+        
+        {/* Others column */}
+        <div className="px-3 py-2 flex justify-center">
+          <div 
+            className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-center w-full truncate"
+            title={row.others}
+          >
+            {row.others}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
     {/* bottom note */}
     <div className="text-center mt-10">
       <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-yellow-50 border border-yellow-100">
