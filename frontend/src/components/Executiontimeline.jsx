@@ -192,7 +192,7 @@ export default function ExecutionTimeline() {
     <div style={{ background:"#fff", padding:"32px 28px", width:"75%", margin:"0 auto", fontFamily:"'DM Sans',sans-serif", marginTop:36, marginBottom:36, border: "1px solid #e5e7eb", borderRadius:12,boxShadow:"0 4px 6px rgba(0,0,0,0.1)" }}>
       <div style={{ marginBottom:56 }}>
         <p style={{fontSize:9,fontWeight:600,letterSpacing:2,textTransform:"uppercase",color:"#7c3aed",marginBottom:6}}>Execution Timeline</p>
-        <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:40,fontWeight:700,color:"#1a1028",lineHeight:1.2,marginBottom:7}}>
+        <h2 style={{fontSize:40,fontWeight:700,color:"#1a1028",lineHeight:1.2,marginBottom:7}}>
           Project first, fundamentals second, pressure last.
         </h2>
         <p style={{fontSize:20,color:"#7a6e8a",lineHeight:1.5}}>
