@@ -12,7 +12,10 @@
   --dash-red: #dc2626;
   --dash-red-light: #fef2f2;
   min-height: 100vh;
-  background: var(--dash-bg);
+  background:
+    url("../static/bg7.png")
+    center center / cover
+    no-repeat;
   color: var(--dash-ink);
   font-family: "Trebuchet MS", "Trebuchet", sans-serif;
 }
