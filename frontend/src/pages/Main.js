@@ -10,8 +10,10 @@ import c2 from "../static/c2.png";
 import c3 from "../static/c3.png";
 import  "../index.css";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { API_BASE } from "../components/student-dashboard/constants";
 import { useAuth } from "../context/AuthContext.jsx";
 import React, { useEffect, useState, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import { useInView } from "react-intersection-observer";
@@ -437,6 +439,7 @@ const packages = [
 //     rotate: "-rotate-2",
 //   },
 ]; 
+
 /* ══════════════════════════════════════════════
    PAGE
 ══════════════════════════════════════════════ */
@@ -447,6 +450,41 @@ export default function Landing() {
   const [role, setRole] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [roadmaps, setRoadmaps] = useState([]);
+  const sliderRef = useRef(null);
+
+  //roadmaps fetching
+  useEffect(() => {
+      const fetchRoadmaps = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/plans/getCourse`);
+          const data = await res.json();
+
+          setRoadmaps(data.courses || []);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+
+      fetchRoadmaps();
+    }, []);
+
+  const scrollLeft = () => {
+    sliderRef.current?.scrollBy({
+      left: -300,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollRight = () => {
+    sliderRef.current?.scrollBy({
+      left: 300,
+      behavior: "smooth",
+    });
+  };
+  const displayedRoadmaps = roadmaps.length > 0 ? [...roadmaps, ...roadmaps]: [];
+//roadmap fetching ended
+
 
 useEffect(() => {
   if (!user?.uid) {
@@ -550,17 +588,250 @@ useEffect(() => {
               transition={{ duration: 0.7, delay: 0.48 }}
               className="mt-8 flex flex-wrap justify-center gap-4 items-center mb-24 "
             >
-              <Link to="/careerQuiz"
+              <Link to="https://www.linkedin.com/company/algonest-edtech"
                 className="bg-[#6b46c1] text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 hover:shadow-purple-300">
-                Start Free Preview →
+                Learn more about AlgoNest→
               </Link>
-              <Link to="/#journey"
+              <Link to="/roadmaps"
                 className="text-[#6b46c1] font-semibold hover:underline underline-offset-4 flex items-center gap-1.5">
-                See the assessment system ↓
+                See roadmaps
               </Link>
             </motion.div>
           </div>
+           <div className="relative mx-auto w-full max-w-4xl">
 
+      {/* Purple Glow */}
+
+      <div
+        className="
+        absolute
+        inset-0
+        -z-10
+        rounded-[34px]
+        blur-3xl
+        opacity-40
+        bg-gradient-to-r
+        from-purple-700/30
+        via-violet-700/20
+        to-fuchsia-700/20
+        "
+      />
+
+
+
+      {/* Window */}
+
+      <div
+        className="
+        overflow-hidden
+        rounded-[32px]
+        border
+        border-white/10
+        bg-gradient-to-br
+        from-[#191919]
+        via-[#222126]
+        to-[#2b203f]
+        shadow-[0_25px_80px_rgba(80,40,150,0.25)]
+        "
+      >
+
+        {/* Thin top bar */}
+
+        <div
+          className="
+          flex
+          items-center
+          justify-between
+          border-b
+          border-white/5
+          px-5
+          h-9
+          bg-black/10
+          backdrop-blur-sm
+          "
+        >
+
+          {/* Traffic lights */}
+
+          <div className="flex items-center gap-2">
+
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+
+            <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+
+            <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+
+          </div>
+
+
+
+          {/* Center title */}
+
+          <div
+            className="
+            text-[11px]
+            font-semibold
+            tracking-wide
+            text-gray-400
+            "
+          >
+            algonest-demo.mp4
+          </div>
+
+
+
+          {/* Right placeholder */}
+
+          <div className="w-12" />
+
+        </div>
+
+
+
+        {/* Video Placeholder */}
+
+        <div
+          className="
+          relative
+          aspect-video
+          w-full
+          overflow-hidden
+          "
+        >
+
+          {/* Purple radial */}
+
+          <div
+            className="
+            absolute
+            left-1/2
+            top-1/2
+            h-[320px]
+            w-[320px]
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            bg-purple-700/20
+            blur-3xl
+            "
+          />
+
+
+
+          {/* Dot grid */}
+
+          <div className="absolute left-10 top-10 opacity-20">
+
+            <div className="grid grid-cols-5 gap-3">
+
+              {[...Array(25)].map((_, i) => (
+
+                <div
+                  key={i}
+                  className="h-1 w-1 rounded-full bg-purple-300"
+                />
+
+              ))}
+
+            </div>
+
+          </div>
+
+
+
+          {/* Doodle Curve */}
+
+          <svg
+            className="absolute right-12 top-12 opacity-20"
+            width="90"
+            height="50"
+          >
+
+            <path
+              d="M5 35 C 30 5, 60 5, 85 25"
+              stroke="#c084fc"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray="5 7"
+            />
+
+            <path
+              d="M75 18 L85 25 L70 28"
+              stroke="#c084fc"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+            />
+
+          </svg>
+
+
+
+          {/* Play Button */}
+
+          <div
+            className="
+            absolute
+            left-1/2
+            top-1/2
+            flex
+            h-20
+            w-20
+            -translate-x-1/2
+            -translate-y-1/2
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-white/10
+            bg-white/5
+            backdrop-blur-md
+            shadow-lg
+            "
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="white"
+              className="h-8 w-8 opacity-90 ml-1"
+            >
+
+              <path d="M8 5v14l11-7z" />
+
+            </svg>
+
+          </div>
+
+
+
+          {/* Bottom Text */}
+
+          <div
+            className="
+            absolute
+            bottom-8
+            left-1/2
+            -translate-x-1/2
+            text-center
+            "
+          >
+
+            <p className="text-lg font-bold text-white">
+              Learn with AI + Mentors
+            </p>
+
+            <p className="mt-1 text-sm text-gray-400">
+              Watch how AlgoNest works
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
           {/* Wave */}
           <svg className="absolute bottom-[-1px] left-0 w-full" viewBox="0 0 1440 40" preserveAspectRatio="none">
             <path fill="#6b46c1" d="M0,20 C24,36 72,36 96,20 C120,4 168,4 192,20 C216,36 264,36 288,20 C312,4 360,4 384,20 C408,36 456,36 480,20 C504,4 552,4 576,20 C600,36 648,36 672,20 C696,4 744,4 768,20 C792,36 840,36 864,20 C888,4 936,4 960,20 C984,36 1032,36 1056,20 C1080,4 1128,4 1152,20 C1176,36 1224,36 1248,20 C1272,4 1320,4 1344,20 C1368,36 1416,36 1440,20 L1440,40 L0,40 Z"/>
@@ -595,11 +866,11 @@ useEffect(() => {
               {[
                 { v: "80%",    l: "Engineers struggle to defend project decisions" },
                 { v: "~5%",    l: "People finish passive online programs" },
-                { v: "₹9,999", l: "Full assessment system. No hidden fees." },
-                { v: "1+3",     l: "Live mentor checkpoint reviews" },
+                { v: "₹𝟫̶,̶𝟫̶𝟫̶𝟫̶  ₹2500", l: "AI+Mentor Collaborative Roadmap" },
+                { v: "₹𝟣̶,̶𝟫̶𝟫̶𝟫̶  ₹499",l: "1:1 One time mentor sessions" },
               ].map((s, i) => (
                 <motion.div key={i} variants={itemVariants}>
-                  <div className="text-4xl font-extrabold text-[#f6c90e] mb-2">{s.v}</div>
+                  <div className="text-3xl font-extrabold text-[#f6c90e] mb-2">{s.v}</div>
                   <div className="text-white text-lg leading-relaxed">{s.l}</div>
                 </motion.div>
               ))}
@@ -833,7 +1104,7 @@ useEffect(() => {
             </span>
         </h2>
         <p className="mt-5 text-slate-500 text-lg">
-        Personalized paths that adapt to your goals, skills & progress.
+        Personalized paths, with AI+ human mentor collaboration that adapt to your goals, skills & progress and tracks you down.
         </p>
     </div>
 
@@ -1002,18 +1273,174 @@ useEffect(() => {
 
     </div>
   </div>
-        </section>
 
-        <section className="w-full bg-white py-20 md:py-28 overflow-hidden">
+
+  <section className="relative overflow-hidden bg-white py-28 mt-14 px-6">
+
+      {/* Doodles */}
+
+      <div className="absolute top-16 left-16 h-16 w-16 opacity-20">
+        <div className="grid grid-cols-4 gap-2">
+          {[...Array(16)].map((_, i) => (
+            <div
+              key={i}
+              className="h-1.5 w-1.5 rounded-full bg-purple-500"
+            />
+          ))}
+        </div>
+      </div>
+
+      <svg
+        className="absolute right-10 top-24 opacity-30"
+        width="100"
+        height="60"
+      >
+        <path
+          d="M5 40 C 35 5, 70 5, 90 35"
+          stroke="#7C3AED"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray="6 8"
+        />
+
+        <path
+          d="M82 24 L90 35 L75 34"
+          stroke="#7C3AED"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div className="max-w-7xl mx-auto relative">
+
+        {/* Heading */}
+
+        <div className="text-center mb-14">
+
+          <div className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700 shadow-sm mb-6">
+            🔥 Trending Paths
+          </div>
+
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900">
+            Explore our
+            <span className="relative mx-2 text-purple-600">
+
+              HOT
+
+              <svg
+                className="absolute -bottom-3 left-0"
+                width="100%"
+                height="12"
+              >
+                <path
+                  d="M2 8 Q 30 1 65 8 Q 90 12 110 5"
+                  stroke="#FACC15"
+                  strokeWidth="7"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+
+            Roadmaps
+          </h2>
+
+          <p className="text-gray-500 mt-5 max-w-xl mx-auto font-medium">
+            Dynamic paths where you are mentored collaboratively from both AI and a mentor.
+            12 lessons, 4 checkpoints, your workflow demo, Github enhanced and interview prep - All in one.
+          </p>
+
+        </div>
+
+        {/* Arrows */}
+
+        <button
+          onClick={scrollLeft}
+          className="absolute left-0 top-[65%] -translate-y-1/2 z-20 h-12 w-12 rounded-full border border-gray-100 bg-white shadow-lg flex items-center justify-center hover:scale-105 transition"
+        >
+          <ChevronLeft className="h-5 w-5 text-purple-600" />
+        </button>
+
+        <button
+          onClick={scrollRight}
+          className="absolute right-0 top-[65%] -translate-y-1/2 z-20 h-12 w-12 rounded-full border border-gray-100 bg-white shadow-lg flex items-center justify-center hover:scale-105 transition"
+        >
+          <ChevronRight className="h-5 w-5 text-purple-600" />
+        </button>
+
+        {/* Slider */}
+
+        <div
+          ref={sliderRef}
+          className="overflow-x-scroll no-scrollbar"
+        >
+
+          <div className="flex gap-5 animate-roadmap-scroll w-max py-6">
+
+            {displayedRoadmaps.map((roadmap, index) => (
+
+              <button
+                key={index}
+                className="
+                shrink-0
+                px-7
+                py-4
+                rounded-full
+                bg-white
+                border
+                border-purple-100
+                shadow-[0_8px_25px_rgba(124,58,237,0.08)]
+                hover:shadow-[0_10px_35px_rgba(124,58,237,0.15)]
+                hover:-translate-y-1
+                transition-all
+                duration-300
+                group
+                "
+              >
+
+                <div className="flex items-center gap-3">
+
+                  <div
+                    className="
+                    h-3
+                    w-3
+                    rounded-full
+                    bg-yellow-400
+                    group-hover:scale-125
+                    transition
+                    "
+                  />
+
+                  <span className="font-bold text-gray-800 whitespace-nowrap">
+                    {roadmap?.title}
+                  </span>
+
+                </div>
+
+              </button>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+        </section>
+        
+      {/* Human + AI Collaboration */}
+        {/* <section className="w-full bg-white py-20 md:py-28 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
 
             <div className="grid lg:grid-cols-[0.95fr_1.25fr] gap-14 lg:gap-20 items-center">
 
-            {/* LEFT */}
 
             <div className="relative text-center lg:text-left">
 
-                {/* Dot Grid */}
 
                 <div className="absolute -top-10 -left-2 grid grid-cols-5 gap-2 opacity-30 hidden md:grid">
                 {[...Array(25)].map((_, i) => (
@@ -1024,7 +1451,6 @@ useEffect(() => {
                 ))}
                 </div>
 
-                {/* Little Doodle */}
 
                 <svg
                 className="absolute -right-3 top-6 hidden lg:block"
@@ -1049,8 +1475,6 @@ useEffect(() => {
                 />
                 </svg>
 
-                {/* Badge */}
-
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-100 bg-violet-50 mb-7">
 
                 <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
@@ -1061,7 +1485,6 @@ useEffect(() => {
 
                 </div>
 
-                {/* Heading */}
 
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
 
@@ -1097,7 +1520,6 @@ useEffect(() => {
 
                 </h2>
 
-                {/* Description */}
 
                 <p className="mt-8 text-slate-600 text-[16px] sm:text-lg leading-8 max-w-xl mx-auto lg:mx-0">
 
@@ -1130,7 +1552,6 @@ useEffect(() => {
                 </p>
 
 
-                {/* Mini Flow */}
 
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-10">
 
@@ -1183,11 +1604,9 @@ useEffect(() => {
             </div>
 
 
-            {/* RIGHT */}
 
             <div className="relative w-full">
 
-                {/* Decorative Blob */}
 
                 <div className="absolute -top-10 -right-10 w-48 h-48 bg-violet-100 rounded-full blur-3xl opacity-70" />
 
@@ -1195,11 +1614,9 @@ useEffect(() => {
 
 
 
-                {/* Video Container */}
 
                 <div className="relative rounded-[32px] overflow-hidden border border-slate-100 bg-white shadow-[0_25px_80px_rgba(124,58,237,0.10)]">
 
-                {/* top bar */}
 
                 <div className="h-14 border-b border-slate-100 bg-slate-50 flex items-center px-6 gap-3">
 
@@ -1218,12 +1635,8 @@ useEffect(() => {
                 </div>
 
 
-                {/* Placeholder */}
 
                 <div className="aspect-video bg-gradient-to-br from-[#faf7ff] via-white to-[#f6f2ff] flex items-center justify-center relative">
-
-                    {/* play button */}
-                    {/* text */}
 
                     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-center">
 
@@ -1246,7 +1659,6 @@ useEffect(() => {
                 </div>
 
 
-                {/* Tiny doodle */}
 
                 <svg
                 className="absolute -right-4 top-1/2 hidden lg:block"
@@ -1277,7 +1689,7 @@ useEffect(() => {
             </div>
 
         </div>
-        </section>
+        </section> */}
         
         <section className=" relative bg-[#6B46C1] overflow-hidden isolate ">
 
@@ -1516,9 +1928,8 @@ useEffect(() => {
         Not another static playlist. A living roadmap that evolves with you, the market and your ambitions.
       </p>
     </div>
-
-    {/* COMPACT DESKTOP TABLE */}
-    <div className="hidden md:block mt-12 max-w-4xl mx-auto">
+    
+<div className="hidden md:block mt-12 max-w-4xl mx-auto">
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Header */}
         <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center bg-slate-50/50">
@@ -1580,8 +1991,8 @@ useEffect(() => {
       </div>
     </div>
 
-    {/* COMPACT MOBILE */}
-    <div className="md:hidden mt-10 max-w-md mx-auto">
+{/* MOBILE TABLE (Two-column layout matching desktop style) */}
+<div className="md:hidden mt-10 max-w-md mx-auto">
   <div className="bg-white rounded-xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-hidden">
     {/* Header */}
     <div className="grid grid-cols-2 items-center bg-slate-50/50 text-center">
@@ -1635,6 +2046,8 @@ useEffect(() => {
     ))}
   </div>
 </div>
+
+
     {/* bottom note */}
     <div className="text-center mt-10">
       <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-yellow-50 border border-yellow-100">
