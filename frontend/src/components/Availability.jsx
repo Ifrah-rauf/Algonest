@@ -55,6 +55,20 @@ export default function AvailabilityDisplay({
   const activeFlow = gateFlow || checkpointFlow || null;
   const activeFlowKind = activeFlow?.kind || (activeFlow?.interviewId ? "interview" : activeFlow?.checkpointId ? "checkpoint" : null);
   const [gateStatus, setGateStatus] = useState(null);
+  const [visibleTimeSlots, setVisibleTimeSlots] = useState([]);
+
+  function isSlotBooked(slot) {
+    return Boolean(
+      slot?.isbooked ??
+      slot?.isBooked ??
+      slot?.is_booked ??
+      slot?.slotbooking?.isbooked
+    );
+  }
+
+  useEffect(() => {
+    setVisibleTimeSlots(timeSlots || []);
+  }, [timeSlots]);
 
   function getDateGroupKey(slot) {
     const raw = slot?.availability?.date || slot?.startat || "";
@@ -133,7 +147,7 @@ export default function AvailabilityDisplay({
   const grouped = useMemo(() => {
     const map = new Map();
 
-    timeSlots.forEach((s) => {
+    visibleTimeSlots.forEach((s) => {
       const key = getDateGroupKey(s);
       if (!key) return;
       if (!map.has(key)) map.set(key, []);
@@ -141,7 +155,7 @@ export default function AvailabilityDisplay({
     });
 
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [timeSlots]);
+  }, [visibleTimeSlots]);
 
   // ── format helpers ────────────────────────────────────────
   const formatTime = (dateString) =>
@@ -361,6 +375,11 @@ export default function AvailabilityDisplay({
 
       // ── success
       if (bookdata.success && bookdata.code === CODE.SESSION_BOOKED) {
+        setVisibleTimeSlots((prev) =>
+          prev.map((item) =>
+            item.slot_id === slot.slot_id ? { ...item, isbooked: true } : item
+          )
+        );
         const confirmed = await algoswal({
           icon: "success",
           title: activeFlow ? `${activeFlowKind === "interview" ? "Interview" : "Checkpoint"} Session Confirmed! 🎉` : "Session Confirmed! 🎉",
@@ -469,7 +488,7 @@ export default function AvailabilityDisplay({
 
       {/* meeting_link is hidden from public view — only shown post-booking via email */}
 
-      {timeSlots.length === 0 && (
+      {visibleTimeSlots.length === 0 && (
         <p className="text-gray-500 text-sm">
           This mentor has no upcoming slots.
         </p>
@@ -499,20 +518,15 @@ export default function AvailabilityDisplay({
                     const type     = slot.availability?.type?.toLowerCase?.();
                     const isOneOff = type === "session" || type === "free";
 
-                    // normalise booked flag across possible key names
-                    const booked = Boolean(
-                      slot.isbooked ??
-                      slot.isBooked ??
-                      slot.is_booked ??
-                      slot.slotbooking?.isbooked
-                    );
+                    const booked = isSlotBooked(slot);
+                    const inactive = slot.availability?.active === false;
 
                     const past      = isPast(slot.startat);
                     const checkpointBlocked = Boolean(
                       activeFlow && gateStatus && !gateStatus.canBook
                     );
                     const notStudent = Boolean(user && !isStudent);
-                    const disabled  = booked || past || checkpointBlocked || notStudent;
+                    const disabled  = booked || inactive || past || checkpointBlocked || notStudent;
 
                     return (
                       <div
@@ -543,7 +557,11 @@ export default function AvailabilityDisplay({
                         </p>
 
                         {/* status label */}
-                        {past && !booked ? (
+                        {inactive ? (
+                          <p className="text-xs text-gray-500 font-bold mt-1">
+                            Unavailable
+                          </p>
+                        ) : past && !booked ? (
                           <p className="text-xs text-gray-400 font-semibold mt-1">
                             ✕ Slot Expired
                           </p>
@@ -578,6 +596,8 @@ export default function AvailabilityDisplay({
                         >
                           {booked
                             ? "Booked"
+                            : inactive
+                            ? "Unavailable"
                             : past
                             ? "Expired"
                             : notStudent

@@ -1,8 +1,20 @@
 import Joi from "joi";
 
+const strongPassword = Joi.string()
+  .min(8)
+  .pattern(/[A-Z]/, "uppercase letter")
+  .pattern(/[a-z]/, "lowercase letter")
+  .pattern(/\d/, "number")
+  .pattern(/[^A-Za-z0-9]/, "special character")
+  .required()
+  .messages({
+    "string.min": "Password must be at least 8 characters long",
+    "string.pattern.name": "Password must include at least one {#name}",
+  });
+
 const signupSchema = Joi.object({
   username: Joi.string().min(3).max(30).required(),
-  password: Joi.string().min(6).required(),
+  password: strongPassword,
   mail: Joi.string().email().required(),
   role: Joi.string().valid("STUDENT", "TEACHER", "ADMIN").default("STUDENT")
 });

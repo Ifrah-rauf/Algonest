@@ -54,6 +54,7 @@ function AppLayout() {
     (location.pathname === "/" || location.pathname === "/dashboard");
 
   const hideFooter =
+    isTeacherDashboard ||
     location.pathname === "/login" ||
     location.pathname === "/signup"||
     location.pathname === "/roadmap_express"||
@@ -83,7 +84,7 @@ function AppLayout() {
         <Route path="/careerquiz" element={<CareerQuiz />} />
 
       </Routes>
-    {!hideFooter && <Footer className={isTeacherDashboard ? "teacher-dashboard-footer" : ""} />}
+    {!hideFooter && <Footer />}
      </>
   );
 }

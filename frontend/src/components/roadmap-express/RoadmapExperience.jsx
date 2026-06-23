@@ -35,6 +35,7 @@ function CheckpointSuccessBanner({ checkpointSuccess, onDismiss }) {
 
 function RoadmapSummaryCard({
   checkpoints,
+  chatLockReason,
   completedCount,
   courseId,
   dashboardData,
@@ -43,6 +44,7 @@ function RoadmapSummaryCard({
   interviews,
   totalLessons,
 }) {
+  const isFullyLocked = ["free_prompt_limit", "payment_pending", "payment_rejected", "booking_expired"].includes(chatLockReason);
   const cards = [
     {
       label: "Lessons",
@@ -61,9 +63,9 @@ function RoadmapSummaryCard({
     },
     {
       label: "AI Access",
-      value: hasDomain ? (hasActiveBooking ? "Unlocked" : "Preview") : "Locked",
+      value: hasDomain && !isFullyLocked ? (hasActiveBooking ? "Unlocked" : "Preview") : "Locked",
       className: hasDomain
-        ? hasActiveBooking
+        ? hasActiveBooking && !isFullyLocked
           ? "text-[var(--road-green)]"
           : "text-[var(--road-purple)]"
         : "text-red-600",
@@ -102,19 +104,18 @@ function RoadmapSummaryCard({
   );
 }
 
-function AccessLimitBanner({ chatLockedCta }) {
+function AccessLimitBanner({ chatLockedCta, chatLockedCtaLabel, chatLockedDescription, chatLockedTitle }) {
   return (
     <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
-      <div className="text-sm font-extrabold">AI limit exhausted - booking needed</div>
+      <div className="text-sm font-extrabold">{chatLockedTitle || "Access locked"}</div>
       <p className="mt-1 text-xs leading-5">
-        Your free AI preview is used up. Book a plan to continue AI guidance, assessments, lesson progress,
-        checkpoints, and mentor review.
+        {chatLockedDescription || "Complete your booking to continue AI guidance, lessons, checkpoints, and mentor review."}
       </p>
       <a
         href={chatLockedCta || "/#pricing"}
         className="mt-2 inline-flex rounded-lg bg-[#6b46c1] px-3 py-2 text-xs font-bold text-white no-underline"
       >
-        See plans
+        {chatLockedCtaLabel || "See plans"}
       </a>
     </section>
   );
@@ -132,6 +133,7 @@ export default function RoadmapExperience({
   canUseAI,
   chatIsLocked,
   chatLockedCta,
+  chatLockedCtaLabel,
   chatLockedDescription,
   chatLockReason,
   chatLockedTitle,
@@ -185,7 +187,7 @@ export default function RoadmapExperience({
   user,
 }) {
   const chatPanelRef = useRef(null);
-  const isProgressLocked = chatLockReason === "free_prompt_limit";
+  const isProgressLocked = ["free_prompt_limit", "payment_pending", "payment_rejected", "booking_expired"].includes(chatLockReason);
 
   useEffect(() => {
     if (!pendingMessage?.trim()) return;
@@ -235,6 +237,7 @@ export default function RoadmapExperience({
 
             <RoadmapSummaryCard
               checkpoints={checkpoints}
+              chatLockReason={chatLockReason}
               completedCount={completedCount}
               courseId={courseId}
               dashboardData={dashboardData}
@@ -244,7 +247,14 @@ export default function RoadmapExperience({
               totalLessons={totalLessons}
             />
 
-            {isProgressLocked ? <AccessLimitBanner chatLockedCta={chatLockedCta} /> : null}
+            {isProgressLocked ? (
+              <AccessLimitBanner
+                chatLockedCta={chatLockedCta}
+                chatLockedCtaLabel={chatLockedCtaLabel}
+                chatLockedDescription={chatLockedDescription}
+                chatLockedTitle={chatLockedTitle}
+              />
+            ) : null}
 
             {lessons.length === 0 ? (
               <div className="px-1 py-5 font-mono text-xs text-[var(--road-subtle)]">
@@ -322,6 +332,7 @@ export default function RoadmapExperience({
               lockedTitle={chatLockedTitle}
               lockedDescription={chatLockedDescription}
               lockedCtaHref={chatLockedCta}
+              lockedCtaLabel={chatLockedCtaLabel}
               lockedFooter={getLockedNotice(user)}
               onUserMessageSent={handleUserAIMessage}
             />

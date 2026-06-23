@@ -3,16 +3,12 @@ import { Search, MoreVertical, Mail } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = apiUrl("");
-
 function formatDbDateTime(value) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
 
-  // Keep the same clock time as stored in the DB payload instead of shifting to local timezone.
   return date.toLocaleString('en-IN', {
-    timeZone: 'UTC',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -23,28 +19,7 @@ function formatDbDateTime(value) {
 
 function parseDbWallTime(value) {
   if (!value) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-
-  // Treat DB timestamps as wall-clock values so they don't drift by timezone.
-  const match = raw.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (match) {
-    const [, y, m, d, hh = '00', mm = '00', ss = '00'] = match;
-    const date = new Date(
-      Number(y),
-      Number(m) - 1,
-      Number(d),
-      Number(hh),
-      Number(mm),
-      Number(ss)
-    );
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  const parsed = new Date(raw);
+  const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -65,7 +40,11 @@ function getSessionTimingStatus(session) {
     return { key: 'expired', label: 'Expired', canJoin: false };
   }
 
-  return { key: 'live', label: 'Join from dashboard', canJoin: Boolean(session.join_url) };
+  return { key: 'live', label: 'Join from dashboard', canJoin: Boolean(getTeacherJoinLink(session)) };
+}
+
+function getTeacherJoinLink(session) {
+  return session?.start_url || session?.join_url || null;
 }
 
 function dedupeUniqueStudents(rows) {
@@ -101,7 +80,7 @@ export function Students() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`${API_BASE}/api/teachers/students`, {
+        const res = await fetch(apiUrl("/api/teachers/students"), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ uid: user.uid, mode }),
@@ -293,7 +272,10 @@ export function Students() {
 
                         {getSessionTimingStatus(st.session).canJoin ? (
                           <button
-                            onClick={() => (window.location.href = st.session.join_url)}
+                            onClick={() => {
+                              const joinLink = getTeacherJoinLink(st.session);
+                              if (joinLink) window.location.href = joinLink;
+                            }}
                             className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
                           >
                             Join from dashboard

@@ -210,7 +210,9 @@ export async function getDashboardfunc(uid) {
     throw new Error("User not found");
   }
 
-  if (user.role === "TEACHER") {
+  const userRole = String(user.role || "STUDENT").trim().toUpperCase();
+
+  if (userRole === "TEACHER") {
     const { data: teacher, error } = await supabase
       .from("teacher")
       .select("*")
@@ -223,7 +225,7 @@ export async function getDashboardfunc(uid) {
       role: "TEACHER",
       data: teacher,
     };
-  } else if (user.role === "ADMIN") {
+  } else if (userRole === "ADMIN") {
     return {
       role: "ADMIN",
       data: {
@@ -231,7 +233,7 @@ export async function getDashboardfunc(uid) {
           uid: user.uid,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: userRole,
         },
       },
     };

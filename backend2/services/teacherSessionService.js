@@ -55,7 +55,7 @@ export async function getStudentsConnectedToTeacher(t_id) {
   // 1) fetch sessions for this teacher
   const { data: sessions, error: sessionsError } = await supabase
     .from("session")
-    .select("session_id, booking_id, start_time, end_time, status, join_url, feedback")
+    .select("session_id, booking_id, start_time, end_time, status, join_url, start_url, feedback")
     .eq("t_id", t_id);
 
   if (sessionsError) {
@@ -153,10 +153,12 @@ export async function getStudentsConnectedToTeacher(t_id) {
     let sessionState = "INACTIVE"; // ACTIVE | UPCOMING | EXPIRED | INACTIVE
     let sessionStatus = null;
     let sessionJoinUrl = null;
+    let sessionStartUrl = null;
     let sessionId = null;
     if (latestSession) {
       sessionStatus = latestSession.status || null;
       sessionJoinUrl = latestSession.join_url || null;
+      sessionStartUrl = latestSession.start_url || null;
       sessionId = latestSession.session_id || null;
       const start = latestSession.start_time ? new Date(latestSession.start_time) : null;
       const end = latestSession.end_time ? new Date(latestSession.end_time) : null;
@@ -180,6 +182,7 @@ export async function getStudentsConnectedToTeacher(t_id) {
             status: sessionStatus,
             state: sessionState,
             join_url: sessionJoinUrl,
+            start_url: sessionStartUrl,
             start_time: latestSession.start_time,
             end_time: latestSession.end_time,
             ...buildSummaryFields(latestSession, processingBySessionId),
@@ -219,7 +222,7 @@ export async function getAllSessionsForTeacherByUid(uid) {
   // 1) fetch sessions for this teacher
   const { data: sessions, error: sessionsError } = await supabase
     .from("session")
-    .select("session_id, booking_id, start_time, end_time, status, join_url, feedback")
+    .select("session_id, booking_id, start_time, end_time, status, join_url, start_url, feedback")
     .eq("t_id", t_id);
 
   if (sessionsError) {
@@ -321,6 +324,7 @@ export async function getAllSessionsForTeacherByUid(uid) {
         status: s.status || null,
         state: sessionState,
         join_url: s.join_url || null,
+        start_url: s.start_url || null,
         start_time: s.start_time,
         end_time: s.end_time,
         ...buildSummaryFields(s, processingBySessionId),

@@ -155,6 +155,7 @@ export default function useAlgoNestRoadmapController() {
       if (user?.uid) {
         let activeCourseJson = null;
         let dashboardJson = null;
+        let aiAccessJson = null;
 
         try {
           activeCourseJson = await activeCourseRes.json();
@@ -171,7 +172,7 @@ export default function useAlgoNestRoadmapController() {
         }
 
         try {
-          const aiAccessJson = await aiAccessRes.json();
+          aiAccessJson = await aiAccessRes.json();
           const promptCount = Number(aiAccessJson?.promptCount || 0);
           const promptLimit = Number(aiAccessJson?.promptLimit || 10);
           setAiInputCount(promptCount);
@@ -198,8 +199,9 @@ export default function useAlgoNestRoadmapController() {
 
         // A booking is valid for this roadmap if activeCourse exists and its courseId matches
         const validForThisCourse = (dashboardActiveCourse && Number(dashboardActiveCourse.courseId) === Number(courseId));
+        const approvedForThisCourse = Boolean(validForThisCourse && aiAccessJson?.hasActiveBooking === true);
 
-        setHasActiveBooking(Boolean(validForThisCourse));
+        setHasActiveBooking(approvedForThisCourse);
         setHasAnyBooking(dashboardHasAnyBooking);
         setResolvedDomain(dashboardDomain);
       } else {
@@ -270,10 +272,11 @@ export default function useAlgoNestRoadmapController() {
     loadRoadmapData();
   }, [loadRoadmapData]);
 
-  function handleUserAIMessage() {
+  function handleUserAIMessage(result = {}) {
     if (!user?.uid) return;
     // only count preview usage when AI is actually available
     if (!canUseAI || hasActiveBooking) return;
+    if (result?.status === 401 || result?.status === 403) return;
 
     const next = aiInputCount + 1;
     setAiInputCount(next);
@@ -394,9 +397,9 @@ export default function useAlgoNestRoadmapController() {
     if (!canUseAI) return;
     setAskedLessonId(lesson.lesson_id); // visual feedback
     setActiveLessonId(lesson.lesson_id);
-    setPendingMessage(
-      `I'm on "${lesson.title}" (Lesson ${lesson.order_index}). Can you help me understand this?`
-    );
+    const message = `I'm on "${lesson.title}" (Lesson ${lesson.order_index}). Can you help me understand this?`;
+    setPendingMessage("");
+    setTimeout(() => setPendingMessage(message), 0);
     // clear visual feedback after 1.5s
     setTimeout(() => setAskedLessonId(null), 1500);
   }
@@ -405,9 +408,9 @@ export default function useAlgoNestRoadmapController() {
     if (!canUseAI) return;
     setAskedLessonId(lesson.lesson_id);
     setActiveLessonId(lesson.lesson_id);
-    setPendingMessage(
-      `I'm on "${lesson.title}" (Lesson ${lesson.order_index}). ${question}`
-    );
+    const message = `I'm on "${lesson.title}" (Lesson ${lesson.order_index}). ${question}`;
+    setPendingMessage("");
+    setTimeout(() => setPendingMessage(message), 0);
     setTimeout(() => setAskedLessonId(null), 1500);
   }
 
@@ -512,11 +515,15 @@ export default function useAlgoNestRoadmapController() {
   const isSelectedRoadmap = Number(selectedRoadmapCourseId) === Number(courseId);
   const hasDomain = hasSelectedRoadmap;
   const hasProjectTitle = Boolean(dashboardData?.profile?.project_title);
+  const isPaymentLocked = ["payment_pending", "payment_rejected", "booking_expired"].includes(aiAccessReason);
   let canUseAI = false;
   let chatLockReason = null; // e.g., "other_roadmap"
 
   if (isAuthenticated) {
-    if (!hasSelectedRoadmap) {
+    if (isPaymentLocked) {
+      canUseAI = false;
+      chatLockReason = aiAccessReason;
+    } else if (!hasSelectedRoadmap) {
       canUseAI = false;
       chatLockReason = "no_roadmap";
     } else if (!hasProjectTitle) {
@@ -542,8 +549,22 @@ export default function useAlgoNestRoadmapController() {
   let chatLockedTitle = "";
   let chatLockedDescription = "";
   let chatLockedCta = "/#pricing";
+  let chatLockedCtaLabel = "See plans";
 
-  if (aiLockedByUsage) {
+  if (chatLockReason === "booking_expired") {
+    chatLockedTitle = "Your plan has expired";
+    chatLockedDescription = "Renew this roadmap plan to restore unlimited AI, paid lessons, checkpoints, and mentor sessions. Your progress and AI memory are preserved.";
+    chatLockedCta = `/book-now?courseId=${courseId}&renew=1`;
+    chatLockedCtaLabel = "Renew plan";
+  } else if (chatLockReason === "payment_pending") {
+    chatLockedTitle = "Payment approval pending";
+    chatLockedDescription = "Your booking request is received. AI access will unlock after admin approves your payment.";
+    chatLockedCta = "/dashboard";
+  } else if (chatLockReason === "payment_rejected") {
+    chatLockedTitle = "Payment not approved";
+    chatLockedDescription = "Admin did not approve this payment. Please contact support or submit a new booking request.";
+    chatLockedCta = "/dashboard";
+  } else if (aiLockedByUsage) {
     chatLockedTitle = "AI limit exhausted - booking needed";
     chatLockedDescription = `You have used all ${aiPromptLimit} free AI prompts. Book a plan to continue AI guidance, assessments, lesson progress, checkpoints, and mentor review.`;
     chatLockedCta = "/#pricing";
@@ -585,6 +606,7 @@ export default function useAlgoNestRoadmapController() {
   canUseAI,
   chatIsLocked,
   chatLockedCta,
+  chatLockedCtaLabel,
   chatLockedDescription,
   chatLockedTitle,
   chatLockReason: aiAccessReason || chatLockReason,

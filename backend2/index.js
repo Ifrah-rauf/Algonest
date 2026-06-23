@@ -25,6 +25,20 @@ import adminRoutes from "./routes/adminRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "AlgoNest backend is running",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    status: "ok",
+  });
+});
+
 app.use(express.json({ limit: "6mb" }));
 app.use(session({
   secret: process.env.SESSION_SECRET,

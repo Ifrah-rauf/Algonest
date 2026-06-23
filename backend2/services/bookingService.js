@@ -723,6 +723,15 @@ export async function getPlanService({ userId, teacherId, slot, checkpointId = n
     };
   }
 
+  if (booking.payment_status !== "approved") {
+    return {
+      success: false,
+      code: CODE.PAYMENT_REQUIRED,
+      paymentRequired: true,
+      message: "Your booking is pending payment approval. Please wait for admin approval.",
+    };
+  }
+
   // Check expiry
   if (new Date(booking.expiry_date) < new Date()) {
     return {
@@ -819,7 +828,11 @@ export async function getTimeSlotsService({ teachers_id }) {
     label: "getTimeSlotsService",
   });
 
-  return { success: true, message: "Slots fetched", availSlots };
+  return {
+    success: true,
+    message: "Slots fetched",
+    availSlots: availSlots.filter((slot) => slot.availability?.active !== false),
+  };
 }
 
 /* ============================================================
@@ -911,6 +924,15 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
     };
   }
 
+  if (bookingData.payment_status !== "approved") {
+    return {
+      success: false,
+      code: CODE.PAYMENT_REQUIRED,
+      paymentRequired: true,
+      message: "Your booking is pending payment approval. Please wait for admin approval.",
+    };
+  }
+
   if (new Date(bookingData.expiry_date) < new Date()) {
     return {
       success: false,
@@ -965,6 +987,14 @@ export async function bookPlanCore({ studentId, slot, checkpointId = null, inter
       success: false,
       code: CODE.PLAN_EXPIRED,
       message: "Availability record not found for this slot.",
+    };
+  }
+
+  if (availability.active === false) {
+    return {
+      success: false,
+      code: CODE.NOT_UNIQUE,
+      message: "This slot is no longer available.",
     };
   }
 

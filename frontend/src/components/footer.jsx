@@ -119,10 +119,10 @@ export function Footer({ className = "" }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12 mt-12">
-        <div className="m-4 mb-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <section className="mx-auto max-w-7xl px-6 py-12 mt-12 text-center">
+        <div className="mx-auto mb-12 grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex items-center justify-center gap-3">
               <div className="footer-brand-mark flex h-12 w-12 items-center justify-center rounded-lg">
                 <span className="text-3xl font-black">A</span>
               </div>
@@ -135,7 +135,7 @@ export function Footer({ className = "" }) {
               students who want to build proof of work.
             </p> */}
 
-            <div className="flex gap-3">
+            <div className="flex justify-center gap-3">
               <SocialLink href="https://twitter.com" label="Twitter">
                 <RiTwitterXLine size={18} />
               </SocialLink>
@@ -157,14 +157,14 @@ export function Footer({ className = "" }) {
             <h4 className="mb-4 font-semibold text-gray-400">Contact Us</h4>
 
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-gray-400">
+              <li className="flex items-center justify-center gap-2 text-gray-400">
                 <FaPhone size={14} />
                 <FooterTextLink href="tel:+15551234567">
                   +1 (555) 123-4567
                 </FooterTextLink>
               </li>
 
-              <li className="flex items-center gap-2 text-gray-400">
+              <li className="flex items-center justify-center gap-2 text-gray-400">
                 <FaEnvelope size={14} />
                 <FooterTextLink href="mailto:support@algonest.com">
                   support@algonest.com

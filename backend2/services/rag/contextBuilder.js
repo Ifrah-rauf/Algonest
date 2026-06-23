@@ -207,8 +207,12 @@ export async function buildContext(uid, message = '') {
           searchRelevantMessages(sId, qEmbedding, 6),
           searchRelevantFeedback(sId, qEmbedding, 3),
         ]);
-        // sem items expected to have content and role
-        ragContext.history = (sem || []).map((m) => ({ role: m.role || 'assistant', content: m.content || m.text || '' }));
+        // sem items expected to have content and role. The current prompt may
+        // already be saved before RAG builds, so do not echo it back in history.
+        const currentPrompt = compact(message);
+        ragContext.history = (sem || [])
+          .map((m) => ({ role: m.role || 'assistant', content: m.content || m.text || '' }))
+          .filter((m) => !(m.role === 'user' && compact(m.content) === currentPrompt));
         semanticFeedback = feedback || [];
 
       } catch (err) {

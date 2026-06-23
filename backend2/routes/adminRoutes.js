@@ -12,10 +12,19 @@ import {
   adminUpdateTeacher,
   adminDeleteTeacher,
 } from "../controllers/adminTeacherController.js";
+import {
+  adminListPaymentBookings,
+  adminApproveBookingPayment,
+  adminRejectBookingPayment,
+} from "../controllers/adminPaymentController.js";
 
 const router = express.Router();
 
 router.use(requireAdmin);
+
+router.get("/bookings/payments", adminListPaymentBookings);
+router.patch("/bookings/:bookingId/approve-payment", adminApproveBookingPayment);
+router.patch("/bookings/:bookingId/reject-payment", adminRejectBookingPayment);
 
 router.get("/teachers", adminListTeachers);
 router.get("/teachers/:tId", adminGetTeacher);

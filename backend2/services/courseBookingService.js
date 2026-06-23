@@ -50,9 +50,51 @@ async function getCourseById(courseId) {
   });
 }
 
+async function getExistingCourseBooking({ studentId, courseId }) {
+  if (!studentId || !courseId) return null;
+
+  const bookings = await dbFetch({
+    query: supabase
+      .from("booking")
+      .select("*")
+      .eq("s_id", studentId)
+      .eq("course_id", courseId)
+      .in("booking_status", ["pending", "active"])
+      .in("payment_status", ["pending", "approved"])
+      .order("booking_date", { ascending: false })
+      .limit(10),
+    label: "courseBooking/existingBooking",
+  });
+
+  const now = Date.now();
+  return (bookings || []).find((booking) => {
+    if (booking.booking_status === "pending") return true;
+    const expiryTime = booking.expiry_date ? new Date(booking.expiry_date).getTime() : NaN;
+    return booking.booking_status === "active" && Number.isFinite(expiryTime) && expiryTime > now;
+  }) || null;
+}
+
 function buildExpiryDate(expiryDays) {
   const days = Number(expiryDays) > 0 ? Number(expiryDays) : 120;
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+async function calculateRoadmapSessionAllowance(courseId) {
+  const parsedCourseId = Number(courseId);
+  const missedSessionBuffer = 2;
+  const interviewSessions = 2;
+  if (!parsedCourseId) return missedSessionBuffer + interviewSessions;
+
+  const { count: checkpointCount, error: checkpointError } = await supabase
+    .from("checkpoints")
+    .select("checkpoint_id", { count: "exact", head: true })
+    .eq("course_id", parsedCourseId);
+
+  if (checkpointError) {
+    throw new Error(`Failed to calculate roadmap checkpoint sessions: ${checkpointError.message}`);
+  }
+
+  return Number(checkpointCount || 0) + interviewSessions + missedSessionBuffer;
 }
 
 function buildCourseBookingEmail({ student, auth, booking, course }) {
@@ -123,7 +165,6 @@ export async function createCourseBookingService({
   courseId = 1,
   paymentId = null,
   planId = null,
-  remainingSessions = 12,
   expiryDays = 120,
   projectId = null,
 }) {
@@ -139,15 +180,46 @@ export async function createCourseBookingService({
   const auth = await getAuthByUid(uid);
   const parsedCourseId = Number(courseId) > 0 ? Number(courseId) : 1;
   const course = await getCourseById(parsedCourseId);
+  const remainingSessions = await calculateRoadmapSessionAllowance(parsedCourseId);
+  const existingBooking = await getExistingCourseBooking({
+    studentId: student.s_id,
+    courseId: parsedCourseId,
+  });
+
+  if (existingBooking) {
+    const { data: updatedStudent, error: studentUpdateError } = await supabase
+      .from("student")
+      .update({
+        course_id: parsedCourseId,
+      })
+      .eq("s_id", student.s_id)
+      .select("s_id, uid, name, total_bookings, active_booking_id, course_id")
+      .single();
+
+    if (studentUpdateError) {
+      throw new Error(`Existing booking found but failed to update the selected roadmap: ${studentUpdateError.message}`);
+    }
+
+    return {
+      success: true,
+      duplicate: true,
+      message: "A booking request for this roadmap already exists.",
+      booking: existingBooking,
+      student: updatedStudent,
+      email: { sent: false, reason: "Duplicate booking request" },
+    };
+  }
 
   const bookingPayload = {
     s_id: student.s_id,
     plan_id: planId ?? null,
     payment_id: paymentId ?? null,
     expiry_date: buildExpiryDate(expiryDays),
-    remainingsessions: Number(remainingSessions) > 0 ? Number(remainingSessions) : null,
+    remainingsessions: remainingSessions,
     course_id: parsedCourseId,
     project_id: projectId ?? null,
+    payment_status: "pending",
+    booking_status: "pending",
   };
 
   const { data, error } = await supabase
@@ -163,16 +235,14 @@ export async function createCourseBookingService({
   const { data: updatedStudent, error: studentUpdateError } = await supabase
     .from("student")
     .update({
-      active_booking_id: data.booking_id,
       course_id: parsedCourseId,
-      total_bookings: Number(student.total_bookings || 0) + 1,
     })
     .eq("s_id", student.s_id)
     .select("s_id, uid, name, total_bookings, active_booking_id, course_id")
     .single();
 
   if (studentUpdateError) {
-    throw new Error(`Booking created but failed to update student active booking: ${studentUpdateError.message}`);
+    throw new Error(`Booking created but failed to update the selected roadmap: ${studentUpdateError.message}`);
   }
 
   let email = { sent: false, reason: "Email not attempted" };

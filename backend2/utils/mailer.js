@@ -6,14 +6,28 @@ export const senderMail =
 const senderMailPassword =
   process.env.OFFICIAL_MAIL_APP_PASS;
 
-if (!senderMail || !senderMailPassword) {
-  throw new Error("OFFICIAL_MAIL and OFFICIAL_MAIL_APP_PASS env variables are required");
+const mailerConfigured = Boolean(senderMail && senderMailPassword);
+
+if (!mailerConfigured) {
+  console.warn("OFFICIAL_MAIL and OFFICIAL_MAIL_APP_PASS are not configured; email sending is disabled.");
 }
 
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: senderMail,
-    pass: senderMailPassword,
+const configuredTransporter = mailerConfigured
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: senderMail,
+        pass: senderMailPassword,
+      },
+    })
+  : null;
+
+export const transporter = {
+  async sendMail(...args) {
+    if (!configuredTransporter) {
+      throw new Error("Email service is not configured");
+    }
+
+    return configuredTransporter.sendMail(...args);
   },
-});
+};

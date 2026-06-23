@@ -65,10 +65,6 @@ export default function RoadmapTopBar({
               {completedCount}/{totalLessons} lessons
             </span>
           </div>
-
-          <div className="rounded-xl border border-[var(--road-yellow)] bg-amber-50 px-3 py-1.5 font-mono text-[11px] font-semibold text-[var(--road-amber)]">
-            12-day streak
-          </div>
         </div>
       </header>
     </>

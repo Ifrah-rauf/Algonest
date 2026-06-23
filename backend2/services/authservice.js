@@ -20,7 +20,7 @@ function toPublicUser(userRow) {
     uid: userRow.uid,
     username: userRow.name,
     email: userRow.email,
-    role: userRow.role,
+    role: normalizeRole(userRow.role),
   };
 }
 

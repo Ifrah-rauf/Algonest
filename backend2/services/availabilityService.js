@@ -116,10 +116,17 @@ function buildExpectedTimeslots(availabilityRow) {
 }
 
 async function syncTimeslotsForAvailability(availabilityRow) {
-  if (!availabilityRow?.a_id) return;
+  if (!availabilityRow?.a_id) return null;
 
   const expected = buildExpectedTimeslots(availabilityRow);
-  if (!expected.length) return;
+  if (!expected.length) {
+    return {
+      protectedCount: 0,
+      deletedCount: 0,
+      insertedCount: 0,
+      notice: null,
+    };
+  }
 
   console.debug("[syncTimeslots] rebuilding", {
     a_id: availabilityRow.a_id,
@@ -132,22 +139,85 @@ async function syncTimeslotsForAvailability(availabilityRow) {
     expectedCount: expected.length,
   });
 
-  const { error: deleteError } = await supabase
+  const { data: existingSlots, error: existingSlotsError } = await supabase
     .from("timeslot")
-    .delete()
+    .select("slot_id, startat, endat, isbooked")
     .eq("availabilityid", availabilityRow.a_id);
 
-  if (deleteError) {
-    console.error("[syncTimeslots] delete failed", {
+  if (existingSlotsError) {
+    console.error("[syncTimeslots] existing slot lookup failed", {
       a_id: availabilityRow.a_id,
-      error: deleteError,
+      error: existingSlotsError,
     });
-    throw deleteError;
+    throw existingSlotsError;
+  }
+
+  const existingSlotIds = (existingSlots || []).map((slot) => slot.slot_id).filter(Boolean);
+  const { data: referencedRows, error: referencedError } = existingSlotIds.length
+    ? await supabase
+        .from("slotbooking")
+        .select("slotid")
+        .in("slotid", existingSlotIds)
+    : { data: [], error: null };
+
+  if (referencedError) {
+    console.error("[syncTimeslots] slotbooking lookup failed", {
+      a_id: availabilityRow.a_id,
+      error: referencedError,
+    });
+    throw referencedError;
+  }
+
+  const referencedSlotIds = new Set((referencedRows || []).map((row) => row.slotid).filter(Boolean));
+  const protectedSlots = (existingSlots || []).filter(
+    (slot) => slot.isbooked === true || referencedSlotIds.has(slot.slot_id)
+  );
+  const deletableSlotIds = (existingSlots || [])
+    .filter((slot) => slot.isbooked !== true && !referencedSlotIds.has(slot.slot_id))
+    .map((slot) => slot.slot_id)
+    .filter(Boolean);
+
+  if (deletableSlotIds.length) {
+    const { error: deleteError } = await supabase
+      .from("timeslot")
+      .delete()
+      .in("slot_id", deletableSlotIds);
+
+    if (deleteError) {
+      console.error("[syncTimeslots] delete failed", {
+        a_id: availabilityRow.a_id,
+        error: deleteError,
+      });
+      throw deleteError;
+    }
+  }
+
+  const protectedTimeKeys = new Set(
+    protectedSlots.map((slot) => `${slot.startat}|${slot.endat}`)
+  );
+  const slotsToInsert = expected.filter(
+    (slot) => !protectedTimeKeys.has(`${slot.startat}|${slot.endat}`)
+  );
+
+  if (!slotsToInsert.length) {
+    console.debug("[syncTimeslots] no new slots needed", {
+      a_id: availabilityRow.a_id,
+      protectedCount: protectedSlots.length,
+      deletedCount: deletableSlotIds.length,
+    });
+    return {
+      protectedCount: protectedSlots.length,
+      deletedCount: deletableSlotIds.length,
+      insertedCount: 0,
+      notice: protectedSlots.length
+        ? "Booked sessions were kept unchanged."
+        : null,
+    };
   }
 
   const { error: insertError } = await supabase
     .from("timeslot")
-    .insert(expected);
+    .insert(slotsToInsert);
 
   if (insertError) {
     console.error("[syncTimeslots] insert failed", {
@@ -160,8 +230,19 @@ async function syncTimeslotsForAvailability(availabilityRow) {
 
   console.debug("[syncTimeslots] success", {
     a_id: availabilityRow.a_id,
-    inserted: expected.length,
+    protectedCount: protectedSlots.length,
+    deletedCount: deletableSlotIds.length,
+    inserted: slotsToInsert.length,
   });
+
+  return {
+    protectedCount: protectedSlots.length,
+    deletedCount: deletableSlotIds.length,
+    insertedCount: slotsToInsert.length,
+    notice: protectedSlots.length
+      ? "Booked sessions were kept unchanged."
+      : null,
+  };
 }
 
 function normalizeSlotType(type, isfree) {
@@ -271,9 +352,10 @@ export async function createAvailabilitySlot(uid, slotData) {
 
   if (error) throw new Error(`Failed to create slot: ${error.message}`);
   try {
-    await syncTimeslotsForAvailability(data);
+    data._timeslotSync = await syncTimeslotsForAvailability(data);
   } catch (timeslotError) {
     console.error("[createAvailabilitySlot] timeslot sync failed:", timeslotError.message);
+    throw new Error(`Slot saved but timeslot sync failed: ${timeslotError.message}`);
   }
   console.debug("[createAvailabilitySlot] saved", { a_id: data.a_id, teacherid: data.teacherid });
   return data;
@@ -344,9 +426,10 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
   if (!error) console.log("updated slot: ", data);
   if (error) throw new Error(`Failed to update slot: ${error.message}`);
   try {
-    await syncTimeslotsForAvailability(data);
+    data._timeslotSync = await syncTimeslotsForAvailability(data);
   } catch (timeslotError) {
     console.error("[updateAvailabilitySlot] timeslot sync failed:", timeslotError.message);
+    throw new Error(`Slot saved but timeslot sync failed: ${timeslotError.message}`);
   }
   console.debug("[updateAvailabilitySlot] saved", {
     a_id: data.a_id,
@@ -401,6 +484,37 @@ export async function deleteAvailabilitySlot(uid, slotId) {
   if (fetchError || !existing) throw new Error("Slot not found");
   if (existing.teacherid !== teacherId) throw new Error("Unauthorized: slot does not belong to this teacher");
 
+  const { data: existingSlots, error: timeslotError } = await supabase
+    .from("timeslot")
+    .select("slot_id, isbooked")
+    .eq("availabilityid", slotId);
+
+  if (timeslotError) throw new Error(`Failed to check booked sessions: ${timeslotError.message}`);
+
+  const slotIds = (existingSlots || []).map((slot) => slot.slot_id).filter(Boolean);
+  const { data: referencedRows, error: referenceError } = slotIds.length
+    ? await supabase.from("slotbooking").select("slotid").in("slotid", slotIds)
+    : { data: [], error: null };
+
+  if (referenceError) throw new Error(`Failed to check booked sessions: ${referenceError.message}`);
+
+  const hasBookedSessions =
+    (existingSlots || []).some((slot) => slot.isbooked === true) ||
+    (referencedRows || []).length > 0;
+
+  if (hasBookedSessions) {
+    throw new Error("This availability has booked sessions. Keep it inactive instead of deleting it.");
+  }
+
+  const { error: deleteTimeslotsError } = await supabase
+    .from("timeslot")
+    .delete()
+    .eq("availabilityid", slotId);
+
+  if (deleteTimeslotsError) {
+    throw new Error(`Failed to delete generated timeslots: ${deleteTimeslotsError.message}`);
+  }
+
   const { error } = await supabase
     .from("availability")
     .delete()
@@ -443,7 +557,17 @@ export async function bulkSaveAvailability(uid, slots) {
  
   const toUpdate = slots.filter((s) => s.a_id);
  
-  const results = { inserted: [], updated: [], errors: [] };
+  const results = {
+    inserted: [],
+    updated: [],
+    errors: [],
+    notices: [],
+    timeslotSync: {
+      protectedCount: 0,
+      deletedCount: 0,
+      insertedCount: 0,
+    },
+  };
  
   if (toInsert.length > 0) {
     console.debug("[bulkSaveAvailability] inserting", { count: toInsert.length, sample: toInsert[0] });
@@ -459,7 +583,13 @@ export async function bulkSaveAvailability(uid, slots) {
       results.inserted = data;
       for (const row of data || []) {
         try {
-          await syncTimeslotsForAvailability(row);
+          row._timeslotSync = await syncTimeslotsForAvailability(row);
+          if (row._timeslotSync) {
+            results.timeslotSync.protectedCount += row._timeslotSync.protectedCount || 0;
+            results.timeslotSync.deletedCount += row._timeslotSync.deletedCount || 0;
+            results.timeslotSync.insertedCount += row._timeslotSync.insertedCount || 0;
+            if (row._timeslotSync.notice) results.notices.push(row._timeslotSync.notice);
+          }
         } catch (timeslotError) {
           console.error("[bulkSaveAvailability] timeslot sync failed", {
             a_id: row.a_id,
@@ -476,11 +606,19 @@ export async function bulkSaveAvailability(uid, slots) {
       console.debug("[bulkSaveAvailability] updating", { a_id: slot.a_id, slot });
       const updated = await updateAvailabilitySlot(uid, slot.a_id, slot);
       results.updated.push(updated);
+      if (updated._timeslotSync) {
+        results.timeslotSync.protectedCount += updated._timeslotSync.protectedCount || 0;
+        results.timeslotSync.deletedCount += updated._timeslotSync.deletedCount || 0;
+        results.timeslotSync.insertedCount += updated._timeslotSync.insertedCount || 0;
+        if (updated._timeslotSync.notice) results.notices.push(updated._timeslotSync.notice);
+      }
     } catch (err) {
       console.error("[bulkSaveAvailability] update failed", { a_id: slot.a_id, err });
       results.errors.push(`Update failed for a_id ${slot.a_id}: ${err.message}`);
     }
   }
+
+  results.notices = [...new Set(results.notices)];
 
   console.debug("[bulkSaveAvailability] result", results);
  

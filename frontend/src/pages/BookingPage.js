@@ -10,7 +10,6 @@ const COURSE_DEFAULTS = {
   1: {
     title: "Simple Stack Booking",
     stack: "Simple Stack",
-    sessions: 12,
     expiryDays: 120,
     price: "₹9,999",
     accent: "#534AB7",
@@ -18,7 +17,6 @@ const COURSE_DEFAULTS = {
   2: {
     title: "Advanced Stack Booking",
     stack: "Advanced Stack",
-    sessions: 14,
     expiryDays: 150,
     price: "₹9,999",
     accent: "#7c3aed",
@@ -26,7 +24,6 @@ const COURSE_DEFAULTS = {
   3: {
     title: "FAANG Stack Booking",
     stack: "FAANG Stack",
-    sessions: 16,
     expiryDays: 180,
     price: "₹9,999",
     accent: "#059669",
@@ -88,7 +85,6 @@ export default function BookingPage() {
           courseId,
           paymentId: null,
           planId: null,
-          remainingSessions: course.sessions,
           expiryDays: course.expiryDays,
           projectId: null,
           paymentMethod,
@@ -149,7 +145,7 @@ export default function BookingPage() {
                 {[
                   { label: "Course ID", value: courseId },
                   { label: "Plan ID", value: "null" },
-                  { label: "Remaining sessions", value: course.sessions },
+                  { label: "Remaining sessions", value: "Calculated from roadmap" },
                   { label: "Expiry window", value: `${course.expiryDays} days` },
                 ].map((item) => (
                   <div key={item.label} style={{ background: "#fff", border: "1px solid #ece7fb", borderRadius: 18, padding: "16px 18px", boxShadow: "0 10px 30px rgba(83,74,183,0.06)" }}>

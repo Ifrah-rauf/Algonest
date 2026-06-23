@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "postinstall": "npm --prefix backend2 install",
+    "start": "npm --prefix backend2 start"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.94.0",
     "assemblyai": "^4.33.3",

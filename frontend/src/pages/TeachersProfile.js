@@ -150,7 +150,7 @@ const TeacherProfile = () => {
       .then((data) => {
         setTeacher(data.teacher);
         setAvailability(data.avail);
-        setTimeSlots(data.timeSlots);
+        setTimeSlots(data.timeSlots || []);
       })
       .catch(console.error);
       console.log("teacher data on profile page: ",teacher);

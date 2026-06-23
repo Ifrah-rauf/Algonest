@@ -1,4 +1,4 @@
-import { Calendar, FileText, Star } from "lucide-react";
+import { Calendar, FileText, Star, Video } from "lucide-react";
 import { capitalizeWords, formatDateTimeLabel } from "./formatters";
 import { EmptyPanel, SectionCard } from "./ui";
 
@@ -38,6 +38,10 @@ function getSessionSummaryText(session) {
 
 function getMentorFeedbackText(session) {
   return session?.mentor_feedback_text || session?.feedback || null;
+}
+
+function getSessionJoinLink(session) {
+  return session?.join_url || session?.session_link || null;
 }
 
 export default function ActivityTab({
@@ -85,13 +89,32 @@ export default function ActivityTab({
                       {capitalizeWords(sessionInfo.status)}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/teachers")}
-                    className="dash-button-primary px-4 py-2 text-xs md:text-sm"
-                  >
-                    Schedule a Session
-                  </button>
+                  {sessionInfo.status === "ACTIVE" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const joinLink = getSessionJoinLink(sessionInfo.session);
+                        if (joinLink) window.location.href = joinLink;
+                      }}
+                      disabled={!getSessionJoinLink(sessionInfo.session)}
+                      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition md:text-sm ${
+                        getSessionJoinLink(sessionInfo.session)
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "cursor-not-allowed bg-slate-200 text-slate-500"
+                      }`}
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Session
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/teachers")}
+                      className="dash-button-primary px-4 py-2 text-xs md:text-sm"
+                    >
+                      Schedule a Session
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

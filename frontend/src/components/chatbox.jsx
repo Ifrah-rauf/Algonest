@@ -231,12 +231,6 @@ export default function ChatBox({
       const userMsg = { role: "user", content: cleanText };
       setMessages((prev) => [...prev, userMsg]);
 
-      try {
-        onUserMessageSent();
-      } catch {
-        // Optional parent callbacks should not block the chat request.
-      }
-
       setLoading(true);
 
       try {
@@ -253,6 +247,16 @@ export default function ChatBox({
           }),
         });
         const data = await res.json();
+
+        try {
+          onUserMessageSent({
+            ok: res.ok,
+            status: res.status,
+            reason: data?.reason || null,
+          });
+        } catch {
+          // Optional parent callbacks should not block the chat request.
+        }
 
         if (!res.ok) {
           throw new Error(data?.error || data?.message || "AI request failed.");

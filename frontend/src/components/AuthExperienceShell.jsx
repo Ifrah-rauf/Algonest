@@ -23,7 +23,7 @@ export default function AuthExperienceShell({
 }) {
   return (
     <div
-      className="h-screen relative overflow-hidden"
+      className="min-h-screen relative overflow-x-hidden overflow-y-auto"
       style={{
         background:
           "radial-gradient(circle at top left, #f7f3ff 0%, #ffffff 30%, #f5f0ff 60%, #ede7ff 100%)",
@@ -47,7 +47,7 @@ export default function AuthExperienceShell({
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 h-screen flex flex-col lg:flex-row px-4 lg:px-8 py-4 lg:py-6">
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row px-4 lg:px-8 py-4 lg:py-6">
         <div className="hidden lg:flex lg:w-[48%] px-4 lg:px-6 pt-4 pb-2 flex-col">
           <div className="flex items-center gap-3">
             <img src={logo} alt="AlgoNest" className="w-8 h-8" />
@@ -119,8 +119,8 @@ export default function AuthExperienceShell({
           w-full
           lg:w-[52%]
           lg:mt-20
-          h-screen
-          overflow-hidden
+          min-h-[calc(100vh-2rem)]
+          overflow-visible
           flex
           items-center
           justify-center
@@ -131,8 +131,8 @@ export default function AuthExperienceShell({
               
               w-full
               max-w-[760px]
-              h-full
-              overflow-hidden
+              max-h-none
+              overflow-visible
               p-4
               lg:p-7
             "

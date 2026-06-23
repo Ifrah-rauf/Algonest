@@ -19,6 +19,18 @@ const GRANULARITIES = [
   { value: 90, label: "90 min" },
 ];
 
+function getFriendlySaveError(errors = []) {
+  const text = errors.join(" ").toLowerCase();
+  if (
+    text.includes("timeslot") ||
+    text.includes("slotbooking") ||
+    text.includes("foreign key constraint")
+  ) {
+    return "Some availability changes were saved. Booked sessions were kept at their original time.";
+  }
+  return "Some changes could not be saved. Please review your availability and try again.";
+}
+
 function minToTime(min) {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -71,11 +83,12 @@ export function EditAvailability() {
 
   // Feedback
   const [saveStatus, setSaveStatus] = useState(null); // "success" | "partial" | "error"
+  const [saveMessage, setSaveMessage] = useState("");
   const [fetchError, setFetchError] = useState(null);
 
   // ── Fetch on mount ────────────────────────────────────────
-  const fetchSlots = useCallback(async () => {
-    setLoading(true);
+  const fetchSlots = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setFetchError(null);
     try {
       const res = await fetch(`${BASE_URL}`, {
@@ -95,7 +108,7 @@ export function EditAvailability() {
       console.error("[fetchSlots]", err.message);
       setFetchError(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [uid]);
 
@@ -165,6 +178,12 @@ export function EditAvailability() {
       if (expandedKey === key) setExpandedKey(null);
     } catch (err) {
       console.error("[deleteSlot]", err.message);
+      setSaveStatus("error");
+      setSaveMessage(
+        err.message?.includes("booked sessions")
+          ? "This availability has booked sessions. Turn it inactive instead of deleting it."
+          : "Could not delete this availability. Please try again."
+      );
     } finally {
       setDeletingId(null);
     }
@@ -174,6 +193,9 @@ export function EditAvailability() {
   async function handleSave() {
     setSaving(true);
     setSaveStatus(null);
+    setSaveMessage("");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     try {
       console.debug("[EditAvailability] save request", {
         uid,
@@ -186,6 +208,7 @@ export function EditAvailability() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, slots }),
+        signal: controller.signal,
       });
       const json = await res.json();
       console.debug("[EditAvailability] save response", {
@@ -195,7 +218,13 @@ export function EditAvailability() {
       });
       if (!json.success) throw new Error(json.message);
 
-      const { inserted, updated, errors } = json.data;
+      const {
+        inserted = [],
+        updated = [],
+        errors = [],
+        notices = [],
+        timeslotSync = {},
+      } = json.data;
 
       setSlots((prev) => {
         let remaining = [...prev];
@@ -226,12 +255,30 @@ export function EditAvailability() {
         console.warn("[EditAvailability] partial save errors", errors);
       }
       setSaveStatus(errors.length > 0 ? "partial" : "success");
+      if (errors.length > 0) {
+        setSaveMessage(getFriendlySaveError(errors));
+      } else if (notices.length > 0) {
+        const protectedCount = Number(timeslotSync.protectedCount || 0);
+        setSaveMessage(
+          protectedCount > 0
+            ? `Saved. ${protectedCount} booked session${protectedCount === 1 ? "" : "s"} kept at the original time.`
+            : notices.join(" ")
+        );
+      } else {
+        setSaveMessage("Availability saved and bookable timeslots updated.");
+      }
+      fetchSlots({ silent: true });
     } catch (err) {
       console.error("[bulkSave]", err.message);
       setSaveStatus("error");
+      setSaveMessage(getFriendlySaveError([err.message || ""]));
     } finally {
+      clearTimeout(timeoutId);
       setSaving(false);
-      setTimeout(() => setSaveStatus(null), 2500);
+      setTimeout(() => {
+        setSaveStatus(null);
+        setSaveMessage("");
+      }, 8000);
     }
   }
 
@@ -306,6 +353,25 @@ export function EditAvailability() {
           </button>
         </div>
       </div>
+
+      {saveMessage && (
+        <div
+          className={`flex items-start gap-3 rounded-xl px-4 py-3 mb-4 text-sm border ${
+            saveStatus === "error"
+              ? "bg-red-50 border-red-100 text-red-700"
+              : saveStatus === "partial"
+                ? "bg-orange-50 border-orange-100 text-orange-700"
+                : "bg-emerald-50 border-emerald-100 text-emerald-700"
+          }`}
+        >
+          {saveStatus === "error" || saveStatus === "partial" ? (
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          ) : (
+            <Info size={16} className="mt-0.5 shrink-0" />
+          )}
+          <span>{saveMessage}</span>
+        </div>
+      )}
 
       {/* Info banner */}
       <div className="flex items-start gap-3 bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 mb-6">

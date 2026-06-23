@@ -61,7 +61,7 @@ async function getBookingById(bookingId) {
 
   const { data, error } = await supabase
     .from("booking")
-    .select("booking_id, s_id, course_id, booking_date, expiry_date, remainingsessions")
+    .select("booking_id, s_id, course_id, booking_date, expiry_date, remainingsessions, payment_status, payment_approved_at, booking_status")
     .eq("booking_id", bookingId)
     .maybeSingle();
 

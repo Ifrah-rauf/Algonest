@@ -30,6 +30,18 @@ function buildOAuthPayload(firebaseUser, role) {
   };
 }
 
+function getPasswordErrors(password) {
+  const checks = [
+    { valid: password.length >= 8, message: "at least 8 characters" },
+    { valid: /[A-Z]/.test(password), message: "one uppercase letter" },
+    { valid: /[a-z]/.test(password), message: "one lowercase letter" },
+    { valid: /\d/.test(password), message: "one number" },
+    { valid: /[^A-Za-z0-9]/.test(password), message: "one special character" },
+  ];
+
+  return checks.filter((check) => !check.valid).map((check) => check.message);
+}
+
 export default function Signup() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -40,6 +52,7 @@ export default function Signup() {
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState("STUDENT");
   const [submitting, setSubmitting] = useState(false);
+  const passwordErrors = getPasswordErrors(password);
 
   const handleProviderSignup = async (provider) => {
     if (submitting) return;
@@ -76,6 +89,11 @@ export default function Signup() {
 
     if (password !== confirm) {
       alert("Passwords do not match!");
+      return;
+    }
+
+    if (passwordErrors.length > 0) {
+      alert(`Password must include ${passwordErrors.join(", ")}.`);
       return;
     }
 
@@ -152,6 +170,11 @@ export default function Signup() {
             <label className="sr-only" htmlFor="signup-password">
               Password
             </label>
+            {password && passwordErrors.length > 0 && (
+              <p className="text-xs text-[#8b6f2d]">
+                Missing: {passwordErrors.join(", ")}.
+              </p>
+            )}
             <input
               id="signup-password"
               name="password"

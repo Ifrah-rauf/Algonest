@@ -6,7 +6,7 @@ import { getEmbedding } from './embeddingService.js';
 // saveMessage
 // Called by your partner's aiOrchestrator BEFORE and AFTER every AI call.
 // Saves user message + AI reply both with their embedding vectors.
-// lessonId and topicId are optional — pass them so you can filter later.
+// lessonId and topicId are optional
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function saveMessage(sId, role, content, lessonId = null, topicId = null) {

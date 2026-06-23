@@ -51,7 +51,6 @@ export async function createCourseBooking(req, res) {
       courseId = 1,
       paymentId = null,
       planId = null,
-      remainingSessions = 12,
       expiryDays = 120,
       projectId = null,
     } = req.body || {};
@@ -68,7 +67,6 @@ export async function createCourseBooking(req, res) {
       courseId,
       paymentId,
       planId,
-      remainingSessions,
       expiryDays,
       projectId,
     });
