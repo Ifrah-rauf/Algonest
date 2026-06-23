@@ -101,7 +101,21 @@ function RoadmapSummaryCard({
     </section>
   );
 }
-
+function TabButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-10 shrink-0 px-3 py-2 text-xs font-extrabold transition ${
+        active
+          ? "bg-[var(--road-purple-soft)] text-violet-800"
+          : "text-[var(--road-subtle)] hover:bg-white hover:text-[var(--road-purple)]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 function AccessLimitBanner({ chatLockedCta, activeTab, setActiveTab}) {
   return (
     <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
