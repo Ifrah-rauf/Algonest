@@ -52,12 +52,14 @@ export default function Signup() {
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState("STUDENT");
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const passwordErrors = getPasswordErrors(password);
 
   const handleProviderSignup = async (provider) => {
     if (submitting) return;
 
     try {
+      setFormError("");
       setSubmitting(true);
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
@@ -72,7 +74,7 @@ export default function Signup() {
       navigate("/dashboard");
     } catch (error) {
       console.error("OAuth Signup Error:", error);
-      alert(error?.response?.data?.message || error.message || "OAuth signup failed.");
+      setFormError(error?.response?.data?.message || error.message || "OAuth signup failed.");
     } finally {
       setSubmitting(false);
     }
@@ -81,19 +83,20 @@ export default function Signup() {
   // EMAIL SIGNUP
   const handleSignup = async () => {
     if (submitting) return;
+    setFormError("");
 
     if (!username.trim() || !mail.trim() || !password.trim()) {
-      alert("Please fill all fields.");
+      setFormError("Please fill all fields.");
       return;
     }
 
     if (password !== confirm) {
-      alert("Passwords do not match!");
+      setFormError("Passwords do not match.");
       return;
     }
 
     if (passwordErrors.length > 0) {
-      alert(`Password must include ${passwordErrors.join(", ")}.`);
+      setFormError(`Password must include ${passwordErrors.join(", ")}.`);
       return;
     }
 
@@ -115,11 +118,14 @@ export default function Signup() {
         await login(data.user);
         navigate("/dashboard");
       } else if (data.message === "Email already exists") {
-        alert("Account exists. Please login.");
+        setFormError("Account exists. Please login.");
         navigate("/login");
       } else {
-        alert("Error: " + (data.message || "Signup failed."));
+        setFormError(data.message || "Signup failed.");
       }
+    } catch (error) {
+      console.error("Signup Error:", error);
+      setFormError(error.message || "Signup failed.");
     } finally {
       setSubmitting(false);
     }
@@ -136,6 +142,14 @@ export default function Signup() {
         <p className="mt-2 text-sm text-[#7b70a0]">
           Build your student or mentor profile.
         </p>
+        {formError && (
+          <div
+            role="alert"
+            className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+          >
+            {formError}
+          </div>
+        )}
 
         <div className="mt-6 grid lg:grid-cols-[1.45fr_1fr] gap-5 items-start">
           <div className="space-y-3">
