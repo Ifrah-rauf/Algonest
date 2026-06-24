@@ -101,8 +101,22 @@ function RoadmapSummaryCard({
     </section>
   );
 }
-
-function AccessLimitBanner({ chatLockedCta }) {
+function TabButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-10 shrink-0 px-3 py-2 text-xs font-extrabold transition ${
+        active
+          ? "bg-[var(--road-purple-soft)] text-violet-800"
+          : "text-[var(--road-subtle)] hover:bg-white hover:text-[var(--road-purple)]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+function AccessLimitBanner({ chatLockedCta, activeTab, setActiveTab}) {
   return (
     <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
       <div className="text-sm font-extrabold">AI limit exhausted - booking needed</div>
@@ -110,12 +124,9 @@ function AccessLimitBanner({ chatLockedCta }) {
         Your free AI preview is used up. Book a plan to continue AI guidance, assessments, lesson progress,
         checkpoints, and mentor review.
       </p>
-      <a
-        href={chatLockedCta || "/#pricing"}
-        className="mt-2 inline-flex rounded-lg bg-[#6b46c1] px-3 py-2 text-xs font-bold text-white no-underline"
-      >
-        See plans
-      </a>
+      <TabButton active={activeTab === "booking"} onClick={() => setActiveTab("booking")}>
+              Tab 2 - Booking & Overview
+    </TabButton>
     </section>
   );
 }
@@ -244,7 +255,7 @@ export default function RoadmapExperience({
               totalLessons={totalLessons}
             />
 
-            {isProgressLocked ? <AccessLimitBanner chatLockedCta={chatLockedCta} /> : null}
+            {isProgressLocked ? <AccessLimitBanner chatLockedCta={chatLockedCta} activeTab={activeTab} setActiveTab={setActiveTab} /> : null}
 
             {lessons.length === 0 ? (
               <div className="px-1 py-5 font-mono text-xs text-[var(--road-subtle)]">

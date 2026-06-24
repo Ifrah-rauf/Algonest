@@ -7,27 +7,27 @@ export default function HowItWorksScroll() {
   const steps = [
     {
       number: 1,
-      title: "Consult & Assess",
+      title: "Create your profile.",
       description:
-        "Drop us a query, 'Where do I begin?' We understand your level, goals, and constraints before planning.",
+        "Signup to your account and create your profile. Add your resume, github and project details to get started in the profile tab.",
     },
     {
       number: 2,
-      title: "Structured Plan",
+      title: "Choose your roadmap.",
       description:
-        "Choose a fixed roadmap on what you aim to build that replaces cohorts, bootcamps, random sessions and confusion. Select your own project or take smart suggestions",
+        "Pick a roadmap-Project/ CS or Grill Sessions. Choose the roadmap which aligns with your goals, deadlines, target companies and skillset.",
     },
     {
       number: 3,
-      title: "Execute it with Mentors personally",
+      title: "Execute it with AI and Mentor.",
       description:
-        "We'll make possible! According to you we'll plan daily accountability, tracking, pattern training, guidance and interviews",
+        "Within the timeline of the roadmap, complete given tasks, assignments and projects under mentor and AI support and tracking.",
     },
     {
       number: 4,
-      title: "Track & Finish",
+      title: "Finish",
       description:
-        "You end up being creating your own product! deploy, compete and see visible progress until completion",
+        "Get your final project reviewed, recorded and deployed. You may continue your journey with more roadmaps from CS and Grill sessions to wrap up interview prep.",
     },
   ];
 

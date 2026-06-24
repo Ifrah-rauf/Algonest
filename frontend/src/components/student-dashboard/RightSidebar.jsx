@@ -23,37 +23,81 @@ function getMentorTags(mentor) {
 }
 
 function CourseAds({ courses, activeCourse, navigate }) {
+  const course = [
+    {
+      index:1,
+      course_id: "setup-1",
+      title: "Complete Profile",
+      domain: "Step 1",
+      description: "Open Profiles tab and fill 'Roadmap and Project Details' according to your goals. Now your learning path is defined.",
+      link:"", //add target to profile tab, section: roadmap and project details
+    },
+    {
+      index:2,
+      course_id: "setup-2",
+      title: "Roadmap",
+      domain: "Step 2",
+      description: "You can access AI for a limited amount of prompts in free tier.",
+      link:"",//add target to activity tab, your roadmap section
+
+    },
+    {
+      index:3,
+      course_id: "setup-3",
+      title: "Booking",
+      domain: "Step 3",
+      description: "You can book your roadmap in the respective roadmap -> Overview & booking tab to use all features.",
+      link:"", //add target to roadmap overview and booking tab
+
+    },
+    {
+      index:4,
+      course_id: "setup-4",
+      title: "Connect Mentor",
+      domain: "Step 4",
+      description: "Get guidance and reviews by booking your mentor on each checkpoint.",
+      link:"/teachers",
+
+    },
+    {
+      index:5,
+      course_id: "setup-5",
+      title: "Explore",
+      domain: "Step 5",
+      description: "Explore other roadmaps, projects, mentors & sessions.",
+      link:"",
+
+    }
+  ];
+
   const activeCourseId = activeCourse?.courseId || activeCourse?.course_id;
   const activeTitle = activeCourse?.title?.toLowerCase();
-  const otherCourses = (courses || [])
+  const otherCourses = (course || [])
     .filter((course) => {
       const courseId = course.course_id || course.id;
       const title = course.title?.toLowerCase();
       return courseId !== activeCourseId && title !== activeTitle;
     })
-    .slice(0, 3);
+    // .slice(0, 3);
 
   return (
-    <SectionCard title="What's New @Algonest?">
+    <SectionCard title="Setup Your account">
       {otherCourses.length ? (
-        <div className="space-y-3">
+        <div className="space-y-1">
           {otherCourses.map((course) => (
             <button
               key={course.course_id || course.title}
               type="button"
-              onClick={() => navigate("/roadmaps")}
-              className="w-full rounded-3xl border border-[var(--dash-border)] bg-white p-4 text-left transition hover:border-purple-200 hover:bg-purple-50"
+              onClick={() => navigate(course.link)}
+              className="w-full rounded-3xl border border-purple-200 bg-white p-4 text-left transition hover:border-purple-400 hover:bg-purple-50 shadow-lg"
             >
               <div className="flex items-start gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(107,70,193,0.14)] text-sm font-bold text-[var(--dash-purple)]">
-                  {(course.domain || course.title || "A").charAt(0).toUpperCase()}
+                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-2xl bg-[rgba(107,70,193,0.14)] text-sm font-bold text-[var(--dash-purple)]">
+                  {(course.index)}
                 </div>
                 <div className="min-w-0">
                   <div className="line-clamp-2 text-sm font-semibold text-[var(--dash-ink)]">
                     {course.title || "New course"}
-                  </div>
-                  <div className="mt-1 text-xs font-medium text-[var(--dash-purple)]">
-                    {course.domain || "AlgoNest course"}
                   </div>
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--dash-muted)]">
                     {course.description || "Explore a new guided roadmap with mentor support and project checkpoints."}

@@ -239,37 +239,7 @@ export default function ActivityTab({
       </div>
 
       {/* CS Core and Grill Bookings */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* CS Core Booking */}
-        <SectionCard className="p-0">
-          <div className="rounded-t-2xl bg-gradient-to-r from-violet-600 to-violet-700 px-5 py-4">
-            <div className="text-sm font-semibold text-white md:text-base">CS Core Fundamentals</div>
-          </div>
-          <div className="space-y-4 p-5">
-            <p className="text-xs leading-6 text-[var(--dash-muted)] md:text-sm">
-              Master Data Structures, Algorithms, DBMS, OS, and DCCN
-            </p>
-            <p className="text-xs leading-6 text-slate-500 md:text-sm">
-              No current plan
-            </p>
-          </div>
-        </SectionCard>
 
-        {/* Grill Sessions Booking */}
-        <SectionCard className="p-0">
-          <div className="rounded-t-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-4">
-            <div className="text-sm font-semibold text-white md:text-base">Grill Sessions</div>
-          </div>
-          <div className="space-y-4 p-5">
-            <p className="text-xs leading-6 text-[var(--dash-muted)] md:text-sm">
-              Mock interviews with experienced professionals
-            </p>
-            <p className="text-xs leading-6 text-slate-500 md:text-sm">
-              No current plan
-            </p>
-          </div>
-        </SectionCard>
-      </div>
 
       <PrepModulesBand />
 

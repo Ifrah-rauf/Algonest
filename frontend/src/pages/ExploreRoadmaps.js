@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../components/student-dashboard/constants";
 import { isGithubUrl, normalizeGithubUrl } from "../components/student-dashboard/github";
+import { useLoading } from '../context/LoadingContext.jsx';
 import "../styles/explore-roadmaps.css";
 import "../styles/footer.css";
 
@@ -412,21 +413,40 @@ export default function AlgoNestPage() {
   const [reviewStatus, setReviewStatus] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-
+  const { setLoading } = useLoading();
   useEffect(() => {
-    let cancelled = false;
-    async function loadCourseStacks() {
-      try {
-        const res = await fetch(`${API_BASE}/api/plans/getCourse`);
-        const data = await res.json();
-        if (!cancelled && data?.courses) setAllStacks(buildStackList(data.courses));
-      } catch (err) {
-        console.error("Failed to load course stacks:", err);
+  let cancelled = false;
+
+  async function loadCourseStacks() {
+    // 1. Start the loader right before the fetch begins
+    setLoading(true); 
+    
+    try {
+      const res = await fetch(`${API_BASE}/api/plans/getCourse`);
+      const data = await res.json();
+      
+      if (!cancelled && data?.courses) {
+        setAllStacks(buildStackList(data.courses));
+      }
+    } catch (err) {
+      console.error("Failed to load course stacks:", err);
+    } finally {
+      // 2. Turn off the loader in the 'finally' block 
+      // This ensures it hides whether the fetch succeeds or crashes
+      if (!cancelled) {
+        setLoading(false);
       }
     }
-    loadCourseStacks();
-    return () => { cancelled = true; };
-  }, []);
+  }
+
+  loadCourseStacks();
+
+  return () => { 
+    cancelled = true; 
+    // 3. Clean up the loader if the component unmounts mid-fetch
+    setLoading(false); 
+  };
+}, [setLoading]);
 
   useEffect(() => {
     setDashboardData(null);
@@ -606,50 +626,80 @@ export default function AlgoNestPage() {
 
       {/* ─── REVIEW SECTION ─── */}
       <hr/>
-      <section className="roadmaps-review-section" style={{ background: "#1e1e1e"}}>
-        <h1 className={"mb-4 text-2xl font-bold color-gray-100 sm:text-4xl"} style={{ color: "#fff" }}>#Generate your project's own Outline</h1>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <div style={{background: "#fdf8ed", border: "2px solid rgba(10,10,30,0.12)", borderRadius: 18, padding: "24px 28px", display: "flex", gap: 40, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 260 }}>
-              <div style={{  marginTop:"5%",display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", border: "1px solid #ececec", borderRadius: 999, padding: "4px 10px", marginBottom: 10 }}>
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: Y }} />
-                <span style={{ fontSize: 9, fontWeight: 700, color: "#6b7280", letterSpacing: 1, textTransform: "uppercase" }}>Existing Project Review</span>
-              </div>
-              <h3 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>Already building something?</h3>
-              <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.55, fontFamily: "'DM Sans'" }}>
-                Submit your GitHub project. Our mentors review architecture, code quality, and roadmap potential — manually.
-              </p>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="roadmaps-review-input">
-                <input
-                  id="github-review-link"
-                  name="githubReviewLink"
-                  type="text"
-                  placeholder="Paste GitHub repo or profile link"
-                  value={githubLink}
-                  onChange={(e) => { setGithubLink(e.target.value); if (reviewStatus) setReviewStatus(null); }}
-                  style={{ flex: 1, minWidth: 0, background: "#fff", border: "1px solid #dbe2ee", borderRadius: 10, padding: "11px 14px", color: DARK, fontSize: 12, outline: "none", fontFamily: "'DM Sans'" }}
-                />
-                <button
-                  type="button"
-                  disabled={reviewSubmitting}
-                  onClick={handleSubmitForReview}
-                  style={{ background: P, color: "#fff", border: "none", borderRadius: 10, padding: "11px 16px", fontSize: 12, fontWeight: 700, cursor: reviewSubmitting ? "not-allowed" : "pointer", opacity: reviewSubmitting ? 0.8 : 1, fontFamily: "'DM Sans'" }}
-                >
-                  {reviewSubmitting ? "Sending..." : "Submit"}
-                </button>
-              </div>
-              {reviewStatus && (
-                <div style={{ borderRadius: 8, padding: "9px 12px", fontSize: 11, fontFamily: "'DM Sans'", background: reviewStatus.type === "success" ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)", border: `1px solid ${reviewStatus.type === "success" ? "rgba(34,197,94,0.24)" : "rgba(239,68,68,0.24)"}`, color: reviewStatus.type === "success" ? "#166534" : "#b91c1c" }}>
-                  {reviewStatus.message}
-                </div>
-              )}
-              <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 8, fontFamily: "'DM Sans'" }}>Low-effort clones may not receive a mentor call.</p>
-            </div>
-          </div>
+<section 
+  className="roadmaps-hero px-4 py-8 sm:px-12 lg:px-24 sm:py-12" 
+  style={{ background: P, position: "relative", overflow: "hidden" }}
+>
+  {/* Decorative translucent circles */}
+  <div style={{ position: "absolute", top: -80, left: -80, width: 340, height: 340, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", top: 20, left: 180, width: 160, height: 160, borderRadius: "50%", background: "rgba(246,201,14,0.10)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", bottom: -100, left: "38%", width: 280, height: 280, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", top: -40, right: 60, width: 220, height: 220, borderRadius: "50%", background: "rgba(246,201,14,0.08)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", bottom: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+  <div style={{ position: "absolute", top: "50%", right: 280, width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.07)", pointerEvents: "none" }} />
+
+  <div className="w-full mx-auto" style={{ maxWidth: 1160 }}>
+    <h1 className="mb-6 text-xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+      #Generate your project's own Outline
+    </h1>
+
+    <div 
+      className="flex flex-col md:flex-row gap-6 lg:gap-16 items-start md:items-center"
+      style={{
+        background: "#fdf8ed", 
+        border: "2px solid rgba(10,10,30,0.12)", 
+        borderRadius: 18, 
+        padding: "28px 32px" 
+      }}
+    >
+      {/* Left Column: Info - Fixed inline styling breaking laptop widths */}
+      <div className="w-full md:w-1/2 flex-1">
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", border: "1px solid #ececec", borderRadius: 999, padding: "4px 10px", marginBottom: 10 }}>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: Y }} />
+          <span style={{ fontSize: 9, fontWeight: 700, color: "#6b7280", letterSpacing: 1, textTransform: "uppercase" }}>Existing Project Review</span>
         </div>
-      </section>
+        <h3 className="text-lg sm:text-xl lg:text-2xl" style={{ fontWeight: 800, letterSpacing: -0.5, marginBottom: 6, color: "#000" }}>Already building something?</h3>
+        <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.55, fontFamily: "'DM Sans'" }}>
+          Submit your GitHub project. Our mentors review architecture, code quality, and roadmap potential — manually.
+        </p>
+      </div>
+
+      {/* Right Column: Interactive Input Form */}
+      <div className="w-full md:w-1/2 flex-1">
+        <div 
+          className="roadmaps-review-input flex flex-col sm:flex-row gap-2 w-full"
+          style={{ marginBottom: reviewStatus ? 8 : 0 }}
+        >
+          <input
+            id="github-review-link"
+            name="githubReviewLink"
+            type="text"
+            placeholder="Paste GitHub repo or profile link"
+            value={githubLink}
+            onChange={(e) => { setGithubLink(e.target.value); if (reviewStatus) setReviewStatus(null); }}
+            style={{ flex: 1, width: "100%", background: "#fff", border: "1px solid #dbe2ee", borderRadius: 10, padding: "11px 14px", color: DARK, fontSize: 12, outline: "none", fontFamily: "'DM Sans'" }}
+          />
+          <button
+            type="button"
+            disabled={reviewSubmitting}
+            onClick={handleSubmitForReview}
+            className="w-full sm:w-auto shrink-0"
+            style={{ background: P, color: "#fff", border: "none", borderRadius: 10, padding: "11px 16px", fontSize: 12, fontWeight: 700, cursor: reviewSubmitting ? "not-allowed" : "pointer", opacity: reviewSubmitting ? 0.8 : 1, fontFamily: "'DM Sans'" }}
+          >
+            {reviewSubmitting ? "Sending..." : "Submit"}
+          </button>
+        </div>
+
+        {reviewStatus && (
+          <div style={{ borderRadius: 8, padding: "9px 12px", fontSize: 11, fontFamily: "'DM Sans'", background: reviewStatus.type === "success" ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)", border: `1px solid ${reviewStatus.type === "success" ? "rgba(34,197,94,0.24)" : "rgba(239,68,68,0.24)"}`, color: reviewStatus.type === "success" ? "#166534" : "#b91c1c", marginTop: 8 }}>
+            {reviewStatus.message}
+          </div>
+        )}
+        <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 8, fontFamily: "'DM Sans'" }}>Low-effort clones may not receive a mentor call.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* ─── TRUST BAR ─── */}
       <section className="roadmaps-trust" style={{ background: "#fafafa", borderTop: "1px solid #ececec", borderBottom: "1px solid #ececec", padding: "22px 48px" }}>

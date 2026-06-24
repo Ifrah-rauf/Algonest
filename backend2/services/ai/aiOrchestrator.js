@@ -55,13 +55,14 @@ export async function generateAIResponse({
   }
 
   // 3. Use RAG-generated system prompt
-  const finalSystemPrompt =
-    context.systemPrompt || systemPrompt || DEFAULT_SYSTEM;
+  const finalSystemPrompt = context.systemPrompt || systemPrompt || DEFAULT_SYSTEM;
+
   const selectedRoadmapLine = context?.selectedCourse
     ? `Selected roadmap: ${context.selectedCourse.title || `Course #${context.selectedCourse.course_id}`}`
     : context?.student?.course_id
     ? `Selected roadmap: Course #${context.student.course_id}`
     : "Selected roadmap: not set";
+
   const selectedDomainLine = context?.domain
     ? `Selected domain: ${context.domain}`
     : context?.selectedCourse?.domain
@@ -70,12 +71,12 @@ export async function generateAIResponse({
 
   const expandedSystemPrompt = `${finalSystemPrompt}
 
---- Roadmap Selection ---
-${selectedRoadmapLine}
+  --- Roadmap Selection ---
+  ${selectedRoadmapLine}
 
---- Domain Selection ---
-${selectedDomainLine}
-`.trim();
+  --- Domain Selection ---
+  ${selectedDomainLine}`
+  .trim();
 
   if (shouldLogAiPrompt()) {
     console.log("[RAG] Claude prompt inspection:", {

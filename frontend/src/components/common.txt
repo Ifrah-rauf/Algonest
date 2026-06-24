@@ -21,3 +21,22 @@ COLORS: {
 }
 #d1fae5
 #002c1e
+
+prompt:
+Create this section in a Modern Doodle SaaS style:
+
+White spacious background
+Purple primary, yellow accent
+Intentional doodles only
+Dot grids and curved arrows
+Rounded cards and soft shadows
+Bold typography with highlighted keywords
+Hand-drawn but polished
+Professional + creative
+Minimal text
+Apple + Linear + Notion + Codedamn vibe
+
+
+Design style used: Modern Doodle SaaS — white spacious background, purple primary, yellow accent, 
+intentional doodles, rounded cards, soft shadows, bold typography, and storytelling UI. The layout automatically 
+becomes a centered vertical stack on smaller screens with text first and video below.

@@ -48,76 +48,128 @@ export function Footer({ className = "" }) {
   };
 
   return (
-    <footer className={`algonest-footer mt-36 w-full text-white ${className}`.trim()}>
-      <section className="footer-newsletter-band max-w-7xl m-auto px-4 py-3 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="footer-newsletter-card rounded-lg px-6 py-8 md:px-10 md:py-10">
-            <div className="grid items-center gap-8 md:grid-cols-[320px_1fr] lg:gap-12">
-              <div className="flex justify-center md:justify-start">
-                <div className="footer-cap-card flex h-44 w-44 items-center justify-center rounded-lg">
-                  <div className="text-center">
-                    <FaGraduationCap className="footer-cap-icon mx-auto mb-4 animate-bounce text-5xl" />
-                    <div className="text-sm font-bold">Learn &amp; Grow</div>
-                  </div>
-                </div>
-              </div>
+    <footer className={`algonest-footer w-full text-white ${className}`.trim()}>
+      
+    <section className="relative py-12 md:py-16 bg-white overflow-hidden">
+  
+  {/* Left Top Dot Grid Doodle */}
+  <div className="absolute left-4 top-8 hidden md:grid grid-cols-4 gap-1.5 opacity-20">
+    {[...Array(16)].map((_, i) => (
+      <div key={i} className="w-1 h-1 rounded-full bg-violet-600" />
+    ))}
+  </div>
 
-              <div>
-                <h2 className="mb-3 text-2xl font-bold md:text-3xl">
-                  Subscribe to our newsletter
-                </h2>
+  {/* Right Bottom Zig-Zag Line Doodle */}
+  <div className="absolute right-6 bottom-10 hidden sm:block opacity-20">
+    <svg width="60" height="30" fill="none">
+      <path d="M0 20 L15 5 L30 20 L45 5 L60 20" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </div>
 
-                <p className="mb-6 max-w-2xl text-sm leading-6 text-white/75">
-                  Get updates on roadmaps, mentor sessions, projects, and
-                  placement preparation resources.
-                </p>
+  <div className="max-w-4xl mx-auto px-4 relative">
+    {/* Main Card with Split Layout */}
+    <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-[0_20px_50px_rgba(109,40,217,0.05)] px-6 py-10 md:px-12 md:py-12">
+      
+      {/* Background Subtle Blobs */}
+      <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-violet-50/70 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-yellow-50/60 blur-2xl pointer-events-none" />
 
-                <form
-                  onSubmit={handleSubscribe}
-                  className="mb-4 flex w-full flex-col gap-3 sm:flex-row"
+      {/* Doodle Arrow */}
+      <svg
+        className="absolute right-8 top-10 hidden lg:block opacity-30"
+        width="100"
+        height="60"
+        fill="none"
+      >
+        <path
+          d="M10 15 C35 5 65 15 80 32"
+          stroke="#8b5cf6"
+          strokeWidth="2"
+          strokeDasharray="4 4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M70 32 L80 32 L78 22"
+          stroke="#8b5cf6"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+
+      {/* Grid Container: Left Heading, Right Content */}
+      <div className="relative z-10 grid md:grid-cols-[1fr_1.2fr] gap-8 md:gap-12 items-start text-left flex justify-center items-center">
+        
+        {/* Left Side: Main Title */}
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            Ready to build{" "}
+            <span className="relative text-violet-600 inline-block">
+              proof of work?
+              <svg
+                className="absolute -bottom-1.5 left-0 w-full"
+                height="8"
+                viewBox="0 0 170 18"
+                preserveAspectRatio="none"
+                fill="none"
+              >
+                <path
+                  d="M4 12C45 5 100 5 130 12"
+                  fill="none"
+                  stroke="#FACC15"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+          </h2>
+        </div>
+
+        {/* Right Side: Description and Professional Actions */}
+        <div className="space-y-6">
+          <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
+            Join a community dedicated to structured technical development, system blueprints, and rigorous progress tracking alongside industry engineers.
+          </p>
+
+          <div className="space-y-4 pt-2 border-t border-slate-100">
+            {/* Primary Action: Join Community */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+              <span className="text-xs font-semibold text-slate-700">Enter as a platform member</span>
+              <button className="group px-4 py-2 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm">
+                Join Community
+                <svg className="w-3 h-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Secondary Action: Join as Teacher/Mentor (With Email Input) */}
+            <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 space-y-3">
+              <span className="block text-xs font-semibold text-slate-700">Apply to collaborate as a mentor</span>
+              <form className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  placeholder="Enter your professional email"
+                  className="flex-1 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 outline-none focus:border-violet-400 transition-all shadow-inner"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-violet-600 hover:bg-violet-700 active:scale-[0.99] text-white text-xs font-semibold rounded-lg transition-all duration-200 text-center whitespace-nowrap shadow-sm"
                 >
-                  <input
-                    id="newsletter-email"
-                    name="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="email"
-                    required
-                    className="footer-newsletter-input min-w-0 flex-1 rounded-lg px-4 py-3 text-sm outline-none transition"
-                  />
-
-                  <button
-                    type="submit"
-                    className="footer-subscribe-button shrink-0 rounded-lg px-8 py-3 text-sm font-bold transition-colors"
-                  >
-                    Subscribe
-                  </button>
-                </form>
-
-                <p className="text-xs text-white/70">
-                  You can{" "}
-                  <a
-                    href={`mailto:support@algonest.com?subject=${unsubscribeSubject}&body=${unsubscribeBody}`}
-                    className="footer-inline-link underline"
-                  >
-                    unsubscribe
-                  </a>{" "}
-                  at any time. Explore our{" "}
-                  <a
-                    href="/roadmaps"
-                    className="footer-inline-link underline"
-                  >
-                    roadmaps
-                  </a>
-                  .
-                </p>
-              </div>
+                  Join as Teacher
+                </button>
+              </form>
             </div>
           </div>
+          
         </div>
-      </section>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 
       <section className="mx-auto max-w-7xl px-6 py-12 mt-12">
         <div className="m-4 mb-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">

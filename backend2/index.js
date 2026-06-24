@@ -36,8 +36,12 @@ app.use(session({
     httpOnly: true
   }
 }));
+// app.use(cors({
+//   origin: process.env.CLIENT_URL ||"http://localhost:3000", // <-- React app URL
+//   credentials: true               // <-- allow cookies/session to be sent
+// }));
 app.use(cors({
-  origin: process.env.CLIENT_URL ||"http://localhost:3000", // <-- React app URL
+  origin:"http://localhost:3000", // <-- React app URL
   credentials: true               // <-- allow cookies/session to be sent
 }));
 
