@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE } from "./constants";
 import {
   buildActivityItems,
   buildRoadmaps,
@@ -15,7 +16,9 @@ import ProfileHeader from "./ProfileHeader";
 import ProfileTab from "./ProfileTab";
 import RightSidebar from "./RightSidebar";
 import { AppShell, ErrorBanner, LoadingSkeleton, TabButton } from "./ui";
+import { startDashboardTour } from "./dashboardTour";
 import "../../styles/student-dashboard.css";
+import "../../styles/driver.css";
 
 export default function StudentDashboard({ data: propData }) {
   const { user } = useAuth();
@@ -48,7 +51,23 @@ export default function StudentDashboard({ data: propData }) {
     setActiveTab("activity");
     navigate("/roadmaps");
   };
+  useEffect(() => {
+  if (!user?.uid) return;
 
+  fetch(
+    `${API_BASE}/api/dashboard/tour/${user.uid}`
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.data) {
+        startDashboardTour({
+          setActiveTab,
+          uid: user.uid,
+        });
+      }
+    })
+    .catch(console.error);
+}, [user?.uid]);
   if (dashboardLoading) return <LoadingSkeleton />;
 
   return (

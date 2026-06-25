@@ -83,30 +83,32 @@ function CourseAds({ courses, activeCourse, navigate }) {
   return (
     <SectionCard title="Setup Your account">
       {otherCourses.length ? (
-        <div className="space-y-1">
-          {otherCourses.map((course) => (
-            <button
-              key={course.course_id || course.title}
-              type="button"
-              onClick={() => navigate(course.link)}
-              className="w-full rounded-3xl border border-purple-200 bg-white p-4 text-left transition hover:border-purple-400 hover:bg-purple-50 shadow-lg"
-            >
-              <div className="flex items-start gap-3">
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-2xl bg-[rgba(107,70,193,0.14)] text-sm font-bold text-[var(--dash-purple)]">
-                  {(course.index)}
-                </div>
-                <div className="min-w-0">
-                  <div className="line-clamp-2 text-sm font-semibold text-[var(--dash-ink)]">
-                    {course.title || "New course"}
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--dash-muted)]">
-                    {course.description || "Explore a new guided roadmap with mentor support and project checkpoints."}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+        <div className="space-y-3 w-full text-left">
+  {otherCourses.map((course, idx) => (
+    <div 
+      key={course.course_id || course.title} 
+      className="flex items-start gap-2.5 min-w-0 w-full"
+    >
+      {/* Small Inline Number Icon */}
+      <div className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded bg-[rgba(107,70,193,0.11)] text-sm font-extrabold text-[var(--dash-purple)]">
+        {idx + 1}
+      </div>
+      
+      {/* Text Content Block */}
+      <div className="min-w-0 flex-1 break-words">
+        <span 
+          onClick={() => navigate(course.link)}
+          className="text-sm font-bold text-[var(--dash-ink)] cursor-pointer hover:underline inline-block leading-tight"
+        >
+          {course.title || "New course"}
+        </span>
+        <p className="text-xs leading-normal text-[var(--dash-muted)] mt-0.5">
+          {course.description || "Explore a new guided roadmap with mentor support and project checkpoints."}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
       ) : (
         <div className="text-sm text-[var(--dash-muted)]">
           New course recommendations will appear here soon.

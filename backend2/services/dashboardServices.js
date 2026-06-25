@@ -263,3 +263,30 @@ export async function getDashboardfunc(uid) {
     };
   }
 }
+
+
+export async function getTourStatusFunc(uid) {
+  const { data: students } = await supabase
+    .from("student")
+    .select("tour")
+    .eq("uid", uid)
+    .limit(1);
+
+  if (!students?.length) {
+    return false;
+  }
+
+  return students[0].tour ?? false;
+}
+export async function completeTourFunc(uid) {
+  const { error } = await supabase
+    .from("student")
+    .update({ tour: true })
+    .eq("uid", uid);
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
+}

@@ -451,7 +451,7 @@ export default function ProfileTab({
       </SectionCard>
 
       <SectionCard title="GitHub profile">
-        <div className="space-y-3">
+        <div className="space-y-3" id="github-section">
           <label htmlFor="student-github-url" className="block text-sm font-medium text-[var(--dash-ink)]">
             GitHub URL
           </label>
@@ -487,7 +487,7 @@ export default function ProfileTab({
       </SectionCard>
 
       <SectionCard title="Roadmap and Project Details (AI Context)">
-        <div className="space-y-4">
+        <div className="space-y-4" id="project-section">
           <div className="space-y-2">
             <label htmlFor="student-roadmap" className="block text-sm font-medium text-[var(--dash-ink)]">
               Select Roadmap

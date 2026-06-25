@@ -3,8 +3,8 @@ import { SectionCard } from "./ui";
 export default function ExploreProjectsTab({ projects, navigate, loading }) {
   return (
     <div className="space-y-5">
-      <SectionCard title="Recommended Projects for You">
-        <div className="mb-3 text-sm text-[var(--dash-muted)]">
+      <SectionCard title="Recommended Projects for You" >
+        <div className="mb-3 text-sm text-[var(--dash-muted)]" id="explore-projects-section">
           These projects are selected to help you build something real from your current skill track.
         </div>
 

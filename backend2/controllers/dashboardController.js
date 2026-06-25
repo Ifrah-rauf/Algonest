@@ -1,4 +1,4 @@
-import { getActiveCourse, getSessions, getDashboardfunc } from "../services/dashboardServices.js";
+import { getActiveCourse, getSessions, getDashboardfunc, getTourStatusFunc, completeTourFunc } from "../services/dashboardServices.js";
 
 export async function activeCourse(req, res) {
   try {
@@ -41,4 +41,42 @@ export async function getDashboard(req, res) {
   }
 }
 
+export async function getTourStatus(req, res) {
+  try {
+    const { uid } = req.params;
 
+    const tour = await getTourStatusFunc(uid);
+
+    res.json({
+      success: true,
+      message: "Tour status fetched successfully",
+      data: tour,
+    });
+  } catch (err) {
+    console.error("❌ getTourStatus error:", err.message);
+
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+}
+export async function completeTour(req, res) {
+  try {
+    const { uid } = req.params;
+
+    await completeTourFunc(uid);
+
+    res.json({
+      success: true,
+      message: "Tour completed successfully",
+    });
+  } catch (err) {
+    console.error("❌ completeTour error:", err.message);
+
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+}

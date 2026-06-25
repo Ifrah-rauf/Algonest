@@ -57,7 +57,7 @@ export default function ActivityTab({
   return (
     <div className="space-y-6">
       {/* Sessions */}
-      <div>
+      <div id="activity-roadmaps">
         <div className="mb-3 text-sm font-semibold text-[var(--dash-ink)] md:text-base">
           Your ongoing sessions!
         </div>
@@ -201,7 +201,7 @@ export default function ActivityTab({
       </SectionCard>
 
       {/* Roadmaps */}
-      <div>
+      <div id="roadmaps-section">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm font-semibold text-[var(--dash-ink)] md:text-base">
             {roadmapState?.heading || "Roadmaps"}
