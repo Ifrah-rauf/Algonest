@@ -2070,40 +2070,7 @@ useEffect(() => {
         {/* ══════════════════════════════════════════
             MENTORS
         ══════════════════════════════════════════ */}
-        // <section className="max-w-6xl mx-auto px-6 py-24">
-        //   <div className="text-center mb-16">
-        //     <h2 className="text-4xl font-semibold mb-4 text-[#1a0533]">
-        //       Your mentor isn't a teacher.<br />
-        //       <span className="text-[#6b46c1]">They're your advocate.</span>
-        //     </h2>
-        //     <p className="text-gray-500 max-w-xl mx-auto">
-        //       AlgoNest mentors are recent placements (1–3 years in) who remember your exact
-        //       struggle — and have network access you don't yet have.
-        //     </p>
-        //   </div>
 
-        //   <motion.div
-        //     className="grid md:grid-cols-3 gap-8 justify-items-center"
-        //     variants={containerVariants} initial="hidden"
-        //     whileInView="show" viewport={{ once: true, amount: 0.3 }}
-        //   >
-        //     {[
-        //       { img: m1, title: "Student Mentors",  sub: "Strong fundamentals & execution",  role: "Checkpoint assessment + progress tracking" },
-        //       { img: m2, title: "Corporate Mentors", sub: "Real-world project exposure",      role: "Coaching on professional communication" },
-        //       { img: m3, title: "Industry Experts",  sub: "Advanced guidance & mastery",      role: "Referrals + network introductions" },
-        //     ].map((m, i) => (
-        //       <motion.div key={i} variants={itemVariants} className="flex flex-col items-center text-center">
-        //         <div className="w-52 h-52 rounded-full overflow-hidden border-4 border-[#f6c90e] mb-5 shadow-xl shadow-purple-100">
-        //           <img src={m.img} alt={m.title} className="w-full h-full object-cover" />
-        //         </div>
-        //         <p className="font-bold text-xl text-[#1a0533] mb-1">{m.title}</p>
-        //         <p className="text-sm text-gray-500 mb-3">{m.sub}</p>
-        //         <span className="text-xs bg-[#6b46c1]/10 text-[#6b46c1] px-3 py-1.5 rounded-full font-semibold">{m.role}</span>
-        //       </motion.div>
-        //     ))}
-        //   </motion.div>
-
-        // </section>
       </main>)}
     </>
   );
