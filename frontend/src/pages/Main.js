@@ -594,7 +594,7 @@ useEffect(() => {
               </Link>
               <Link to="/roadmaps"
                 className="text-[#6b46c1] font-semibold hover:underline underline-offset-4 flex items-center gap-1.5">
-                See roadmaps
+                See project roadmaps
               </Link>
             </motion.div>
           </div>
@@ -1160,7 +1160,10 @@ useEffect(() => {
               </span>
             ))}
           </div>
-          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group">
+          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group"
+          Link="/roadmaps"
+          >
+            
             Explore Tech Roadmaps
             <svg 
                 className="w-3.5 h-3.5 transform transition-transform duration-200 group-hover:translate-x-0.5" 
@@ -1208,8 +1211,9 @@ useEffect(() => {
               </span>
             ))}
           </div>
-          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group">
-            Explore CS fundamental roadmaps
+          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-gray-500 bg-slate-200 hover:cursor-not-allowed rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group"
+          disabled>
+            Coming soon: CS fundamental roadmaps
             <svg 
                 className="w-3.5 h-3.5 transform transition-transform duration-200 group-hover:translate-x-0.5" 
                 fill="none" 
@@ -1256,8 +1260,9 @@ useEffect(() => {
               </span>
             ))}
           </div>
-          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group">
-            Explore Grill sessions
+          <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-gray-500 bg-slate-200 hover:cursor-not-allowed rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group"
+          disabled>
+            Coming soon: Grill session roadmaps
             <svg 
                 className="w-3.5 h-3.5 transform transition-transform duration-200 group-hover:translate-x-0.5" 
                 fill="none" 
@@ -1397,7 +1402,9 @@ useEffect(() => {
                 transition-all
                 duration-300
                 group
+                hover:cursor-pointer
                 "
+                disabled
               >
 
                 <div className="flex items-center gap-3">
@@ -1854,7 +1861,8 @@ useEffect(() => {
                                 </div>
                             ))}
                         </div>
-                        <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group">
+                        <button className="mx-auto mt-5 px-5 py-2 w-full sm:w-auto text-xs font-semibold tracking-wide text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] hover:cursor-not-allowed rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 group"
+                            disabled>
                             Explore this opportunity
                             <svg 
                                 className="w-3.5 h-3.5 transform transition-transform duration-200 group-hover:translate-x-0.5" 

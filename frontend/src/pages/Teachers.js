@@ -4,12 +4,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TeacherCard from "../components/TeacherCard";
 import Navbar from "../components/navbar";
 import FadeInSection from "../components/FadeInSection";
+import bg7 from "../static/bg7.png";
 
 const PLAN_FILTERS = [
-  { label: "School / College Help", value: "syllabus" },
-  { label: "Project Mentorship", value: "project" },
-  { label: "DSA Mentorship", value: "dsa" },
-  { label: "Interview Prep", value: "interview" },
+  { label: "Project Roadmap Mentorship", value: "project" },
+  { label: "DSA/CS tracking & Mentorship", value: "dsa" },
+  { label: "Interview Prep & Grilling", value: "interview" },
 ];
 
 const AVAILABILITY = [
@@ -115,38 +115,111 @@ export default function Teachers() {
   const params = new URLSearchParams(location.search);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen ">
       <Navbar />
 
       {/* HERO SECTION */}
-      <FadeInSection>
-        <section className="text-center py-12 px-4 bg-white shadow-sm">
-          {gateFlow && (
-            <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-left shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-700">
-                {gateFlow.kind === "interview" ? "Interview Mentor Selection" : "Checkpoint Mentor Selection"}
-              </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
-                Pick a teacher for {gateFlow.title}
-              </div>
-              <p className="mt-1 text-sm text-gray-600">
-                Once you book a mentor session, we&apos;ll link that session directly to this roadmap gate and take you back to your roadmap.
-              </p>
-            </div>
-          )}
-          <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
-            Meet Our Mentors
-          </h1>
-          <p className="mt-2 text-base text-gray-600 sm:text-lg">
-            From pressure test to placement-ready 🚀
-          </p>
-          <p className="max-w-2xl mx-auto mt-4 text-gray-500">
-            At <strong>Algonest</strong>, our mentors are engineers, creators,
-            and innovators who help you prepare for interviews, build defensible projects,
-            and bridge your proof to real-world success.
-          </p>
-        </section>
-      </FadeInSection>
+<FadeInSection>
+  <section className="relative overflow-hidden py-12 bg-no-repeat bg-cover bg-center" style={{ backgroundImage: `url(${bg7})` }}>
+    {/* Doodles */}
+    <div className="absolute left-10 top-10 opacity-25">
+      <div className="grid grid-cols-5 gap-1.5">
+        {[...Array(25)].map((_, i) => (
+          <div key={i} className="h-1 w-1 rounded-full bg-purple-300" />
+        ))}
+      </div>
+    </div>
+
+    <svg className="absolute right-16 top-6 opacity-30" width="50" height="65" viewBox="0 0 70 90">
+      <path
+        d="M18 8 C55 5 58 45 30 55 C18 60 18 72 26 82"
+        stroke="#B197FC"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <circle cx="26" cy="87" r="3.5" fill="#B197FC" />
+    </svg>
+
+    <svg className="absolute left-20 bottom-6 opacity-40" width="50" height="30" viewBox="0 0 70 40">
+      <path
+        d="M5 8 C25 2 50 12 58 30"
+        stroke="#8B5CF6"
+        strokeWidth="3"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray="5 5"
+      />
+      <path d="M53 24 L58 30 L49 30" stroke="#8B5CF6" strokeWidth="3" fill="none" strokeLinecap="round" />
+    </svg>
+
+    <div className="mx-auto max-w-4xl px-4">
+      {/* Badge */}
+      <div className="flex justify-center">
+        <span className="rounded-full border border-purple-100 bg-purple-50 px-3 py-1 text-[13px] font-bold tracking-wide text-purple-600">
+          Built with cool mentors
+        </span>
+      </div>
+
+      {/* Heading */}
+      <div className="mt-4 text-center">
+        <h2 className="mx-auto max-w-2xl text-2xl font-black tracking-tight text-[#1E2235] md:text-4xl">
+          Meet the
+          <span className="relative mx-1.5 text-[#6B46F2]">
+            mentors
+            <svg className="absolute -bottom-1 left-0" width="100%" height="6">
+              <path d="M2 4 Q 35 0 75 4" stroke="#FACC15" strokeWidth="4" fill="none" strokeLinecap="round" />
+            </svg>
+          </span>
+          behind every roadmap.
+        </h2>
+
+        <p className="mx-auto mt-2.5 max-w-xl text-xm leading-relaxed text-slate-500">
+          Every roadmap is designed, maintained and continuously improved by experienced engineers so you're always learning what actually matters.
+        </p>
+      </div>
+
+      {/* Horizontally Rectangular & Responsive Feature Cards */}
+      <div className="mt-8 grid grid-cols-1 gap-3">
+        {/* Card 1 */}
+        <div className="flex flex-col gap-4 rounded-xl border border-purple-100 bg-white p-4 transition hover:-translate-y-0.5 md:flex-row md:items-center shadow-lg">
+          <div className="grid gap-1 md:grid-cols-3 md:items-center md:gap-4 w-full">
+            <h3 className="text-sm font-bold text-[#1E2235] md:col-span-1 items-center justify-center rounded-xl bg-purple-100 text-base p-2">
+              Mentor-designed Roadmaps
+            </h3>
+            <p className="text-sm text-slate-500 md:col-span-2">
+              Every roadmap is created and maintained by mentors responsible for keeping the learning path practical and industry aligned.
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="flex flex-col gap-4 rounded-xl border border-purple-100 bg-white p-4 transition hover:-translate-y-0.5 md:flex-row md:items-center shadow-lg">
+          <div className="grid gap-1 md:grid-cols-3 md:items-center md:gap-4 w-full ">
+            <h3 className="text-sm font-bold text-[#1E2235] md:col-span-1 items-center justify-center rounded-xl bg-yellow-100 text-base p-2">
+              Real Industry Guidance
+            </h3>
+            <p className="text-sm text-slate-500 md:col-span-2">
+              Learn directly from engineers who've built production systems, cleared interviews and worked in top tech companies.
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="flex flex-col gap-4 rounded-xl border border-purple-100 bg-white p-4 transition hover:-translate-y-0.5 md:flex-row md:items-center shadow-lg">
+          <div className="grid gap-1 md:grid-cols-3 md:items-center md:gap-4 w-full">
+            <h3 className="text-sm font-bold text-[#1E2235] md:col-span-1 items-center justify-center rounded-xl bg-green-100 text-base p-2">
+              Continuously Updated
+            </h3>
+            <p className="text-sm text-slate-500 md:col-span-2">
+              As technologies and hiring trends evolve, mentors continuously refine the roadmaps so your preparation stays relevant.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</FadeInSection>
 
       {/* MAIN PAGE LAYOUT — SAME STRUCTURE AS PROPEERS STYLE */}
       <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 md:px-12 md:py-10 lg:flex-row">

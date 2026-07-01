@@ -5,15 +5,22 @@ import {useState,useEffect} from "react"
 
 function formatDbDateTime(value) {
   if (!value) return "No scheduled session";
-  const date = new Date(value);
+
+  const text = String(value).trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{3}))?(?:\s?(Z|[+-]\d{1,2}(?::?\d{2})?))?$/);
+  const date = match
+    ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6] || 0), 0))
+    : new Date(text);
+
   if (Number.isNaN(date.getTime())) return "No scheduled session";
+
   return date.toLocaleString("en-IN", {
-    timeZone: "UTC",
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "UTC",
   });
 }
 

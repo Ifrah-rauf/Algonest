@@ -7,16 +7,15 @@ function getSessionState(session) {
   const startTime = session?.start_time ? new Date(session.start_time) : null;
   const endTime = session?.end_time ? new Date(session.end_time) : null;
 
+  if (startTime && now < startTime) return "UPCOMING";
+  if (startTime && (!endTime || now <= endTime)) return "ACTIVE";
+  if (endTime && now > endTime) return "EXPIRED";
+
   if (status === "COMPLETED") return "COMPLETED";
   if (status === "FAILED") return "FAILED";
   if (status === "PROCESSING") return "PROCESSING";
   if (status === "UPLOAD_RECEIVED") return "UPLOAD_RECEIVED";
   if (status === "ENDED_PENDING_UPLOAD") return "PENDING_UPLOAD";
-
-  if (startTime && now < startTime) return "UPCOMING";
-  if (startTime && (!endTime || now <= endTime)) return "ACTIVE";
-  if (endTime && now > endTime) return "EXPIRED";
-
   return "INACTIVE";
 }
 

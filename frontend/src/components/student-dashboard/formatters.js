@@ -9,12 +9,33 @@ export function getInitials(name = "Student") {
   );
 }
 
+function parseStoredDate(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const text = String(value).trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{3}))?(?:\s?(Z|[+-]\d{1,2}(?::?\d{2})?))?$/);
+
+  if (match) {
+    const [, year, month, day, hours, minutes, seconds = match] = match;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds || 0), 0));
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export function formatDateLabel(value, fallback = "Not scheduled yet") {
-  if (!value) return fallback;
-  return new Date(value).toLocaleDateString("en-IN", {
+  const parsed = parseStoredDate(value);
+  if (!parsed) return fallback;
+  return parsed.toLocaleDateString("en-IN", {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -35,14 +56,16 @@ export function formatRelativeTime(value, fallback = "Recently") {
 }
 
 export function formatDateTimeLabel(value, fallback = "Not scheduled yet") {
-  if (!value) return fallback;
-  return new Date(value).toLocaleString("en-IN", {
+  const parsed = parseStoredDate(value);
+  if (!parsed) return fallback;
+  return parsed.toLocaleString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "UTC",
   });
 }
 

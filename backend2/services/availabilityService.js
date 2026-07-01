@@ -65,7 +65,16 @@ function normalizeDateInput(dateValue, fallbackDate) {
   return formatLocalDateOnly(fallbackDate);
 }
 
-function buildDateTimeString(dateOnly, minutes) {
+const DEFAULT_TIMEZONE = "Asia/Kolkata";
+
+function getTimeZoneOffsetMinutes(timezone) {
+  const normalized = String(timezone || "").trim().toLowerCase();
+  if (!normalized || normalized === "utc" || normalized === "etc/utc") return 0;
+  if (normalized === "asia/kolkata" || normalized === "india" || normalized === "ist" || normalized === "asia/calcutta") return 330;
+  return 0;
+}
+
+function buildDateTimeString(dateOnly, minutes, timezone = DEFAULT_TIMEZONE) {
   const raw = String(dateOnly || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
 
@@ -75,10 +84,32 @@ function buildDateTimeString(dateOnly, minutes) {
   const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
   const minute = String(minutes % 60).padStart(2, "0");
 
-  return `${year}-${month}-${day} ${hour}:${minute}:00`;
+  const offsetMinutes = getTimeZoneOffsetMinutes(timezone);
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absOffsetMinutes / 60)).padStart(2, "0");
+  const offsetMinutesPart = String(absOffsetMinutes % 60).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hour}:${minute}:00${sign}${offsetHours}:${offsetMinutesPart}`;
 }
 
-function buildExpectedTimeslots(availabilityRow) {
+async function getTeacherTimezone(teacherId) {
+  if (!teacherId) return DEFAULT_TIMEZONE;
+
+  const { data, error } = await supabase
+    .from("teacher")
+    .select("timezone")
+    .eq("t_id", teacherId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("[availability] failed to resolve teacher timezone", { teacherId, error: error.message });
+  }
+
+  return data?.timezone || DEFAULT_TIMEZONE;
+}
+
+async function buildExpectedTimeslots(availabilityRow, timezone = DEFAULT_TIMEZONE) {
   if (!availabilityRow) return [];
 
   const startmin = Number(availabilityRow.startmin);
@@ -95,8 +126,8 @@ function buildExpectedTimeslots(availabilityRow) {
 
   while (currentStart + slotgranularity <= endmin) {
     const currentEnd = currentStart + slotgranularity;
-    const startat = buildDateTimeString(dateOnly, currentStart);
-    const endat = buildDateTimeString(dateOnly, currentEnd);
+    const startat = buildDateTimeString(dateOnly, currentStart, timezone);
+    const endat = buildDateTimeString(dateOnly, currentEnd, timezone);
 
     if (startat && endat) {
       slots.push({
@@ -118,7 +149,8 @@ function buildExpectedTimeslots(availabilityRow) {
 async function syncTimeslotsForAvailability(availabilityRow) {
   if (!availabilityRow?.a_id) return null;
 
-  const expected = buildExpectedTimeslots(availabilityRow);
+  const teacherTimezone = await getTeacherTimezone(availabilityRow.teacherid);
+  const expected = await buildExpectedTimeslots(availabilityRow, teacherTimezone);
   if (!expected.length) {
     return {
       protectedCount: 0,
