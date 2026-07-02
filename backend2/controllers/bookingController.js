@@ -245,6 +245,7 @@ export async function bookPlan(req, res) {
       topic: "AlgoNest Session",
       startTime: slot.startat,
       duration: slot.durationmin ?? 30,
+      teacherId: slot.teacherid || slot.availability?.teacherid || null,
     });
   } catch (err) {
     // Zoom failed — compensate: unmark slot + restore session count

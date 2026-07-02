@@ -9,6 +9,8 @@ export function getInitials(name = "Student") {
   );
 }
 
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
+
 function parseStoredDate(value) {
   if (!value) return null;
 
@@ -35,7 +37,7 @@ export function formatDateLabel(value, fallback = "Not scheduled yet") {
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 
@@ -65,7 +67,7 @@ export function formatDateTimeLabel(value, fallback = "Not scheduled yet") {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 
@@ -76,4 +78,3 @@ export function capitalizeWords(value = "") {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
-

@@ -3,6 +3,8 @@ import { Search, MoreVertical, Mail } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
+
 function formatDbDateTime(value) {
   if (!value) return '—';
   const date = new Date(value);
@@ -14,6 +16,7 @@ function formatDbDateTime(value) {
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 

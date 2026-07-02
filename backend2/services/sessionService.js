@@ -1,11 +1,46 @@
 import { supabase } from "../lib/supabase.js";
 import { markSessionCheckpointComplete } from "./rag/studentDataLayer.js";
 
-function getSessionState(session) {
+function parseSessionDate(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const text = String(value).trim();
+  if (!text) return null;
+
+  const match = text.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{3}))?(?:\s?(Z|[+-]\d{1,2}(?::?\d{2})?))?$/
+  );
+
+  if (match) {
+    const [, year, month, day, hours, minutes, seconds = "0", , offset] = match;
+    if (offset) {
+      return new Date(text);
+    }
+    return new Date(
+      Date.UTC(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hours),
+        Number(minutes),
+        Number(seconds),
+        0
+      )
+    );
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getSessionState(session, now = new Date()) {
   const status = String(session?.status || "").toUpperCase();
-  const now = new Date();
-  const startTime = session?.start_time ? new Date(session.start_time) : null;
-  const endTime = session?.end_time ? new Date(session.end_time) : null;
+  const startTime = parseSessionDate(session?.start_time);
+  const endTime = parseSessionDate(session?.end_time);
 
   if (startTime && now < startTime) return "UPCOMING";
   if (startTime && (!endTime || now <= endTime)) return "ACTIVE";
@@ -17,6 +52,38 @@ function getSessionState(session) {
   if (status === "UPLOAD_RECEIVED") return "UPLOAD_RECEIVED";
   if (status === "ENDED_PENDING_UPLOAD") return "PENDING_UPLOAD";
   return "INACTIVE";
+}
+
+function pickRelevantSession(sessions, now = new Date()) {
+  if (!Array.isArray(sessions) || !sessions.length) return null;
+
+  const parsedSessions = sessions
+    .map((session) => ({
+      session,
+      startTime: parseSessionDate(session?.start_time),
+      endTime: parseSessionDate(session?.end_time),
+    }))
+    .filter(({ startTime }) => Boolean(startTime));
+
+  const activeSession = parsedSessions.find(
+    ({ startTime, endTime }) => startTime && startTime <= now && (!endTime || now <= endTime)
+  );
+  if (activeSession) return activeSession.session;
+
+  const upcomingSessions = parsedSessions
+    .filter(({ startTime }) => startTime > now)
+    .sort((a, b) => a.startTime - b.startTime);
+  if (upcomingSessions.length) return upcomingSessions[0].session;
+
+  const pastSessions = parsedSessions
+    .filter(({ endTime, startTime }) => (endTime && endTime < now) || (startTime && startTime <= now))
+    .sort((a, b) => {
+      const aTime = a.endTime || a.startTime;
+      const bTime = b.endTime || b.startTime;
+      return bTime - aTime;
+    });
+
+  return pastSessions[0]?.session || null;
 }
 
 async function getStudentIdByUid(uid) {
@@ -108,32 +175,34 @@ export async function checkSessionData(uid) {
     return { exists: false };
   }
 
-  // 2️⃣ Fetch latest session for this student
+  const now = new Date();
+
+  // Fetch all sessions and pick the one that is actually relevant right now.
   const { data: sessionData, error: sessionError } = await supabase
     .from("session")
     .select("*")
     .in("booking_id", bookingIds)
-    .order("start_time", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("start_time", { ascending: true });
 
   if (sessionError) {
     throw new Error("Failed to fetch session");
   }
 
-  if (!sessionData) {
+  const session = pickRelevantSession(sessionData, now);
+
+  if (!session) {
     return { exists: false };
   }
 
-    const state = getSessionState(sessionData);
-    const endTime = sessionData.end_time ? new Date(sessionData.end_time) : null;
-    console.log("END TIME: "+endTime);
-    console.log("sessionData: ",sessionData," state: ",state);
-    return {
-        exists: true,
-        state,
-        session: sessionData
-    };
+  const state = getSessionState(session, now);
+  const endTime = parseSessionDate(session.end_time);
+  console.log("END TIME: " + endTime);
+  console.log("sessionData: ", session, " state: ", state);
+  return {
+    exists: true,
+    state,
+    session,
+  };
 }
 
 export async function checkTSessionData(uid) {
@@ -151,30 +220,32 @@ export async function checkTSessionData(uid) {
 
   const t_id = teacherData.t_id;
 
-  // 2️⃣ Fetch latest session for this teacher
+  const now = new Date();
+
+  // Fetch all sessions and choose the active one if available.
   const { data: sessionData, error: sessionError } = await supabase
     .from("session")
     .select("*")
     .eq("t_id", t_id)
     .order("start_time", { ascending: true })
-    .limit(1)
-    .maybeSingle(); // safer than single()
 
   if (sessionError) {
     throw new Error("Failed to fetch session");
   }
 
-  if (!sessionData) {
+  const session = pickRelevantSession(sessionData, now);
+
+  if (!session) {
     return { exists: false };
   }
 
-    const state = getSessionState(sessionData);
-    console.log("sessionData: ",sessionData);
-    return {
-        exists: true,
-        state,
-        session: sessionData
-    };
+  const state = getSessionState(session, now);
+  console.log("sessionData: ", session);
+  return {
+    exists: true,
+    state,
+    session,
+  };
 }
 
 export async function sessionHistory(uid){

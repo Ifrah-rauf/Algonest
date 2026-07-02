@@ -31,10 +31,6 @@ const Navbar = ({ sidebarOpen = false, onSidebarToggle = null }) => {
   const navLinks = NAV_LINKS;
 
   async function book(planId) {
-    if (!user) {
-      navigate("/signup");
-      return;
-    }
     setSelectedPlan(planId);
     setShowModal(true);
   }

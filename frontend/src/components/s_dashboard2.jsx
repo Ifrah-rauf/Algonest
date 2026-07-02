@@ -24,6 +24,7 @@ const C = {
 };
 
 const font = "'Trebuchet MS', 'Trebuchet', sans-serif";
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
 
 const defaultInterviewSlots = [
   {
@@ -69,6 +70,7 @@ function formatDateTimeLabel(value, fallback = "Date & time to be scheduled") {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 

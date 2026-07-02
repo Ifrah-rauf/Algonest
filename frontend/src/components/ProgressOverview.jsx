@@ -3,6 +3,8 @@ import { TrendingUp, Award, Target, Zap } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
 
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
+
 function formatDbDateTime(value) {
   if (!value) return "No scheduled session";
 
@@ -20,7 +22,7 @@ function formatDbDateTime(value) {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 

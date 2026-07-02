@@ -1,5 +1,45 @@
 import { supabase } from "../lib/supabase.js";
 
+function parseSessionDate(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const text = String(value).trim();
+  const match = text.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{3}))?(?:\s?(Z|[+-]\d{1,2}(?::?\d{2})?))?$/
+  );
+
+  if (match) {
+    const [, year, month, day, hours, minutes, seconds = "0", , offset] = match;
+    if (offset) {
+      return new Date(text);
+    }
+    return new Date(
+      Date.UTC(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hours),
+        Number(minutes),
+        Number(seconds),
+        0
+      )
+    );
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isSessionActive(session, now = new Date()) {
+  const start = parseSessionDate(session?.start_time);
+  const end = parseSessionDate(session?.end_time);
+  return Boolean(start && start <= now && (!end || end >= now));
+}
+
 // Resolve teacher record by auth uid
 export async function getTeacherByUid(uid) {
   if (!uid) throw new Error("teacher uid required");
@@ -134,17 +174,17 @@ export async function getStudentsConnectedToTeacher(t_id) {
     let latestSession = null;
 
     sSessions.forEach((ss) => {
-      const start = ss.start_time ? new Date(ss.start_time) : null;
-      const end = ss.end_time ? new Date(ss.end_time) : null;
+      const start = parseSessionDate(ss.start_time);
+      const end = parseSessionDate(ss.end_time);
       if (start && (!lastSessionAt || start > lastSessionAt)) lastSessionAt = start;
 
       // keep track of latest session by start time
-      if (start && (!latestSession || start > new Date(latestSession.start_time))) {
+      if (start && (!latestSession || start > parseSessionDate(latestSession.start_time))) {
         latestSession = ss;
       }
 
       // An "active" session = start_time <= now && (no end_time || end_time >= now)
-      if (start && start <= now && (!end || end >= now)) {
+      if (isSessionActive(ss, now)) {
         hasActiveSession = true;
       }
     });
@@ -160,8 +200,8 @@ export async function getStudentsConnectedToTeacher(t_id) {
       sessionJoinUrl = latestSession.join_url || null;
       sessionStartUrl = latestSession.start_url || null;
       sessionId = latestSession.session_id || null;
-      const start = latestSession.start_time ? new Date(latestSession.start_time) : null;
-      const end = latestSession.end_time ? new Date(latestSession.end_time) : null;
+      const start = parseSessionDate(latestSession.start_time);
+      const end = parseSessionDate(latestSession.end_time);
       if (start) {
         if (start <= now && (!end || end >= now)) sessionState = "ACTIVE";
         else if (start > now) sessionState = "UPCOMING";
@@ -297,8 +337,8 @@ export async function getAllSessionsForTeacherByUid(uid) {
   const result = sessionsWithBooking.map((s) => {
     const booking = bookingMap[s.booking_id] || {};
     const student = studentMap[booking.s_id] || {};
-    const start = s.start_time ? new Date(s.start_time) : null;
-    const end = s.end_time ? new Date(s.end_time) : null;
+    const start = parseSessionDate(s.start_time);
+    const end = parseSessionDate(s.end_time);
 
     // derive session state
     let sessionState = "INACTIVE";

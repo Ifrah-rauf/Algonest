@@ -15,10 +15,44 @@ async function getTeacherIdByUid(uid) {
   if (error) throw new Error(`Teacher not found for uid ${uid}: ${error.message}`);
   return data.t_id;
 }
-function getNearestUpcomingDate(targetDayOfWeek, startmin) {
+function getZonedNowParts(timezone = "Asia/Kolkata") {
   const now = new Date();
-  const todayDay = now.getDay(); // 0 (Sun) – 6 (Sat)
-  const currentMin = now.getHours() * 60 + now.getMinutes();
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const weekdayToIndex = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    weekday: weekdayToIndex[map.weekday] ?? now.getDay(),
+  };
+}
+
+function getNearestUpcomingDate(targetDayOfWeek, startmin, timezone = DEFAULT_TIMEZONE) {
+  const now = getZonedNowParts(timezone);
+  const todayDay = now.weekday;
+  const currentMin = now.hour * 60 + now.minute;
  
   let diff = targetDayOfWeek - todayDay;
  
@@ -36,11 +70,9 @@ function getNearestUpcomingDate(targetDayOfWeek, startmin) {
     }
   }
  
-  const result = new Date(now);
-  result.setDate(now.getDate() + diff);
-  // Zero out time — only the date matters for the `date` column
-  result.setHours(0, 0, 0, 0);
-  return result;
+  const result = new Date(Date.UTC(now.year, now.month - 1, now.day));
+  result.setUTCDate(result.getUTCDate() + diff);
+  return `${result.getUTCFullYear()}-${String(result.getUTCMonth() + 1).padStart(2, "0")}-${String(result.getUTCDate()).padStart(2, "0")}`;
 }
 
 function formatLocalDateOnly(value) {
@@ -115,7 +147,10 @@ async function buildExpectedTimeslots(availabilityRow, timezone = DEFAULT_TIMEZO
   const startmin = Number(availabilityRow.startmin);
   const endmin = Number(availabilityRow.endmin);
   const slotgranularity = Number(availabilityRow.slotgranularity || 30);
-  const dateOnly = normalizeDateInput(availabilityRow.date, getNearestUpcomingDate(availabilityRow.dayofweek, startmin));
+  const dateOnly = normalizeDateInput(
+    availabilityRow.date,
+    getNearestUpcomingDate(availabilityRow.dayofweek, startmin, timezone)
+  );
 
   if (!dateOnly || !Number.isFinite(startmin) || !Number.isFinite(endmin) || endmin <= startmin) {
     return [];
@@ -320,6 +355,7 @@ export async function getAvailabilityByTeacher(uid) {
  */
 export async function createAvailabilitySlot(uid, slotData) {
   const teacherId = await getTeacherIdByUid(uid);
+  const teacherTimezone = await getTeacherTimezone(teacherId);
 
   const {
     dayofweek,
@@ -343,7 +379,7 @@ export async function createAvailabilitySlot(uid, slotData) {
     throw new Error("endmin must be greater than startmin");
   }
   const normalizedType = normalizeSlotType(type, isfree);
-  const nearestDate = getNearestUpcomingDate(dayofweek, startmin);
+  const nearestDate = getNearestUpcomingDate(dayofweek, startmin, teacherTimezone);
   const normalizedDate = normalizeDateInput(date, nearestDate);
   console.debug("[createAvailabilitySlot] incoming", {
     uid,
@@ -399,6 +435,7 @@ export async function createAvailabilitySlot(uid, slotData) {
  */
 export async function updateAvailabilitySlot(uid, slotId, updates) {
   const teacherId = await getTeacherIdByUid(uid);
+  const teacherTimezone = await getTeacherTimezone(teacherId);
 
   // Ownership check — fetch existing day/startmin too for date recalculation
   const { data: existing, error: fetchError } = await supabase
@@ -434,14 +471,14 @@ export async function updateAvailabilitySlot(uid, slotId, updates) {
   if (type          !== undefined) payload.type          = normalizedType;
   if (desc          !== undefined) payload.desc          = desc;
   if (price         !== undefined) payload.price         = price !== "" ? price : null;
-  if (date          !== undefined) payload.date          = normalizeDateInput(date, getNearestUpcomingDate(payload.dayofweek ?? existing.dayofweek, payload.startmin ?? existing.startmin));
+  if (date          !== undefined) payload.date          = normalizeDateInput(date, getNearestUpcomingDate(payload.dayofweek ?? existing.dayofweek, payload.startmin ?? existing.startmin, teacherTimezone));
 
   // Recalculate date if dayofweek or startmin changed
   // Fall back to existing DB values if one of them wasn't part of this update
   if (payload.dayofweek !== undefined || payload.startmin !== undefined) {
     const effectiveDay   = payload.dayofweek ?? existing.dayofweek;
     const effectiveStart = payload.startmin  ?? existing.startmin;
-    payload.date = formatLocalDateOnly(getNearestUpcomingDate(effectiveDay, effectiveStart));
+    payload.date = getNearestUpcomingDate(effectiveDay, effectiveStart, teacherTimezone);
   }
 
   if (payload.startmin != null && payload.endmin != null && payload.endmin <= payload.startmin) {
@@ -562,6 +599,7 @@ export async function deleteAvailabilitySlot(uid, slotId) {
  */
 export async function bulkSaveAvailability(uid, slots) {
   const teacherId = await getTeacherIdByUid(uid);
+  const teacherTimezone = await getTeacherTimezone(teacherId);
   console.debug("[bulkSaveAvailability] start", {
     uid,
     teacherId,
@@ -575,7 +613,7 @@ export async function bulkSaveAvailability(uid, slots) {
     .map((s) => ({
       teacherid: teacherId,
       dayofweek: s.dayofweek,
-      date: normalizeDateInput(s.date, getNearestUpcomingDate(s.dayofweek, s.startmin)),
+      date: normalizeDateInput(s.date, getNearestUpcomingDate(s.dayofweek, s.startmin, teacherTimezone)),
       startmin: s.startmin,
       endmin: s.endmin,
       slotgranularity: s.slotgranularity ?? 60,

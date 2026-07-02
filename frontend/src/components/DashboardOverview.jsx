@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import {useState , useEffect} from "react";
 
 const API_BASE = apiUrl("");
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
 
 function formatDbDateTime(value) {
   if (!value) return "—";
@@ -24,7 +25,7 @@ function formatDbDateTime(value) {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 

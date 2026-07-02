@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import { useInView } from "react-intersection-observer";
 import HowItWorksScroll from "../components/howitworks.jsx";
+import BookPlan from "./BookPlan";
 import roadmap from "../static/roadmap.png"
 import Paper from "../static/paper2.jpg";
 import review from "../static/review.png"
@@ -451,6 +452,8 @@ export default function Landing() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [roadmaps, setRoadmaps] = useState([]);
+  const [showConsultModal, setShowConsultModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const sliderRef = useRef(null);
 
   //roadmaps fetching
@@ -484,6 +487,11 @@ export default function Landing() {
   };
   const displayedRoadmaps = roadmaps.length > 0 ? [...roadmaps, ...roadmaps]: [];
 //roadmap fetching ended
+
+  const book = (planId) => {
+    setSelectedPlan(planId);
+    setShowConsultModal(true);
+  };
 
 
 useEffect(() => {
@@ -528,6 +536,9 @@ useEffect(() => {
   return (
     <>
       <Navbar />
+      {showConsultModal && (
+        <BookPlan plan={selectedPlan} onClose={() => setShowConsultModal(false)} />
+      )}
         {role === "STUDENT" && (
           <StudentDashboard 
             data={dashboardData}
@@ -588,10 +599,11 @@ useEffect(() => {
               transition={{ duration: 0.7, delay: 0.48 }}
               className="mt-8 flex flex-wrap justify-center gap-4 items-center mb-24 "
             >
-              <Link to="https://www.linkedin.com/company/algonest-edtech"
+              <button onClick={() => book(0)}
                 className="bg-[#6b46c1] text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 hover:shadow-purple-300">
-                Learn more about AlgoNest→
-              </Link>
+
+                Request a product walkthrough→
+              </button>
               <Link to="/roadmaps"
                 className="text-[#6b46c1] font-semibold hover:underline underline-offset-4 flex items-center gap-1.5">
                 See project roadmaps
@@ -689,145 +701,82 @@ useEffect(() => {
 
 
         {/* Video Placeholder */}
+<div
+  className="
+  relative
+  aspect-video
+  w-full
+  max-w-3xl 
+  mx-auto
+  overflow-hidden
+  rounded-xl
+  bg-black
+  mb-8
+  "
+>
+  {/* YouTube Embedded Iframe */}
+  <iframe
+    className="absolute inset-0 h-full w-full border-0 pointer-events-none"
+    src="https://www.youtube.com/embed/ea2nfMyJJgU?autoplay=1&mute=1&loop=1&playlist=ea2nfMyJJgU&controls=0&modestbranding=1&rel=0&vq=hd1080"
+    title="AlgoNest Demo Video"
+    allow="autoplay; encrypted-media"
+    allowFullScreen
+  />
 
-        <div
-          className="
-          relative
-          aspect-video
-          w-full
-          overflow-hidden
-          "
-        >
+  {/* Interactive Overlay Graphics (z-10 ensures they sit on top of the iframe) */}
+  <div className="absolute inset-0 pointer-events-none z-10">
 
-          {/* Purple radial */}
-
+    {/* Dot grid */}
+    <div className="absolute left-10 top-10 opacity-20">
+      <div className="grid grid-cols-5 gap-3">
+        {[...Array(25)].map((_, i) => (
           <div
-            className="
-            absolute
-            left-1/2
-            top-1/2
-            h-[320px]
-            w-[320px]
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            bg-purple-700/20
-            blur-3xl
-            "
+            key={i}
+            className="h-1 w-1 rounded-full bg-purple-300"
           />
+        ))}
+      </div>
+    </div>
 
+    {/* Doodle Curve */}
+    <svg
+      className="absolute right-12 top-12 opacity-20"
+      width="90"
+      height="50"
+    >
+      <path
+        d="M5 35 C 30 5, 60 5, 85 25"
+        stroke="#c084fc"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray="5 7"
+      />
+      <path
+        d="M75 18 L85 25 L70 28"
+        stroke="#c084fc"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
 
-
-          {/* Dot grid */}
-
-          <div className="absolute left-10 top-10 opacity-20">
-
-            <div className="grid grid-cols-5 gap-3">
-
-              {[...Array(25)].map((_, i) => (
-
-                <div
-                  key={i}
-                  className="h-1 w-1 rounded-full bg-purple-300"
-                />
-
-              ))}
-
-            </div>
-
-          </div>
-
-
-
-          {/* Doodle Curve */}
-
-          <svg
-            className="absolute right-12 top-12 opacity-20"
-            width="90"
-            height="50"
-          >
-
-            <path
-              d="M5 35 C 30 5, 60 5, 85 25"
-              stroke="#c084fc"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray="5 7"
-            />
-
-            <path
-              d="M75 18 L85 25 L70 28"
-              stroke="#c084fc"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-            />
-
-          </svg>
-
-
-
-          {/* Play Button */}
-
-          <div
-            className="
-            absolute
-            left-1/2
-            top-1/2
-            flex
-            h-20
-            w-20
-            -translate-x-1/2
-            -translate-y-1/2
-            items-center
-            justify-center
-            rounded-full
-            border
-            border-white/10
-            bg-white/5
-            backdrop-blur-md
-            shadow-lg
-            "
-          >
-
-            <svg
-              viewBox="0 0 24 24"
-              fill="white"
-              className="h-8 w-8 opacity-90 ml-1"
-            >
-
-              <path d="M8 5v14l11-7z" />
-
-            </svg>
-
-          </div>
-
-
-
-          {/* Bottom Text */}
-
-          <div
-            className="
-            absolute
-            bottom-8
-            left-1/2
-            -translate-x-1/2
-            text-center
-            "
-          >
-
-            <p className="text-lg font-bold text-white">
-              Learn with AI + Mentors
-            </p>
-
-            <p className="mt-1 text-sm text-gray-400">
-              Watch how AlgoNest works
-            </p>
-
-          </div>
-
-        </div>
+    {/* Bottom Text */}
+    <div
+      className="
+      absolute
+      bottom-8
+      left-1/2
+      -translate-x-1/2
+      text-center
+      "
+    >
+      <p className="mt-1 text-sm text-gray-400">
+        Watch how AlgoNest works
+      </p>
+    </div>
+  </div>
+</div>
 
       </div>
 

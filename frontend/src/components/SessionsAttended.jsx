@@ -3,12 +3,14 @@ import { Video, Calendar, User } from 'lucide-react';
 import {useAuth} from "../context/AuthContext";
 import {useState,useEffect} from "react"
 
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
+
 function formatDbDateTime(value) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString("en-IN", {
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",

@@ -35,7 +35,7 @@ export async function checkSession(req, res) {
   try {
     const { uid } = req.body;
     const data = await checkSessionData(uid); 
-
+    console.log("CHECKSESSIONDATA result:", data);
     return res.status(200).json({
       success: true,
       message:"success",
@@ -74,7 +74,7 @@ export async function checkTSession(req, res) {
   try {
     const { uid } = req.body;
     const data = await checkTSessionData(uid);
-
+    console.log("CHECKTSESSIONDATA result:", data);
     return res.status(200).json({
       success: true,
       message: "success",

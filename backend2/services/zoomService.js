@@ -2,6 +2,27 @@
 import axios from "axios";
 import { supabase } from "../lib/supabase.js";
 
+const DEFAULT_TIMEZONE = "Asia/Kolkata";
+
+async function resolveTeacherTimezone(teacherId) {
+  if (!teacherId) return DEFAULT_TIMEZONE;
+
+  const { data, error } = await supabase
+    .from("teacher")
+    .select("timezone")
+    .eq("t_id", teacherId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("[zoomService] failed to resolve teacher timezone", {
+      teacherId,
+      error: error.message,
+    });
+  }
+
+  return data?.timezone || DEFAULT_TIMEZONE;
+}
+
 /**
  * Generate Zoom OAuth Access Token
  */
@@ -31,6 +52,7 @@ export async function createZoomMeeting({
   startTime,
   duration,
   timezone = "UTC",
+  teacherId = null,
   waitingRoom = true,
   joinBeforeHost = false,
   hostEmail = null,
@@ -42,6 +64,10 @@ export async function createZoomMeeting({
   }
 
   const token = await getZoomAccessToken();
+  const resolvedTimezone =
+    timezone && timezone !== "UTC"
+      ? timezone
+      : await resolveTeacherTimezone(teacherId);
 
   const url = hostEmail
     ? `https://api.zoom.us/v2/users/${encodeURIComponent(hostEmail)}/meetings`
@@ -52,7 +78,7 @@ export async function createZoomMeeting({
     type: 2,
     start_time: startTime,
     duration,
-    timezone,
+    timezone: resolvedTimezone,
     settings: {
       waiting_room: waitingRoom,
       join_before_host: joinBeforeHost,
@@ -130,6 +156,7 @@ export async function createSessionWithZoom(data) {
     topic: title || "AlgoNest Session",
     startTime,
     duration,
+    teacherId: t_id,
     hostEmail: teacherEmail,
     // keep service account as alternative host so system can manage meeting if needed
     alternativeHost: process.env.SENDER_MAIL || null,
