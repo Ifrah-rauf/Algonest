@@ -38,7 +38,16 @@
 <!-- ABOUT THE PROJECT -->
 <h2 id="about-the-project">About The Project</h2>
 <p>
-  Provide a solid overview of the system here. Explain the core problem it solves and the high-level business logic. 
+  AlgoNest is a post-course readiness platform for Indian engineering students (B.Tech, BCA, MCA) — especially those from Tier-2/3 colleges who have already completed a course or bootcamp but still can't defend their own projects in interviews. AlgoNest doesn't teach CS from scratch. It closes the gap between having finished a course and being able to prove you understood it, through structured human assessment backed by AI.
+
+In an AI-saturated market, verified human proof is worth more than another certificate.
+
+<h3>The Problem</h3>
+Students today have unlimited access to courses, tutorials, and AI coding assistants. What they don't have is anyone checking whether they can actually explain what they built. The result: candidates who've "completed" a full-stack course but freeze the moment an interviewer asks why they made a specific architectural decision.
+Resources were never the bottleneck. Accountability was.
+
+<h3>The Solution</h3>
+AlgoNest sits after the course, not instead of it, and produces one concrete, verifiable output: a readiness verdict plus company-targeting recommendations — something no course platform or generic mentorship marketplace delivers.
 </p>
 
 <h3 id="built-with">Built With</h3>
@@ -54,9 +63,6 @@
 <h2 id="getting-started">Getting Started</h2>
 <p>To get a local copy up and running, follow these simple steps.</p>
 
-<h3>Prerequisites</h3>
-<pre><code>npm install npm@latest -g</code></pre>
-
 <h3>Installation & Setup</h3>
 <ol>
   <li>Clone the repo: <pre><code>git clone https://github.com/yourusername/your-repo.git</code></pre></li>
@@ -68,48 +74,95 @@
 <hr />
 
 <!-- PROJECT ARCHITECTURE -->
+<!-- PROJECT ARCHITECTURE -->
 <h2 id="project-architecture">Project Architecture</h2>
 <p>
-  Data Model (high level)
-
-
-auth — central identity table (role-based: STUDENT / TEACHER), referenced by both student and teacher
-student / teacher — profile tables, linked 1:1 to auth via uid
-plan / plan_outline / booking / payment — commercial layer: what a student has purchased, what it unlocks, and how it was paid for
-availability / timeslot / slotbooking — mentor availability windows broken into bookable slots, reserved via slotbooking, and converted into a confirmed session
-session / session_attachment — the actual Zoom-backed meeting record, with duration, feedback, status, and any attached files (scorecards, resumes, code links)
-lessons / lesson_topics / lesson_progress — the roadmap skeleton: ordered lessons with prerequisites, granular topics per lesson (each with an applied_task and ai_note for the Build Companion), and per-student progress tracking
-checkpoints / support_stages — milestone gates within a roadmap, optionally requiring teacher sign-off, tied back to a specific booking
-specialisation / languages / frameworks — teacher-side tagging for matching mentors to student needs
-testimonials — student success stories surfaced on the public site
-
-
-
-Note: the current schema retains generic plan/booking terminology from an earlier package-based pricing model; Grill Sessions, CS Fundamentals, and Project Roadmaps are implemented as distinct plan types on top of the same booking/session infrastructure.
-
-
-
-AI Build Companion — Context Awareness
-
-At any point in a conversation, the Companion is aware of:
-
-
-Where the student is in their roadmap (lesson_progress, checkpoints)
-What their current project/codebase looks like
-Their past questions and recurring struggle patterns (via student_memories + embedding retrieval)
-
-
-Hard constraint, enforced at the system-prompt level: the Companion scaffolds, it never completes. If a student asks it to write code, it redirects to guided questioning instead.
-
-Session Automation Flow
-
-
-Mentor sets availability → sliced into timeslot records
-Student books a timeslot → slotbooking created
-On confirmation, a Zoom meeting is provisioned via the Zoom API → join_url / start_url stored on the session record
-pg_cron jobs handle reminders and no-show/expiry cleanup
-Post-session, mentor feedback and scorecard data are written back to session / session_attachment
+  This section outlines the core technical architecture of the system, including high-level data relationships, AI operational constraints, and background automation loops.
 </p>
+
+<hr />
+
+<h3>Data Model (High Level)</h3>
+<p>
+  The system's database schema is built around modular, decoupled components that connect user identity to commercial access, mentor scheduling, and roadmap progression.
+</p>
+
+<ul>
+  <li><strong>auth:</strong> Central identity table utilizing role-based access control (<code>STUDENT</code> / <code>TEACHER</code>). This serves as the primary root record referenced by both the student and teacher profiles.</li>
+  <li><strong>student / teacher:</strong> Profile-specific metadata tables, linked via a strict 1:1 relationship to the <code>auth</code> table using the <code>uid</code>.</li>
+  <li><strong>plan / plan_outline / booking / payment:</strong> The commercial layer. Tracks what a student has purchased, the access control levels it unlocks, and transactional payment history.</li>
+  <li><strong>availability / timeslot / slotbooking:</strong> The mentor availability matrix. Mentor windows are dynamically sliced into bookable slots, reserved via <code>slotbooking</code>, and eventually promoted to a confirmed session.</li>
+  <li><strong>session / session_attachment:</strong> The core meeting execution record. Integrates directly with Zoom to track duration, feedback scores, completion status, and related artifacts (e.g., scorecards, resumes, code links).</li>
+  <li><strong>lessons / lesson_topics / lesson_progress:</strong> The roadmap skeleton. Defines ordered lessons with explicit prerequisites, granular topics per lesson (including <code>applied_task</code> and <code>ai_note</code> configurations for the Build Companion), and per-student execution tracking.</li>
+  <li><strong>checkpoints / support_stages:</strong> Milestone gates embedded within a roadmap. These handle quality assurance blocks that optionally require explicit teacher sign-off, tied directly to a specific commercial <code>booking</code>.</li>
+  <li><strong>specialisation / languages / frameworks:</strong> Teacher-side taxonomy tagging used by the matching engine to pair mentors with specific student technical requirements.</li>
+  <li><strong>testimonials:</strong> Student success stories and feedback indicators surfaced on the public marketing site.</li>
+</ul>
+
+<blockquote>
+  <strong>Note on Legacy Schema Architecture:</strong> The current schema retains generic <code>plan</code>/<code>booking</code> terminology derived from an earlier package-based pricing model. Feature sets like <em>Grill Sessions</em>, <em>CS Fundamentals</em>, and <em>Project Roadmaps</em> are fully implemented as distinct plan types abstracted on top of this exact same booking/session infrastructure.
+</blockquote>
+
+<hr />
+
+<h3>AI Build Companion — Context Awareness</h3>
+<p>
+  The AI Build Companion operates with localized state tracking. At any point in an active conversation, the engine resolves the following telemetry context vectors:
+</p>
+
+<ol>
+  <li><strong>Roadmap State:</strong> Real-time positioning within the educational pipeline (derived from <code>lesson_progress</code> and <code>checkpoints</code>).</li>
+  <li><strong>Workspace State:</strong> Active structure and state of the student's current local codebase.</li>
+  <li><strong>Historical Vector State:</strong> Past roadblocks, queries, and recurring conceptual struggle patterns (retrieved via <code>student_memories</code> utilizing semantic embedding similarity search).</li>
+</ol>
+
+<blockquote>
+  <strong>⚠️ Architectural Hard Constraint:</strong> Enforced strictly at the LLM system-prompt level, the Build Companion scaffolds and instructs—it <em>never</em> completes tasks. If a student requests direct code generation, the agent explicitly blocks execution and pivots to a guided, Socratic questioning sequence.
+</blockquote>
+
+<hr />
+
+<h3>Session Automation Flow</h3>
+<p>
+  The lifecycle of a mentorship connection is managed via automated event transitions:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Actor/System</th>
+      <th>Action & System Side-Effects</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>Mentor</td>
+      <td>Sets open availability windows, which the system automatically slices into discrete <code>timeslot</code> records.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Student</td>
+      <td>Selects an open window, generating a pending <code>slotbooking</code> record.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>System API</td>
+      <td>Upon checkout/confirmation, a dedicated meeting is provisioned via the Zoom API; <code>join_url</code> and <code>start_url</code> keys are written to the live <code>session</code> record.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>Database Worker</td>
+      <td>Native <code>pg_cron</code> periodic jobs handle automated Slack/email reminders and execute automated cleanup for no-shows or expired holds.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>Post-Session Evaluation</td>
+      <td>Following meeting termination, mentor feedback notes and categorical scorecard data are flushed back into <code>session</code> and <code>session_attachment</code> tables.</td>
+    </tr>
+  </tbody>
+</table>
 <!-- If you have an architecture diagram image, place it here -->
 <!-- <img src="docs/architecture-diagram.png" alt="Architecture Diagram" width="100%" /> -->
 
