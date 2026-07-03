@@ -122,11 +122,6 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
 <!-- PROJECT ARCHITECTURE -->
 <!-- PROJECT ARCHITECTURE -->
 <h2 id="project-architecture">Project Architecture</h2>
-<p>
-  This section outlines the core technical architecture of the system, including high-level data relationships, AI operational constraints, and background automation loops.
-</p>
-
-<hr />
 
 <h3>Data Model (High Level)</h3>
 <p>
