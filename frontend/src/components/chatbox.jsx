@@ -9,6 +9,27 @@ const AI_HISTORY_URL = apiUrl("/api/ai/history");
 const AI_MESSAGE_URL = apiUrl("/api/ai/handleAi");
 const noop = () => {};
 
+function decodeSseChunk(chunk) {
+  const lines = String(chunk || "").split("\n");
+  const event = { event: "message", data: "" };
+
+  for (const line of lines) {
+    if (line.startsWith("event:")) {
+      event.event = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      event.data += line.slice(5).trim();
+    }
+  }
+
+  if (!event.data) return null;
+
+  try {
+    return { event: event.event, data: JSON.parse(event.data) };
+  } catch {
+    return { event: event.event, data: event.data };
+  }
+}
+
 function renderInlineMarkdown(text, keyPrefix) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
 
@@ -229,9 +250,11 @@ export default function ChatBox({
       if (!cleanText || loading || isLocked) return;
 
       const userMsg = { role: "user", content: cleanText };
+      const assistantPlaceholderId = `assistant-${Date.now()}`;
       setMessages((prev) => [...prev, userMsg]);
 
       setLoading(true);
+      setMessages((prev) => [...prev, { role: "assistant", content: "", id: assistantPlaceholderId }]);
 
       try {
         const res = await fetch(AI_MESSAGE_URL, {
@@ -244,28 +267,84 @@ export default function ChatBox({
             lessonId,
             courseId,
             history: [],
+            stream: true,
           }),
         });
-        const data = await res.json();
 
         try {
           onUserMessageSent({
             ok: res.ok,
             status: res.status,
-            reason: data?.reason || null,
+            reason: null,
           });
         } catch {
           // Optional parent callbacks should not block the chat request.
         }
 
         if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
           throw new Error(data?.error || data?.message || "AI request failed.");
         }
 
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply || "Sorry, couldn't respond." }]);
+        const reader = res.body?.getReader();
+        if (!reader) {
+          const data = await res.json().catch(() => ({}));
+          const reply = data.reply || "Sorry, couldn't respond.";
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantPlaceholderId ? { ...msg, content: reply } : msg
+            )
+          );
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalReply = "";
+        let done = false;
+
+        while (!done) {
+          const { value, done: streamDone } = await reader.read();
+          done = streamDone;
+          buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            const packet = decodeSseChunk(part);
+            if (!packet) continue;
+
+            if (packet.event === "delta" && packet.data) {
+              finalReply = packet.data.text || finalReply + (packet.data.delta || "");
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantPlaceholderId
+                    ? { ...msg, content: packet.data.text || finalReply }
+                    : msg
+                )
+              );
+            }
+
+            if (packet.event === "done" && packet.data) {
+              finalReply = packet.data.reply || finalReply;
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantPlaceholderId
+                    ? { ...msg, content: finalReply || "Sorry, couldn't respond." }
+                    : msg
+                )
+              );
+            }
+
+            if (packet.event === "error") {
+              throw new Error(packet.data?.error || "AI response failed.");
+            }
+          }
+        }
       } catch (error) {
         setMessages((prev) => [
-          ...prev,
+          ...prev.filter((msg) => msg.id !== assistantPlaceholderId),
           { role: "assistant", content: error?.message || "Connection issue - try again." },
         ]);
       } finally {

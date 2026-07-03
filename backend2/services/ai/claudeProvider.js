@@ -31,3 +31,15 @@ export async function callClaude({ systemPrompt, history = [], message }) {
 
   return response.content[0].text;
 }
+
+export function streamClaude({ systemPrompt, history = [], message }) {
+  return client.messages.stream({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user", content: message },
+    ],
+  });
+}
