@@ -1,4 +1,6 @@
-<!-- PROJECT LOGO / HEADER -->
+<div align="center">
+  <img src="diagrams/wp.png" alt="banner" width="100%"> 
+</div>
 <br />
 <div align="center">
   <a href="https://github.com/Ifrah-rauf/Algonest">
