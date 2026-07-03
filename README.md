@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="diagrams/wp.png" alt="banner" width="100%"> 
+  <img src="diagrams/wp.png" alt="banner" width="80%"> 
 </div>
 <br />
 <div align="center">
@@ -218,11 +218,11 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
 </div>
 <hr />
 
-<!-- MODULES AND SERVICES (Repeatable Structure) -->
+<!-- MODULES AND SERVICES (Repeatable Structure) 
 <h2 id="modules-and-services">Modules and Services</h2>
 <p>This project is broken down into modular components. Expand each section below to see specific details.</p>
 
-<!-- START REPEATABLE MODULE BLOCK -->
+
 <details>
   <summary>📦 <strong>Module 1: Auth Service</strong> (Click to expand)</summary>
   <br />
@@ -266,9 +266,9 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
     </tbody>
   </table>
 </details>
-<!-- END REPEATABLE MODULE BLOCK -->
 
-<!-- START REPEATABLE MODULE BLOCK -->
+
+
 <details>
   <summary><strong>Module 2: Core Data Engine</strong> (Click to expand)</summary>
   <br />
@@ -299,6 +299,7 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
       </tr>
     </tbody>
   </table>
+  -->
 </details>
 <!-- END REPEATABLE MODULE BLOCK -->
 
