@@ -50,6 +50,10 @@ Resources were never the bottleneck. Accountability was.
 AlgoNest sits after the course, not instead of it, and produces one concrete, verifiable output: a readiness verdict plus company-targeting recommendations — something no course platform or generic mentorship marketplace delivers.
 </p>
 
+<img src="diagrams/d1.jpeg" alt="Dynamic Roadmap Diagram preapred by Ifrah" width="100%" />
+<div align="center">
+  <p><em><font color="#888888">Dynamic Roadmap Diagram prepared by Ifrah</font></em></p>
+</div>
 <!-- TECH STACK -->
 <h2 id="tech-stack">Tech Stack</h2>
 <p>
@@ -207,13 +211,15 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
 <!-- If you have an architecture diagram image, place it here -->
 <img src="diagrams/d2.jpeg" alt="Architecture Diagram prepared by Ifrah" width="100%" />
 <img src="diagrams/d3.jpeg" alt="Architecture Diagram preapred by Ifrah" width="100%" />
+<div align="center">
+  <p><em><font color="#888888">Architecture Diagram prepared by Ifrah</font></em></p>
+</div>
 <hr />
 
 <!-- MODULES AND SERVICES (Repeatable Structure) -->
 <h2 id="modules-and-services">Modules and Services</h2>
 <p>This project is broken down into modular components. Expand each section below to see specific details.</p>
 
-<img src="diagrams/d1.jpeg" alt="Dynamic Roadmap Diagram preapred by Ifrah" width="100%" />
 <!-- START REPEATABLE MODULE BLOCK -->
 <details>
   <summary>📦 <strong>Module 1: Auth Service</strong> (Click to expand)</summary>
