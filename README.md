@@ -50,11 +50,57 @@ Resources were never the bottleneck. Accountability was.
 AlgoNest sits after the course, not instead of it, and produces one concrete, verifiable output: a readiness verdict plus company-targeting recommendations — something no course platform or generic mentorship marketplace delivers.
 </p>
 
-<h3 id="built-with">Built With</h3>
+<!-- TECH STACK -->
+<h2 id="tech-stack">Tech Stack</h2>
+<p>
+  A breakdown of the core technologies, frameworks, and foundational architecture powering the system infrastructure.
+</p>
+
+<h3>Frontend & Client Side</h3>
 <ul>
-  <li><a href="https://reactjs.org/">React.js</a></li>
-  <li><a href="https://nodejs.org/">Node.js</a></li>
-  <li><a href="https://docker.com/">Docker</a></li>
+  <li><strong>React.js:</strong> Core modern UI framework handling single-page application rendering.</li>
+  <li><strong>Tailwind CSS:</strong> Primary utility-first styling framework (with localized CSS modules / inline-style React implemented alongside within legacy layouts).</li>
+  <li><strong>react-router-dom:</strong> Declarative client-side routing and layout management.</li>
+  <li><strong>driver.js:</strong> Interactive overlay library driving contextual, guided onboarding tours for new users.</li>
+</ul>
+
+<h3>Backend & Infrastructure</h3>
+<ul>
+  <li><strong>Node.js + Express.js:</strong> Enterprise runtime and web framework managing API routing and middleware pipelines.</li>
+  <li><strong>JWT Authentication:</strong> Secure, stateless session management via JSON Web Tokens.</li>
+  <li><strong>SSE (Server-Sent Events):</strong> Persistent, unidirectional HTTP channels utilized for real-time streaming of AI engine responses to the UI.</li>
+</ul>
+
+<h3>Database & Vector Layer</h3>
+<ul>
+  <li><strong>Supabase (PostgreSQL):</strong> Core relational database layer handling core application state.</li>
+  <li><strong>pg_cron:</strong> Native internal database schedule automation executing session reminders, recurring availability rollovers, memory/summary batch processing, and expiration cleanups.</li>
+  <li><strong>pgvector:</strong> Vector database extensions facilitating multidimensional embedding storage for optimized, semantic search.</li>
+</ul>
+
+<h3>Artificial Intelligence Engine</h3>
+<p>
+  Deep model tier and contextual processing framework anchored heavily around Retrieval-Augmented Generation (RAG).
+</p>
+<ul>
+  <li><strong>Anthropic Claude API (Haiku):</strong> Lightweight, ultra-low-latency model mapped to programmatic extraction (memory synthesis, system tagging, and prompt classification).</li>
+  <li><strong>Anthropic Claude API (Sonnet):</strong> Deep reasoning engine powering the live AI Build Companion, analytical scorecard generation, and heavy contextual assessments.</li>
+  <li><strong>RAG Core Pipeline:</strong> Student chat history, dynamic workspace project metadata, and static syllabus roadmaps are systematically vectorized and queried via <code>pgvector</code>. This enforces that the Build Companion grounds logic in explicit workspace parameters rather than generic logic models.</li>
+</ul>
+
+<blockquote>
+  <strong>Three-Layer Memory System:</strong> User interaction models are segmented into three operational states to optimize context window efficiency:
+  <ol>
+    <li>Highly structured, relational <code>student_profile</code> tables.</li>
+    <li>A flexible, unstructured <code>student_memories</code> table managing category-tagged behavior observations.</li>
+    <li>A sliding state tracking the immediate, recent conversation window history.</li>
+  </ol>
+  <em>System Constraint:</em> AI pipelines are structured as low-frequency, high-value invocations backed by manual engineering fallbacks. Under no circumstances is an AI service treated as a single-point-of-failure or a hard dependency for core system critical paths.
+</blockquote>
+
+<h3>Third-Party Integrations</h3>
+<ul>
+  <li><strong>Zoom API:</strong> Deep automation layer driving the entire synchronous session lifecycle. Automates server-side meeting generation, dynamically assigns secure <code>join_url</code> and <code>start_url</code> endpoints at booking confirmation, and executes post-call webhook reconciliation to pull telemetry metrics for analytical scorecard tracking.</li>
 </ul>
 
 <hr />
