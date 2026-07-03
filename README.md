@@ -268,7 +268,7 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
 
 <!-- START REPEATABLE MODULE BLOCK -->
 <details>
-  <summary>📦 <strong>Module 2: Core Data Engine</strong> (Click to expand)</summary>
+  <summary><strong>Module 2: Core Data Engine</strong> (Click to expand)</summary>
   <br />
   <blockquote>
     Processes incoming data packets, executes pipeline validation, and writes to the database.
@@ -302,24 +302,3 @@ AlgoNest sits after the course, not instead of it, and produces one concrete, ve
 
 <hr />
 
-<!-- ROADMAP -->
-<h2 id="roadmap">Roadmap</h2>
-<ul>
-  <li>[x] Initial Monorepo Setup</li>
-  <li>[x] Complete Core Data Engine Module</li>
-  <li>[ ] Implement OAuth2 for Auth Service</li>
-  <li>[ ] Add end-to-end testing pipeline</li>
-</ul>
-
-<hr />
-
-<!-- CONTRIBUTING -->
-<h2 id="contributing">Contributing</h2>
-<p>Contributions are what make the open source community such an amazing place to learn, inspire, and create.</p>
-<ol>
-  <li>Fork the Project</li>
-  <li>Create your Feature Branch (<code>git checkout -b feature/AmazingFeature</code>)</li>
-  <li>Commit your Changes (<code>git commit -m 'Add some AmazingFeature'</code>)</li>
-  <li>Push to the Branch (<code>git push origin feature/AmazingFeature</code>)</li>
-  <li>Open a Pull Request</li>
-</ol>
