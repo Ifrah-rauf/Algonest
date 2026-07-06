@@ -11,6 +11,14 @@ import AdminDashboard from "../components/admin-dashboard/AdminDashboard.jsx"
 export default function Dashboard() {
   const { user } = useAuth();
   const [role, setRole] = useState(null);
+
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +60,7 @@ useEffect(() => {
       </>
     );
   }
-if (!user) return <Navigate to="/login" />;
+if (!user && !storedUser) return <Navigate to="/login" />;
 
   return (
     <div className="min-h-screen bg-gray-50">

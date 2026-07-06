@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, UserPlus } from "lucide-react";
-import { apiUrl } from "../../config/api.js";
+import { apiUrl, authHeaders } from "../../config/api.js";
 
 const EMPTY_TEACHER_FORM = {
   name: "",
@@ -40,8 +40,7 @@ export default function TeacherManagementPanel({ user }) {
 
       const res = await fetch(apiUrl("/api/admin/teachers"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           requesterUid: user.uid,
           ...form,

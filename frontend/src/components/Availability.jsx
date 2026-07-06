@@ -519,7 +519,8 @@ export default function AvailabilityDisplay({
                     const isOneOff = type === "session" || type === "free";
 
                     const booked = isSlotBooked(slot);
-                    const inactive = slot.availability?.active === false;
+                    const availabilityIsActive = slot.availability?.active !== false;
+                    const inactive = !availabilityIsActive;
 
                     const past      = isPast(slot.startat);
                     const checkpointBlocked = Boolean(
@@ -559,7 +560,7 @@ export default function AvailabilityDisplay({
                         {/* status label */}
                         {inactive ? (
                           <p className="text-xs text-gray-500 font-bold mt-1">
-                            Unavailable
+                            Unavailable — teacher disabled this slot
                           </p>
                         ) : past && !booked ? (
                           <p className="text-xs text-gray-400 font-semibold mt-1">

@@ -103,7 +103,7 @@ async function getStudentIdByUid(uid) {
 async function getBookingIdsByStudentId(studentId) {
   const { data: bookings, error } = await supabase
     .from("booking")
-    .select("booking_id")
+    .select("booking_id, payment_status, booking_status, expiry_date")
     .eq("s_id", studentId)
     .order("booking_date", { ascending: false });
 
@@ -111,7 +111,17 @@ async function getBookingIdsByStudentId(studentId) {
     throw new Error("Failed to fetch bookings");
   }
 
-  return (bookings || []).map((booking) => booking.booking_id).filter(Boolean);
+  const now = new Date();
+  return (bookings || [])
+    .filter((booking) => {
+      const paymentApproved = String(booking.payment_status || "").toLowerCase() === "approved";
+      const bookingActive = String(booking.booking_status || "").toLowerCase() === "active";
+      const expiry = booking.expiry_date ? new Date(booking.expiry_date) : null;
+      const notExpired = !expiry || expiry > now;
+      return paymentApproved && bookingActive && notExpired;
+    })
+    .map((booking) => booking.booking_id)
+    .filter(Boolean);
 }
 
 async function getSessionProcessingBySessionIds(sessionIds) {
@@ -220,6 +230,7 @@ export async function checkTSessionData(uid) {
 
   const t_id = teacherData.t_id;
 
+<<<<<<< HEAD
   const now = new Date();
 
   // Fetch all sessions and choose the active one if available.
@@ -228,11 +239,20 @@ export async function checkTSessionData(uid) {
     .select("*")
     .eq("t_id", t_id)
     .order("start_time", { ascending: true })
+=======
+  // 2️⃣ Fetch the teacher's sessions and resolve the next upcoming one
+  const { data: sessions, error: sessionError } = await supabase
+    .from("session")
+    .select("*")
+    .eq("t_id", t_id)
+    .order("start_time", { ascending: true });
+>>>>>>> 7bd2e23 (express-sessin to jsonwebtok)
 
   if (sessionError) {
     throw new Error("Failed to fetch session");
   }
 
+<<<<<<< HEAD
   const session = pickRelevantSession(sessionData, now);
 
   if (!session) {
@@ -245,6 +265,43 @@ export async function checkTSessionData(uid) {
     exists: true,
     state,
     session,
+=======
+  const now = new Date();
+  const terminalStatuses = new Set([
+    "COMPLETED",
+    "FAILED",
+    "PROCESSING",
+    "UPLOAD_RECEIVED",
+    "ENDED_PENDING_UPLOAD",
+  ]);
+
+  const nextSession =
+    (sessions || []).find((item) => {
+      const startTime = item?.start_time ? new Date(item.start_time) : null;
+      const endTime = item?.end_time ? new Date(item.end_time) : null;
+      const status = String(item?.status || "").toUpperCase();
+      if (terminalStatuses.has(status)) return false;
+      return startTime && startTime >= now && (!endTime || endTime >= now);
+    }) ||
+    (sessions || []).find((item) => {
+      const startTime = item?.start_time ? new Date(item.start_time) : null;
+      const endTime = item?.end_time ? new Date(item.end_time) : null;
+      const status = String(item?.status || "").toUpperCase();
+      if (terminalStatuses.has(status)) return false;
+      return startTime && (!endTime || now <= endTime);
+    });
+
+  if (!nextSession) {
+    return { exists: false };
+  }
+
+  const state = getSessionState(nextSession);
+  console.log("teacher next session: ", nextSession);
+  return {
+    exists: true,
+    state,
+    session: nextSession,
+>>>>>>> 7bd2e23 (express-sessin to jsonwebtok)
   };
 }
 

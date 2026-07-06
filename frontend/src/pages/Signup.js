@@ -70,8 +70,10 @@ export default function Signup() {
         payload
       );
 
-      await login(response.data.user);
-      navigate("/dashboard");
+      const authUser = await login({ ...response.data.user, token: response.data.token, refreshToken: response.data.refreshToken });
+      if (authUser?.uid) {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("OAuth Signup Error:", error);
       setFormError(error?.response?.data?.message || error.message || "OAuth signup failed.");
@@ -115,8 +117,10 @@ export default function Signup() {
 
       const data = await res.json();
       if (data.status === "success") {
-        await login(data.user);
-        navigate("/dashboard");
+        const authUser = await login({ ...data.user, token: data.token, refreshToken: data.refreshToken });
+        if (authUser?.uid) {
+          navigate("/dashboard");
+        }
       } else if (data.message === "Email already exists") {
         setFormError("Account exists. Please login.");
         navigate("/login");

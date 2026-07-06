@@ -4,6 +4,7 @@ import {
   login,
   firebaseLogin,
   logout,
+  refreshToken,
   saveUser,
   getUser,
   updateStudentProfile,
@@ -23,6 +24,7 @@ router.post("/signup", validate(signupSchema), signup);
 router.post("/login", validate(loginSchema), login);
 router.post("/firebase-login", validate(firebaseLoginSchema), firebaseLogin);
 router.post("/logout", logout);
+router.post("/refresh-token", refreshToken);
 router.post("/save-user", validate(saveUserSchema), saveUser);
 router.get("/user/:uid", getUser);
 router.post("/update-student-profile", updateStudentProfile);

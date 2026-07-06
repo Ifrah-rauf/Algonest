@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { apiUrl, registerAuthLogout } from "../config/api.js";
 
 const AuthContext = createContext();
 
@@ -12,9 +13,8 @@ function safeParse(json) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => safeParse(localStorage.getItem("user")) || null);
 
-  // Load user once on app start
   useEffect(() => {
     const saved = safeParse(localStorage.getItem("user"));
     if (saved) {
@@ -30,17 +30,45 @@ export function AuthProvider({ children }) {
       email: userData?.email,
       role: userData?.role || "STUDENT",
       token: userData?.token || null,
+      refreshToken: userData?.refreshToken || null,
     };
 
     console.log("Logged in user role:", cleanUser.role);
     setUser(cleanUser);
     localStorage.setItem("user", JSON.stringify(cleanUser));
+    return cleanUser;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-  };
+  const logout = useCallback(async () => {
+    const saved = safeParse(localStorage.getItem("user"));
+    const accessToken = saved?.token || null;
+    const storedRefreshToken = saved?.refreshToken || null;
+
+    try {
+      if (accessToken || storedRefreshToken) {
+        await fetch(apiUrl("/api/auth/logout"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({
+            refreshToken: storedRefreshToken,
+          }),
+        });
+      }
+    } catch (error) {
+      console.warn("Logout request failed:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("user");
+      window.location.assign("/login");
+    }
+  }, []);
+
+  useEffect(() => {
+    registerAuthLogout(logout);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

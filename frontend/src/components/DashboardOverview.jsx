@@ -40,7 +40,7 @@ export function DashboardOverview() {
   const [sessionInfo, setSessionInfo] = useState({
     status: "LOADING",
     session: null,
-    label: "Checking session..."
+    label: "Checking your next session..."
   });
   useEffect(() => {
       if (!user) {
@@ -177,7 +177,7 @@ async function checkSession() {
       setSessionInfo({
         status: "NONE",
         session: null,
-        label: "No Active Session"
+        label: "No upcoming session"
       });
       return;
     }
@@ -433,7 +433,7 @@ useEffect(() => {
 
           {/* Title */}
           <h3 className="text-xl font-bold text-gray-900 mb-1">
-            {sessionInfo.session?.title || "Upcoming Session"}
+            {sessionInfo.session?.title || "No upcoming session"}
           </h3>
 
           {/* Time */}

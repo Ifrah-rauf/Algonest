@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CreditCard, Loader2, RefreshCw, XCircle } from "lucide-react";
-import { apiUrl } from "../../config/api.js";
+import { apiUrl, authHeaders } from "../../config/api.js";
 
 const PAYMENT_TABS = [
   { id: "pending", label: "Pending" },
@@ -95,7 +95,7 @@ export default function PaymentApprovalsPanel({ user }) {
       setPaymentMessage("");
       const res = await fetch(
         apiUrl(`/api/admin/bookings/payments?status=${paymentStatus}&requesterUid=${encodeURIComponent(user.uid)}`),
-        { credentials: "include" }
+        { headers: authHeaders() }
       );
       const data = await res.json();
       if (!data.success) {
@@ -121,8 +121,7 @@ export default function PaymentApprovalsPanel({ user }) {
       setPaymentMessage("");
       const res = await fetch(apiUrl(`/api/admin/bookings/${bookingId}/${action}-payment`), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ requesterUid: user.uid }),
       });
       const data = await res.json();

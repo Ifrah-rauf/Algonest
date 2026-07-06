@@ -1,8 +1,8 @@
 import { supabase } from "../lib/supabase.js";
+import { getBearerToken, verifyAuthToken } from "../utils/authToken.js";
 
 function getRequesterUid(req) {
   return (
-    req.session?.user?.uid ||
     req.body?.requesterUid ||
     req.query?.requesterUid ||
     req.headers["x-user-uid"] ||
@@ -12,9 +12,23 @@ function getRequesterUid(req) {
 
 export async function requireAdmin(req, res, next) {
   try {
-    if (req.session?.user?.role === "ADMIN") {
-      req.adminUser = req.session.user;
-      return next();
+    const token = getBearerToken(req);
+    if (token) {
+      try {
+        const payload = verifyAuthToken(token);
+        if (String(payload.role || "").toUpperCase() !== "ADMIN") {
+          return res.status(403).json({ success: false, error: "Admin access required" });
+        }
+        req.adminUser = {
+          uid: payload.uid,
+          name: payload.username,
+          email: payload.email,
+          role: payload.role,
+        };
+        return next();
+      } catch {
+        return res.status(401).json({ success: false, error: "Invalid or expired token" });
+      }
     }
 
     const requesterUid = getRequesterUid(req);

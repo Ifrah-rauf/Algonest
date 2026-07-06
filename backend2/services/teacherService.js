@@ -170,11 +170,14 @@ export async function fetchTeacherById(id) {
     .order("startat", { ascending: true });
 
   if (error1 || error2 || error3) throw (error1 || error2 || error3);
+
+  const visibleTimeSlots = (timeSlotsData || []).filter((slot) => slot.availability?.active !== false);
+
   console.log("teacher video: "+teacherData.video_url);
   return {
     teacher: teacherData,
     avail: availabilityData,
-    timeSlots: timeSlotsData,
+    timeSlots: visibleTimeSlots,
   };
 }
 
