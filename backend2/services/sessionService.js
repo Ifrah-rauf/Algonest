@@ -217,7 +217,7 @@ export async function checkSessionData(uid) {
 
 export async function checkTSessionData(uid) {
 
-  // 1️⃣ Fetch student
+  // Fetch teacher
   const { data: teacherData, error: tError } = await supabase
     .from("teacher")
     .select("t_id")
@@ -225,48 +225,23 @@ export async function checkTSessionData(uid) {
     .single();
 
   if (tError || !teacherData) {
-    throw new Error("Student not found");
+    throw new Error("Teacher not found");
   }
 
   const t_id = teacherData.t_id;
-
-<<<<<<< HEAD
   const now = new Date();
 
-  // Fetch all sessions and choose the active one if available.
-  const { data: sessionData, error: sessionError } = await supabase
-    .from("session")
-    .select("*")
-    .eq("t_id", t_id)
-    .order("start_time", { ascending: true })
-=======
-  // 2️⃣ Fetch the teacher's sessions and resolve the next upcoming one
+  // Fetch the teacher's sessions and resolve the active or next upcoming one.
   const { data: sessions, error: sessionError } = await supabase
     .from("session")
     .select("*")
     .eq("t_id", t_id)
     .order("start_time", { ascending: true });
->>>>>>> 7bd2e23 (express-sessin to jsonwebtok)
 
   if (sessionError) {
     throw new Error("Failed to fetch session");
   }
 
-<<<<<<< HEAD
-  const session = pickRelevantSession(sessionData, now);
-
-  if (!session) {
-    return { exists: false };
-  }
-
-  const state = getSessionState(session, now);
-  console.log("sessionData: ", session);
-  return {
-    exists: true,
-    state,
-    session,
-=======
-  const now = new Date();
   const terminalStatuses = new Set([
     "COMPLETED",
     "FAILED",
@@ -275,33 +250,23 @@ export async function checkTSessionData(uid) {
     "ENDED_PENDING_UPLOAD",
   ]);
 
-  const nextSession =
-    (sessions || []).find((item) => {
-      const startTime = item?.start_time ? new Date(item.start_time) : null;
-      const endTime = item?.end_time ? new Date(item.end_time) : null;
-      const status = String(item?.status || "").toUpperCase();
-      if (terminalStatuses.has(status)) return false;
-      return startTime && startTime >= now && (!endTime || endTime >= now);
-    }) ||
-    (sessions || []).find((item) => {
-      const startTime = item?.start_time ? new Date(item.start_time) : null;
-      const endTime = item?.end_time ? new Date(item.end_time) : null;
-      const status = String(item?.status || "").toUpperCase();
-      if (terminalStatuses.has(status)) return false;
-      return startTime && (!endTime || now <= endTime);
-    });
+  const eligibleSessions = (sessions || []).filter((item) => {
+    const status = String(item?.status || "").toUpperCase();
+    return !terminalStatuses.has(status);
+  });
 
-  if (!nextSession) {
+  const session = pickRelevantSession(eligibleSessions, now);
+  const state = session ? getSessionState(session, now) : null;
+
+  if (!session || state === "EXPIRED") {
     return { exists: false };
   }
 
-  const state = getSessionState(nextSession);
-  console.log("teacher next session: ", nextSession);
+  console.log("teacher session: ", session);
   return {
     exists: true,
     state,
-    session: nextSession,
->>>>>>> 7bd2e23 (express-sessin to jsonwebtok)
+    session,
   };
 }
 
